@@ -9,7 +9,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.ExpenseAdapter
 import com.appdev.split.Model.Data.GroupRecord
-import com.appdev.split.databinding.FragmentAddGroupBinding
 import com.appdev.split.databinding.FragmentGroupBinding
 
 
@@ -38,12 +37,17 @@ class GroupFragment : Fragment() {
             GroupRecord(title = "Jsnsnsn...", subTitle = "no expenses"),
             GroupRecord(title = "Non-group expenses", subTitle = "no expenses")
         )
-        binding.expensesRecyclerView.adapter = ExpenseAdapter(expenseList)
+        binding.expensesRecyclerView.adapter = ExpenseAdapter(expenseList,::move)
 
         binding.add.setOnClickListener {
            findNavController().navigate(R.id.action_groupFragment_to_addGroupFragment)
         }
     }
+
+    fun move(){
+        findNavController().navigate(R.id.action_group_to_groupDetailFragment)
+    }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

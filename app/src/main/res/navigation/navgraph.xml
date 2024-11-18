@@ -41,10 +41,18 @@
         <action
             android:id="@+id/action_groupFragment_to_addGroupFragment"
             app:destination="@id/addGroupFragment" />
+        <action
+            android:id="@+id/action_group_to_groupDetailFragment"
+            app:destination="@id/groupDetailFragment" />
     </fragment>
     <fragment
         android:id="@+id/addGroupFragment"
         android:name="com.appdev.split.AddGroupFragment"
         android:label="fragment_add_group"
         tools:layout="@layout/fragment_add_group" />
+    <fragment
+        android:id="@+id/groupDetailFragment"
+        android:name="com.appdev.split.GroupDetailFragment"
+        android:label="fragment_group_detail"
+        tools:layout="@layout/fragment_group_detail" />
 </navigation>

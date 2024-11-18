@@ -39,4 +39,5 @@
     <color name="chip_unselected_text">#757575</color>
     <color name="chip_unselected_border">#E0E0E0</color>
     <color name="primary">#FF4B39</color>
+    <color name="green">#328C75</color>
 </resources>

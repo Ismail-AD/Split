@@ -8,12 +8,17 @@ import com.appdev.split.Model.Data.GroupRecord
 import com.appdev.split.databinding.ItemExpenseBinding
 
 
-class ExpenseAdapter(private val items: List<GroupRecord>) : RecyclerView.Adapter<ExpenseAdapter.ExpenseViewHolder>() {
+class ExpenseAdapter(private val items: List<GroupRecord>, val navigate: () -> Unit) :
+    RecyclerView.Adapter<ExpenseAdapter.ExpenseViewHolder>() {
 
-    inner class ExpenseViewHolder(private val binding: ItemExpenseBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class ExpenseViewHolder(private val binding: ItemExpenseBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         fun bind(item: GroupRecord) {
             binding.expenseTitle.text = item.title
             binding.expenseDetail.text = item.subTitle
+            binding.parent.setOnClickListener {
+                navigate()
+            }
         }
     }
 
