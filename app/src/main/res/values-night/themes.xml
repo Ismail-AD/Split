@@ -1,0 +1,36 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Split" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your dark theme here. -->
+        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    </style>
+    <style name="CircleImageView" parent="Widget.MaterialComponents.ShapeableImageView">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+    <style name="bottom_menu">
+        <item name="menu">@menu/bottom_night</item>
+    </style>
+    <style name="Background">
+        <item name="backgroundColor">#26272d</item>
+    </style>
+    <style name="indicatorColor">
+        <item name="indicatorColor">#26272d</item>
+    </style>
+    <style name="WordColor">
+        <item name="android:textColor">@color/white</item>
+    </style>
+    <style name="backBillData">
+        <item name="android:background">@drawable/round_item_background_night</item>
+    </style>
+    <style name="billWordColor">
+        <item name="android:textColor">#FFFFFF</item>
+    </style>
+    <style name="CircularImageStyle" parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+    <style name="iconTintColor">
+        <item name="tint">#1C1C1E</item>
+    </style>
+</resources>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/backBillData"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="@dimen/_50sdp"
+        android:layout_height="@dimen/_50sdp"
+        android:id="@+id/cardView"
+        app:cardBackgroundColor="@color/teal_200"
+        app:cardCornerRadius="@dimen/_10sdp">
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:contentDescription=""
+            android:scaleType="centerCrop"
+            android:src="@drawable/bill" />
+
+    </androidx.cardview.widget.CardView>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center|start"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/_10sdp">
+
+        <TextView
+            android:id="@+id/bill_name"
+            style="@style/billWordColor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Bill Name"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/bill_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Date"
+            android:textColor="#8C8C8E"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical|end"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/bill_amount"
+            style="@style/billWordColor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="$123.45"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/person_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3 persons"
+            android:textColor="#8C8C8E"
+            android:textSize="14sp" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorIcon">#FFFFFF</color>
+    <color name="gray">#8C8C8E</color>
+    <color name="itemBack">#FFFFFF</color>
+    <color name="yellowback">#FFE082</color>
+
+
+    <color name="chip_selected_background">@color/primary</color>
+    <color name="chip_selected_text">@color/white</color>
+    <color name="chip_unselected_text">#B0B0B0</color>
+    <color name="chip_unselected_border">#404040</color>
+
+</resources>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="gray">#8C8C8E</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="shadow_steel">#4b4b4b</color>
+    <color name="colorIcon">#0288D1</color>
+    <color name="yellowback">#FFE082</color>
+    <color name="itemBack">#1C1C1E</color>
+
+
+    <color name="mint_leaf">#00b894</color>
+    <color name="pumpkin">#d35400</color>
+    <color name="harley_davidson_orrange">#c23616</color>
+
+    <color name="green_1">#373b3f</color>
+    <color name="green_2">#1cc29f</color>
+    <color name="grey">#EEEEEE</color>
+    <color name="forest_green">#218721</color>
+
+
+
+    <color name="colorPrimary">#008577</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorAccent">#D81B60</color>
+    <color name="official_splitwise_orange">#FF5216</color>
+
+
+
+
+
+    <color name="chip_selected_background">@color/primary</color>
+    <color name="chip_selected_text">@color/white</color>
+    <color name="chip_unselected_text">#757575</color>
+    <color name="chip_unselected_border">#E0E0E0</color>
+    <color name="primary">#FF4B39</color>
+</resources>

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "587065080295",
+    "project_id": "splitwise-ff8b3",
+    "storage_bucket": "splitwise-ff8b3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:587065080295:android:cfb212b045620fcdad2542",
+        "android_client_info": {
+          "package_name": "com.appdev.split"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBoUakXrd9kgE3AML1bPhZjBBASd6R8qJQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:587065080295:android:fe4bc0399960501aad2542",
+        "android_client_info": {
+          "package_name": "com.appdev.splitwise"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBoUakXrd9kgE3AML1bPhZjBBASd6R8qJQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

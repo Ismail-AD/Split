@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/drawable/circle_background.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer shadow layer -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#33000000" /> <!-- Light shadow color -->
+            <size android:width="40dp" android:height="40dp" />
+        </shape>
+    </item>
+    <!-- Inner white circle layer -->
+    <item android:bottom="2dp" android:right="2dp"> <!-- Position the white circle slightly upwards and left for shadow effect -->
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF" /> <!-- White background color -->
+            <size android:width="32dp" android:height="32dp" />
+        </shape>
+    </item>
+</layer-list>
