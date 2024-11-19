@@ -100,8 +100,9 @@
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
+                    android:layout_marginEnd="4dp"
                     android:layout_weight="1"
+                    android:textSize="@dimen/_10ssp"
                     android:text="Settle up" />
 
                 <com.google.android.material.button.MaterialButton
@@ -109,6 +110,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:textSize="@dimen/_10ssp"
 
                     android:text="Charts" />
 
@@ -116,8 +118,10 @@
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
+                    android:layout_marginStart="4dp"
                     android:layout_weight="1"
+                    android:textSize="@dimen/_10ssp"
+
                     android:text="Balances" />
             </LinearLayout>
 
@@ -140,6 +144,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
+                    android:id="@+id/addContact"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true"
@@ -201,7 +206,7 @@
         android:layout_gravity="bottom|end"
         android:text="Add expense"
         android:textColor="@color/white"
-        android:layout_marginBottom="@dimen/_50sdp"
+        android:layout_marginBottom="@dimen/_55sdp"
         android:layout_marginEnd="@dimen/_10sdp"
         app:backgroundTint="@color/green"
         app:icon="@drawable/history_day"

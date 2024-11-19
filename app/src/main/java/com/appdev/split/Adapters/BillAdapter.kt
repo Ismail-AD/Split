@@ -8,11 +8,12 @@ import com.appdev.split.Model.Data.Bill
 import com.appdev.split.databinding.ItemRecentBillBinding
 import kotlin.random.Random
 
-class BillAdapter(private val bills: List<Bill>, kFunction1: (Bill) -> Unit) :
+class BillAdapter(private val bills: List<Bill>, val navigate: (Bill) -> Unit) :
     RecyclerView.Adapter<BillAdapter.BillViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BillViewHolder {
-        val binding = ItemRecentBillBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding =
+            ItemRecentBillBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return BillViewHolder(binding)
     }
 
@@ -38,6 +39,9 @@ class BillAdapter(private val bills: List<Bill>, kFunction1: (Bill) -> Unit) :
             // Generate a slightly darker version of the light color for the image tint
             val darkColor = getDarkerColor(lightColor)
             binding.imageView.setColorFilter(darkColor)
+            binding.parent.setOnClickListener {
+                navigate(bill)
+            }
         }
 
         private fun getLightRandomColor(): Int {

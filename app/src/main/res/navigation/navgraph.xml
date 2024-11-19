@@ -54,5 +54,23 @@
         android:id="@+id/groupDetailFragment"
         android:name="com.appdev.split.GroupDetailFragment"
         android:label="fragment_group_detail"
-        tools:layout="@layout/fragment_group_detail" />
+        tools:layout="@layout/fragment_group_detail" >
+        <action
+            android:id="@+id/action_groupDetailFragment_to_addMembersFragment"
+            app:destination="@id/addMembersFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/addMembersFragment"
+        android:name="com.appdev.split.AddMembersFragment"
+        android:label="fragment_add_members"
+        tools:layout="@layout/fragment_add_members" >
+        <action
+            android:id="@+id/action_addMembersFragment_to_addContactFragment"
+            app:destination="@id/addContactFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/addContactFragment"
+        android:name="com.appdev.split.AddContactFragment"
+        android:label="fragment_add_contact"
+        tools:layout="@layout/fragment_add_contact" />
 </navigation>
