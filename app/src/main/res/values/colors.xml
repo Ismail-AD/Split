@@ -40,4 +40,8 @@
     <color name="chip_unselected_border">#E0E0E0</color>
     <color name="primary">#FF4B39</color>
     <color name="green">#328C75</color>
+
+    <color name="textsmall">#6F7478</color>
+    <color name="tabtext">#000000</color>
+    <color name="error_red">#FF5252</color>
 </resources>

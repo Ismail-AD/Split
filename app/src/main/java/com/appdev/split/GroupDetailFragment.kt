@@ -41,6 +41,10 @@ class GroupDetailFragment : Fragment() {
         binding.addContact.setOnClickListener {
             checkAndRequestPermission()
         }
+
+        binding.addExp.setOnClickListener {
+            findNavController().navigate(R.id.action_groupDetailFragment_to_addGrpExpenseFragment)
+        }
     }
 
     private fun checkAndRequestPermission() {

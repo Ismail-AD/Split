@@ -1,4 +1,248 @@
 <resources>
+    <string-array name="currencies">
+        <item>Afghanistan (AFN)</item>
+        <item>Albania (ALL)</item>
+        <item>Algeria (DZD)</item>
+        <item>Andorra (EUR)</item>
+        <item>Angola (AOA)</item>
+        <item>Antigua and Barbuda (XCD)</item>
+        <item>Argentina (ARS)</item>
+        <item>Armenia (AMD)</item>
+        <item>Australia (AUD)</item>
+        <item>Austria (EUR)</item>
+        <item>Azerbaijan (AZN)</item>
+        <item>Bahrain (BHD)</item>
+        <item>Bangladesh (BDT)</item>
+        <item>Barbados (BBD)</item>
+        <item>Belarus (BYN)</item>
+        <item>Belgium (EUR)</item>
+        <item>Belize (BZD)</item>
+        <item>Benin (XOF)</item>
+        <item>Bhutan (BTN)</item>
+        <item>Bolivia (BOB)</item>
+        <item>Bosnia and Herzegovina (BAM)</item>
+        <item>Botswana (BWP)</item>
+        <item>Brazil (BRL)</item>
+        <item>Brunei (BND)</item>
+        <item>Bulgaria (BGN)</item>
+        <item>Burkina Faso (XOF)</item>
+        <item>Burundi (BIF)</item>
+        <item>Cambodia (KHR)</item>
+        <item>Cameroon (XAF)</item>
+        <item>Canada (CAD)</item>
+        <item>Cape Verde (CVE)</item>
+        <item>Central African Republic (XAF)</item>
+        <item>Chad (XAF)</item>
+        <item>Chile (CLP)</item>
+        <item>China (CNY)</item>
+        <item>Colombia (COP)</item>
+        <item>Comoros (KMF)</item>
+        <item>Congo (XAF)</item>
+        <item>Costa Rica (CRC)</item>
+        <item>Croatia (HRK)</item>
+        <item>Cuba (CUP)</item>
+        <item>Cyprus (EUR)</item>
+        <item>Czech Republic (CZK)</item>
+        <item>Denmark (DKK)</item>
+        <item>Djibouti (DJF)</item>
+        <item>Dominica (XCD)</item>
+        <item>Dominican Republic (DOP)</item>
+        <item>Ecuador (USD)</item>
+        <item>Egypt (EGP)</item>
+        <item>El Salvador (USD)</item>
+        <item>Equatorial Guinea (XAF)</item>
+        <item>Eritrea (ERN)</item>
+        <item>Estonia (EUR)</item>
+        <item>Eswatini (SZL)</item>
+        <item>Ethiopia (ETB)</item>
+        <item>Fiji (FJD)</item>
+        <item>Finland (EUR)</item>
+        <item>France (EUR)</item>
+        <item>Gabon (XAF)</item>
+        <item>Gambia (GMD)</item>
+        <item>Georgia (GEL)</item>
+        <item>Germany (EUR)</item>
+        <item>Ghana (GHS)</item>
+        <item>Greece (EUR)</item>
+        <item>Grenada (XCD)</item>
+        <item>Guatemala (GTQ)</item>
+        <item>Guinea (GNF)</item>
+        <item>Guinea-Bissau (XOF)</item>
+        <item>Guyana (GYD)</item>
+        <item>Haiti (HTG)</item>
+        <item>Honduras (HNL)</item>
+        <item>Hong Kong (HKD)</item>
+        <item>Hungary (HUF)</item>
+        <item>Iceland (ISK)</item>
+        <item>India (INR)</item>
+        <item>Indonesia (IDR)</item>
+        <item>Iran (IRR)</item>
+        <item>Iraq (IQD)</item>
+        <item>Ireland (EUR)</item>
+        <item>Israel (ILS)</item>
+        <item>Italy (EUR)</item>
+        <item>Jamaica (JMD)</item>
+        <item>Japan (JPY)</item>
+        <item>Jordan (JOD)</item>
+        <item>Kazakhstan (KZT)</item>
+        <item>Kenya (KES)</item>
+        <item>Kiribati (AUD)</item>
+        <item>Kuwait (KWD)</item>
+        <item>Kyrgyzstan (KGS)</item>
+        <item>Laos (LAK)</item>
+        <item>Latvia (EUR)</item>
+        <item>Lebanon (LBP)</item>
+        <item>Lesotho (LSL)</item>
+        <item>Liberia (LRD)</item>
+        <item>Libya (LYD)</item>
+        <item>Liechtenstein (CHF)</item>
+        <item>Lithuania (EUR)</item>
+        <item>Luxembourg (EUR)</item>
+        <item>Madagascar (MGA)</item>
+        <item>Malawi (MWK)</item>
+        <item>Malaysia (MYR)</item>
+        <item>Maldives (MVR)</item>
+        <item>Mali (XOF)</item>
+        <item>Malta (EUR)</item>
+        <item>Mauritania (MRU)</item>
+        <item>Mauritius (MUR)</item>
+        <item>Mexico (MXN)</item>
+        <item>Moldova (MDL)</item>
+        <item>Monaco (EUR)</item>
+        <item>Mongolia (MNT)</item>
+        <item>Morocco (MAD)</item>
+        <item>Mozambique (MZN)</item>
+        <item>Myanmar (MMK)</item>
+        <item>Namibia (NAD)</item>
+        <item>Nepal (NPR)</item>
+        <item>Netherlands (EUR)</item>
+        <item>New Zealand (NZD)</item>
+        <item>Nicaragua (NIO)</item>
+        <item>Niger (XOF)</item>
+        <item>Nigeria (NGN)</item>
+        <item>Norway (NOK)</item>
+        <item>Oman (OMR)</item>
+        <item>Pakistan (PKR)</item>
+        <item>Panama (PAB)</item>
+        <item>Papua New Guinea (PGK)</item>
+        <item>Paraguay (PYG)</item>
+        <item>Peru (PEN)</item>
+        <item>Philippines (PHP)</item>
+        <item>Poland (PLN)</item>
+        <item>Portugal (EUR)</item>
+        <item>Qatar (QAR)</item>
+        <item>Romania (RON)</item>
+        <item>Russia (RUB)</item>
+        <item>Rwanda (RWF)</item>
+        <item>Saint Kitts and Nevis (XCD)</item>
+        <item>Saint Lucia (XCD)</item>
+        <item>Saint Vincent and the Grenadines (XCD)</item>
+        <item>Samoa (WST)</item>
+        <item>San Marino (EUR)</item>
+        <item>Saudi Arabia (SAR)</item>
+        <item>Senegal (XOF)</item>
+        <item>Serbia (RSD)</item>
+        <item>Seychelles (SCR)</item>
+        <item>Sierra Leone (SLL)</item>
+        <item>Singapore (SGD)</item>
+        <item>Slovakia (EUR)</item>
+        <item>Slovenia (EUR)</item>
+        <item>Solomon Islands (SBD)</item>
+        <item>Somalia (SOS)</item>
+        <item>South Africa (ZAR)</item>
+        <item>South Korea (KRW)</item>
+        <item>South Sudan (SSP)</item>
+        <item>Spain (EUR)</item>
+        <item>Sri Lanka (LKR)</item>
+        <item>Sudan (SDG)</item>
+        <item>Suriname (SRD)</item>
+        <item>Sweden (SEK)</item>
+        <item>Switzerland (CHF)</item>
+        <item>Syria (SYP)</item>
+        <item>Taiwan (TWD)</item>
+        <item>Tajikistan (TJS)</item>
+        <item>Tanzania (TZS)</item>
+        <item>Thailand (THB)</item>
+        <item>Togo (XOF)</item>
+        <item>Tonga (TOP)</item>
+        <item>Trinidad and Tobago (TTD)</item>
+        <item>Tunisia (TND)</item>
+        <item>Turkey (TRY)</item>
+        <item>Turkmenistan (TMT)</item>
+        <item>Tuvalu (AUD)</item>
+        <item>Uganda (UGX)</item>
+        <item>Ukraine (UAH)</item>
+        <item>United Arab Emirates (AED)</item>
+        <item>United Kingdom (GBP)</item>
+        <item>United States (USD)</item>
+        <item>Uruguay (UYU)</item>
+        <item>Uzbekistan (UZS)</item>
+        <item>Vanuatu (VUV)</item>
+        <item>Vatican City (EUR)</item>
+        <item>Venezuela (VES)</item>
+        <item>Vietnam (VND)</item>
+        <item>Yemen (YER)</item>
+        <item>Zambia (ZMW)</item>
+        <item>Zimbabwe (ZWL)</item>
+    </string-array>
+
+
+    <string-array name="categories">
+        <item>Childcare</item>
+        <item>Clothing</item>
+        <item>Education</item>
+        <item>Gifts</item>
+        <item>Insurance</item>
+        <item>Medical expenses</item>
+        <item>Taxes</item>
+        <item>Bicycle</item>
+        <item>Bus/train</item>
+        <item>Car</item>
+        <item>Plane</item>
+        <item>Taxi</item>
+        <item>Uncategorized</item>
+        <item>Utilities</item>
+        <item>General</item>
+        <item>Cleaning</item>
+        <item>Electricity</item>
+        <item>Heat/gas</item>
+        <item>Trash</item>
+        <item>TV/Phone/Internet</item>
+        <item>Water</item>
+        <item>Entertainment</item>
+        <item>Games</item>
+        <item>Movies</item>
+        <item>Music</item>
+        <item>Sports</item>
+        <item>Food and drink</item>
+        <item>Home</item>
+        <item>Dining out</item>
+        <item>Groceries</item>
+        <item>Liquor</item>
+        <item>Electronics</item>
+        <item>Transportation</item>
+        <item>Bicycle</item>
+        <item>Bus/train</item>
+        <item>Car</item>
+        <item>Gas/fuel</item>
+        <item>Hotel</item>
+        <item>Parking</item>
+        <item>Plane</item>
+        <item>Taxi</item>
+        <item>Uncategorized</item>
+        <item>Utilities</item>
+        <item>General</item>
+        <item>Electronics</item>
+        <item>Furniture</item>
+        <item>Household supplies</item>
+        <item>IT Maintenance</item>
+        <item>Mortgage</item>
+        <item>Pets</item>
+        <item>Rent</item>
+        <item>Services</item>
+        <item>Childcare</item>
+    </string-array>
+
     <string name="app_name">Split</string>
     <string name="create_a_group">Create a group</string>
     <string name="group_name">Group name</string>

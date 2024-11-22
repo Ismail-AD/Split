@@ -66,4 +66,6 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment:2.5.0")
     implementation("androidx.navigation:navigation-ui:2.5.0")
 
+    implementation("com.github.skydoves:powerspinner:1.2.7")
+
 }

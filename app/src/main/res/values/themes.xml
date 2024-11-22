@@ -38,5 +38,13 @@
         <item name="cornerSize">50%</item>
     </style>
 
+    <style name="hintSpinnerWordColor">
+        <item name="android:textColorHint">#F0000000</item>
+        <item name="android:background">@drawable/srchview_back</item>
+        <item name="android:textColor">#F0000000</item>
+        <item name="spinner_arrow_tint">#F0000000</item>
+        <item name="spinner_popup_background">@color/white</item>
+    </style>
+
 
 </resources>
