@@ -7,7 +7,7 @@
     android:orientation="vertical"
     style="@style/Background"
     android:padding="16dp"
-    tools:context=".GroupFragment">
+    tools:context=".UI.Fragment.GroupFragment">
 
     <TextView
         android:id="@+id/overallStatus"

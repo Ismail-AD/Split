@@ -50,6 +50,7 @@ dependencies {
     implementation("com.google.android.material:material:1.10.0")
     implementation("androidx.constraintlayout:constraintlayout:2.2.0")
     implementation("com.google.firebase:firebase-auth:23.1.0")
+    implementation("com.google.firebase:firebase-database:21.0.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
@@ -62,9 +63,13 @@ dependencies {
     androidTestImplementation("com.google.dagger:hilt-android-testing:2.46.1")
     kaptAndroidTest("com.google.dagger:hilt-android-compiler:2.46.1")
     implementation("androidx.navigation:navigation-fragment:2.5.3")
-
     implementation("androidx.navigation:navigation-fragment:2.5.0")
     implementation("androidx.navigation:navigation-ui:2.5.0")
+
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    annotationProcessor("androidx.room:room-compiler:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
 
     implementation("com.github.skydoves:powerspinner:1.2.7")
 

@@ -26,17 +26,17 @@
         android:theme="@style/Theme.Split"
         tools:targetApi="31">
         <activity
-            android:name=".EntryActivity"
+            android:name=".UI.Activity.EntryActivity"
             android:exported="false" />
 
         <activity
-            android:name=".UI.Login"
+            android:name=".UI.Activity.Login"
             android:exported="false" />
         <activity
-            android:name=".UI.SignUp"
+            android:name=".UI.Activity.SignUp"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".UI.Activity.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

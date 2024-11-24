@@ -1,15 +1,12 @@
-package com.appdev.split.UI
+package com.appdev.split.UI.Activity
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
-import com.appdev.split.EntryActivity
-import com.appdev.split.MainActivity
 import com.appdev.split.Model.Data.UserEntity
-import com.appdev.split.Model.MainViewModel
-import com.appdev.split.R
+import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.databinding.ActivityLoginBinding
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -41,7 +38,7 @@ class Login : AppCompatActivity() {
                 val userEntity = UserEntity("", email, password)
                 mainViewModel.startLogin(userEntity) { message, success ->
                     if (success) {
-                        val intent2 = Intent(this,EntryActivity::class.java)
+                        val intent2 = Intent(this, EntryActivity::class.java)
                         startActivity(intent2)
                         this.finish()
                     } else {

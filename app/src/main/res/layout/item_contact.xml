@@ -3,17 +3,21 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
+    android:id="@+id/myContact"
+    android:background="?attr/selectableItemBackground"
     android:padding="12dp">
 
     <ImageView
         android:id="@+id/contactIcon"
         android:layout_width="24dp"
+        style="@style/iconTintColor"
         android:layout_height="24dp"
         android:layout_gravity="center_vertical"
         android:src="@drawable/call" />
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:orientation="vertical">
@@ -24,14 +28,28 @@
             android:layout_height="wrap_content"
             android:textSize="16sp"
             android:text="Mubeen"
-            android:textColor="?android:attr/textColorPrimary" />
-
+            style="@style/billWordColor" />
+        <TextView
+            android:id="@+id/exists"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:visibility="gone"
+            android:text="Already Friend"
+            style="@style/billWordColor"/>
         <TextView
             android:id="@+id/contactNumber"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="14sp"
             android:text="+392939239293"
-            android:textColor="?android:attr/textColorSecondary" />
+            style="@style/billWordColor" />
     </LinearLayout>
+    <ImageView
+        android:id="@+id/selected"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        style="@style/iconTintColor"
+        android:layout_gravity="center_vertical"
+        android:src="@drawable/check" />
 </LinearLayout>

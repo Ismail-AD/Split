@@ -1,72 +1,74 @@
-package com.appdev.split.UI
+package com.appdev.split.UI.Fragment
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.appdev.split.Adapters.PercentageDistributeAdapter
+import com.appdev.split.Adapters.PaymentDistributeAdapter
 import com.appdev.split.Model.Data.PaymentDistribute
-import com.appdev.split.Model.Data.Percentage
 import com.appdev.split.R
-import com.appdev.split.databinding.FragmentAmountPercentBinding
+import com.appdev.split.databinding.FragmentAmounUntEquallyBinding
 import kotlin.math.abs
 
+class AmountUnEquallyFragment : Fragment() {
 
-class AmountPercentFragment : Fragment() {
-
-    private var _binding: FragmentAmountPercentBinding? = null
-    private val binding get() = _binding!!
-    private val totalAmount = 100f  // Static amount to be split
-    private val totalPercentage = 100f
+    private var _binding: FragmentAmounUntEquallyBinding? = null
+    val binding get() = _binding!!
+    private val totalTarget = 100f
     private val payments = listOf(
-        Percentage("1", "Muhammad Ismail Bin Asim"),
-        Percentage("2", "Mubeen Fivver")
+        PaymentDistribute("1", "Muhammad Ismail Bin Asim"),
+        PaymentDistribute("2", "Mubeen Fivver")
     )
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentAmountPercentBinding.inflate(layoutInflater, container, false)
+    ): View? {
+        _binding = FragmentAmounUntEquallyBinding.inflate(layoutInflater, container, false)
         setupRecyclerView()
-        updateProgress(0f)
+        updateTotalAmount(0f)
         return binding.root
     }
 
     private fun setupRecyclerView() {
         binding.memberRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
-            adapter = PercentageDistributeAdapter(payments, totalAmount) { percentage ->
-                updateProgress(percentage)
+            adapter = PaymentDistributeAdapter(payments) { totalAmount ->
+                updateTotalAmount(totalAmount)
             }
         }
     }
 
-    private fun updateProgress(totalPercentageAllocated: Float) {
+    private fun updateTotalAmount(totalAmount: Float) {
         binding.apply {
-            tvPercentage.text = "${totalPercentageAllocated.toInt()}% of 100%"
-            val remainingPercentage = totalPercentage - totalPercentageAllocated
+            tvTotalAmount.text = "$${totalAmount} of $${totalTarget}"
 
+            val difference = totalTarget - totalAmount
             when {
-                totalPercentageAllocated > 100 -> {
+                difference < 0 -> {
+                    // Over the total
                     tvAmountLeft.apply {
-                        text = "${abs(remainingPercentage).toInt()}% over"
+                        text = "$${abs(difference)} over"
                         setTextColor(ContextCompat.getColor(requireContext(), R.color.error_red))
                     }
                 }
-                totalPercentageAllocated == 100f -> {
+                difference == 0f -> {
+                    // Exactly matches
                     tvAmountLeft.apply {
                         text = "Perfect split!"
                         setTextColor(ContextCompat.getColor(requireContext(), R.color.green))
+
                     }
                 }
                 else -> {
+                    // Under the total
                     tvAmountLeft.apply {
-                        text = "${remainingPercentage.toInt()}% left"
+                        text = "$${difference} left"
                         setTextColor(ContextCompat.getColor(requireContext(), R.color.gray))
+
                     }
                 }
             }

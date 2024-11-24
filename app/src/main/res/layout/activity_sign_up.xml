@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".UI.SignUp">
+    tools:context=".UI.Activity.SignUp">
 
 
 
@@ -72,24 +72,7 @@
             android:textColorHint="@color/green_2" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/etSignUpUsername"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/dp_10"
-        app:layout_constraintTop_toBottomOf="@id/etSignUpFullName"
-        app:layout_constraintStart_toStartOf="parent"
-        android:paddingHorizontal="@dimen/dp_15"
-        app:layout_constraintEnd_toEndOf="parent">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Username"
-            android:inputType="text"
-            android:textColor="@color/black"
-            android:textColorHint="@color/green_2" />
-    </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/etSignUpEmail"
@@ -97,7 +80,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/dp_10"
         android:paddingHorizontal="@dimen/dp_15"
-        app:layout_constraintTop_toBottomOf="@id/etSignUpUsername"
+        app:layout_constraintTop_toBottomOf="@id/etSignUpFullName"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 

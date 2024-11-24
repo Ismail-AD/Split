@@ -1,13 +1,14 @@
-package com.appdev.split
+package com.appdev.split.UI.Fragment
 
 import android.app.AlertDialog
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.appdev.split.R
 import com.appdev.split.databinding.FragmentGroupDetailBinding
 
 class GroupDetailFragment : Fragment() {

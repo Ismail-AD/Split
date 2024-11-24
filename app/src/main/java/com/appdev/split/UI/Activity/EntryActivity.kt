@@ -1,4 +1,4 @@
-package com.appdev.split
+package com.appdev.split.UI.Activity
 
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatActivity
@@ -6,8 +6,11 @@ import android.os.Bundle
 import android.view.View
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
+import com.appdev.split.R
 import com.appdev.split.databinding.ActivityEntryBinding
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class EntryActivity : AppCompatActivity() {
     lateinit var binding: ActivityEntryBinding
     lateinit var navController: NavController

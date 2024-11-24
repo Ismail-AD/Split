@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".AddMembersFragment">
+    tools:context=".UI.Fragment.AddMembersFragment">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
@@ -39,11 +39,20 @@
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/selectedContactsRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:orientation="horizontal"
+        android:paddingHorizontal="@dimen/_10sdp"
+        app:layout_constraintTop_toBottomOf="@id/appBarLayout"/>
+
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/appBarLayout">
+        app:layout_constraintTop_toBottomOf="@id/selectedContactsRecyclerView">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -86,6 +95,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
+                android:id="@+id/friendsTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
@@ -99,8 +109,8 @@
                 android:id="@+id/splitwiseFriendsRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="@dimen/_10sdp"
-                android:nestedScrollingEnabled="false" />
+                android:nestedScrollingEnabled="false"
+                android:paddingHorizontal="@dimen/_10sdp" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -115,10 +125,24 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/contactsRecyclerView"
                 android:layout_width="match_parent"
-                android:paddingHorizontal="@dimen/_10sdp"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false" />
+                android:nestedScrollingEnabled="false"
+                android:paddingHorizontal="@dimen/_10sdp" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAddMembers"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:src="@drawable/savecontact"
+        android:contentDescription="Add Members"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:visibility="gone"
+        app:backgroundTint="@color/green"
+        app:tint="@android:color/white" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

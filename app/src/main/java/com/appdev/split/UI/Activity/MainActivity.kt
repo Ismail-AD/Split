@@ -1,10 +1,8 @@
-package com.appdev.split
+package com.appdev.split.UI.Activity
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.appdev.split.UI.Login
-import com.appdev.split.UI.SignUp
 import com.appdev.split.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint

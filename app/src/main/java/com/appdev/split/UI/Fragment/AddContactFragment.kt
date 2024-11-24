@@ -1,4 +1,4 @@
-package com.appdev.split
+package com.appdev.split.UI.Fragment
 
 import android.os.Bundle
 import android.util.Patterns

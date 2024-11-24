@@ -1,23 +1,17 @@
-package com.appdev.split.UI
+package com.appdev.split.UI.Activity
 
-import android.Manifest
-import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.provider.MediaStore
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.core.content.ContextCompat
-import com.appdev.split.MainActivity
 import com.appdev.split.Model.Data.UserEntity
-import com.appdev.split.Model.MainViewModel
+import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.databinding.ActivitySignUpBinding
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -27,6 +21,7 @@ class SignUp : AppCompatActivity() {
     private lateinit var pickMediaLauncher: ActivityResultLauncher<PickVisualMediaRequest>
 
     val mainViewModel by viewModels<MainViewModel>()
+    var uri: Uri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,17 +36,18 @@ class SignUp : AppCompatActivity() {
         }
 
         binding.btnDoneSign.setOnClickListener {
-            if (binding.etSignUpFullName.editText.toString().isNotEmpty() && binding.etSignUpEmail.editText?.text!!.isNotEmpty()
+            if (binding.etSignUpFullName.editText.toString()
+                    .isNotEmpty() && binding.etSignUpEmail.editText?.text!!.isNotEmpty()
                 && binding.etSignUpPassword.editText?.text!!.isNotEmpty()
             ) {
 
                 val userEntity = UserEntity(
-                    binding.etSignUpFullName.editText.toString(),
+                    binding.etSignUpFullName.editText?.text.toString(),
                     binding.etSignUpEmail.editText?.text!!.toString(),
                     binding.etSignUpPassword.editText?.text!!.toString(),
                 )
 
-                mainViewModel.startSignUp(userEntity) { message, success ->
+                mainViewModel.startSignUp(userEntity = userEntity,uri=uri) { message, success ->
                     if (success) {
                         val intent2 = Intent(this, Login::class.java)
                         intent2.putExtra("email", userEntity.email)
@@ -66,14 +62,16 @@ class SignUp : AppCompatActivity() {
             }
         }
 
-       pickMediaLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) {
-                // If the user selected an image, display it
-                binding.ivImageTakerSplitWise.setImageURI(uri)
-            } else {
-                Toast.makeText(this, "No image selected", Toast.LENGTH_SHORT).show()
+        pickMediaLauncher =
+            registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uriget ->
+                if (uriget != null) {
+                    // If the user selected an image, display it
+                    binding.ivImageTakerSplitWise.setImageURI(uriget)
+                    uri = uriget
+                } else {
+                    Toast.makeText(this, "No image selected", Toast.LENGTH_SHORT).show()
+                }
             }
-        }
 
         binding.ivCameraSplitWise.setOnClickListener {
             openGallery()

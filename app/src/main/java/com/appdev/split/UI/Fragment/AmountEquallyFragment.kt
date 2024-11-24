@@ -1,16 +1,13 @@
-package com.appdev.split.UI
+package com.appdev.split.UI.Fragment
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.appdev.split.Adapters.MemberAdapter
 import com.appdev.split.Adapters.SplitMembersAdapter
 import com.appdev.split.Model.Data.Member
-import com.appdev.split.R
 import com.appdev.split.databinding.FragmentAmountEquallyBinding
 
 class AmountEquallyFragment : Fragment() {

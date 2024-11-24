@@ -1,11 +1,10 @@
-package com.appdev.split
+package com.appdev.split.UI.Fragment
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
+import androidx.fragment.app.Fragment
 import com.appdev.split.Adapters.MyPagerAdapter
 import com.appdev.split.databinding.FragmentSplitAmountBinding
 import com.google.android.material.tabs.TabLayoutMediator
@@ -25,7 +24,7 @@ class SplitAmountFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val pagerAdapter = MyPagerAdapter (this)
+        val pagerAdapter = MyPagerAdapter(this)
         binding.viewPager.adapter = pagerAdapter
 
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->

@@ -1,16 +1,16 @@
-package com.appdev.split
+package com.appdev.split.UI.Fragment
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.ExpenseAdapter
 import com.appdev.split.Model.Data.GroupRecord
+import com.appdev.split.R
 import com.appdev.split.databinding.FragmentGroupBinding
-
 
 class GroupFragment : Fragment() {
     private var _binding: FragmentGroupBinding? = null
@@ -37,7 +37,7 @@ class GroupFragment : Fragment() {
             GroupRecord(title = "Jsnsnsn...", subTitle = "no expenses"),
             GroupRecord(title = "Non-group expenses", subTitle = "no expenses")
         )
-        binding.expensesRecyclerView.adapter = ExpenseAdapter(expenseList,::move)
+        binding.expensesRecyclerView.adapter = ExpenseAdapter(expenseList, ::move)
 
         binding.add.setOnClickListener {
            findNavController().navigate(R.id.action_groupFragment_to_addGroupFragment)

@@ -1,18 +1,19 @@
-package com.appdev.split
+package com.appdev.split.UI.Fragment
 
 import android.os.Bundle
 import android.text.TextUtils
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.MemberAdapter
+import com.appdev.split.R
+import com.appdev.split.UI.Activity.EntryActivity
 import com.appdev.split.databinding.DialogMemberListBinding
-import com.appdev.split.databinding.FragmentAddGroupBinding
 import com.appdev.split.databinding.FragmentAddGrpExpenseBinding
 
 class AddGrpExpenseFragment : Fragment() {

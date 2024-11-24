@@ -7,26 +7,29 @@
 
     <fragment
         android:id="@+id/home_page"
-        android:name="com.appdev.split.UI.HomeFragment"
+        android:name="com.appdev.split.UI.Fragment.HomeFragment"
         android:label="fragment_home"
         tools:layout="@layout/fragment_home" >
         <action
             android:id="@+id/action_home_page_to_billDetails"
             app:destination="@id/billDetails" />
+        <action
+            android:id="@+id/action_home_page_to_addMembersFragment"
+            app:destination="@id/addMembersFragment" />
     </fragment>
     <fragment
         android:id="@+id/history"
-        android:name="com.appdev.split.UI.HistoryFragment"
+        android:name="com.appdev.split.UI.Fragment.HistoryFragment"
         android:label="fragment_history"
         tools:layout="@layout/fragment_history" />
     <fragment
         android:id="@+id/profile"
-        android:name="com.appdev.split.UI.ProfileFragment"
+        android:name="com.appdev.split.UI.Fragment.ProfileFragment"
         android:label="fragment_profile"
         tools:layout="@layout/fragment_profile" />
     <fragment
         android:id="@+id/billDetails"
-        android:name="com.appdev.split.BillDetails"
+        android:name="com.appdev.split.UI.Fragment.BillDetails"
         android:label="fragment_bill_details"
         tools:layout="@layout/fragment_bill_details" >
         <argument
@@ -35,7 +38,7 @@
     </fragment>
     <fragment
         android:id="@+id/group"
-        android:name="com.appdev.split.GroupFragment"
+        android:name="com.appdev.split.UI.Fragment.GroupFragment"
         android:label="fragment_group"
         tools:layout="@layout/fragment_group" >
         <action
@@ -47,12 +50,12 @@
     </fragment>
     <fragment
         android:id="@+id/addGroupFragment"
-        android:name="com.appdev.split.AddGroupFragment"
+        android:name="com.appdev.split.UI.Fragment.AddGroupFragment"
         android:label="fragment_add_group"
         tools:layout="@layout/fragment_add_group" />
     <fragment
         android:id="@+id/groupDetailFragment"
-        android:name="com.appdev.split.GroupDetailFragment"
+        android:name="com.appdev.split.UI.Fragment.GroupDetailFragment"
         android:label="fragment_group_detail"
         tools:layout="@layout/fragment_group_detail" >
         <action
@@ -64,21 +67,24 @@
     </fragment>
     <fragment
         android:id="@+id/addMembersFragment"
-        android:name="com.appdev.split.AddMembersFragment"
+        android:name="com.appdev.split.UI.Fragment.AddMembersFragment"
         android:label="fragment_add_members"
         tools:layout="@layout/fragment_add_members" >
         <action
             android:id="@+id/action_addMembersFragment_to_addContactFragment"
             app:destination="@id/addContactFragment" />
+        <argument
+            android:name="isGroupContact"
+            app:argType="boolean" />
     </fragment>
     <fragment
         android:id="@+id/addContactFragment"
-        android:name="com.appdev.split.AddContactFragment"
+        android:name="com.appdev.split.UI.Fragment.AddContactFragment"
         android:label="fragment_add_contact"
         tools:layout="@layout/fragment_add_contact" />
     <fragment
         android:id="@+id/addGrpExpenseFragment"
-        android:name="com.appdev.split.AddGrpExpenseFragment"
+        android:name="com.appdev.split.UI.Fragment.AddGrpExpenseFragment"
         android:label="fragment_add_grp_expense"
         tools:layout="@layout/fragment_add_grp_expense" >
         <action
@@ -87,7 +93,7 @@
     </fragment>
     <fragment
         android:id="@+id/splitAmountFragment"
-        android:name="com.appdev.split.SplitAmountFragment"
+        android:name="com.appdev.split.UI.Fragment.SplitAmountFragment"
         android:label="fragment_split_amount"
         tools:layout="@layout/fragment_split_amount" />
 </navigation>
