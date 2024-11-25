@@ -42,7 +42,7 @@ class AddMembersFragment : Fragment() {
     private lateinit var splitwiseFriendsAdapter: FriendsAdapter
     private val args: AddMembersFragmentArgs by navArgs()
     val sampleFriends = listOf(
-        Friend(1, "Mubeen Fivver")
+        Friend(1, "Mubeen Fivver", contact ="0302030203")
     )
     lateinit var dialog: Dialog
     val mainViewModel by viewModels<MainViewModel>()
@@ -118,7 +118,6 @@ class AddMembersFragment : Fragment() {
         }
         return binding.root
     }
-
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -204,7 +203,7 @@ class AddMembersFragment : Fragment() {
         return contacts.map { contact ->
             Friend(
                 name = contact.name,
-                profileImageUrl = null
+                profileImageUrl = null, contact = contact.number
             )
         }
     }

@@ -47,6 +47,17 @@ class MainViewModel @Inject constructor(var repo: Repo) : ViewModel() {
             }
         }
     }
+    fun addContact(contact: Friend) {
+        _operationState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                repo.insertContact(contact)
+                _operationState.value = UiState.Success(Unit)
+            } catch (e: Exception) {
+                _operationState.value = UiState.Error(e.message ?: "Failed to add contact")
+            }
+        }
+    }
     fun addContacts(contacts: List<Friend>) {
         _operationState.value = UiState.Loading
         viewModelScope.launch {

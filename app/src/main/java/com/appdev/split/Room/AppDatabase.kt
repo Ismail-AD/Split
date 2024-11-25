@@ -6,7 +6,7 @@ import com.appdev.split.Model.Data.Contact
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Room.DaoClasses.ContactDao
 
-@Database(entities = [Friend::class], version = 2, exportSchema = false)
+@Database(entities = [Friend::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun contactDao(): ContactDao
 }
