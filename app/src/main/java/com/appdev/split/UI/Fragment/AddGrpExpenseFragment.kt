@@ -1,25 +1,47 @@
 package com.appdev.split.UI.Fragment
 
+import android.app.Dialog
 import android.os.Bundle
 import android.text.TextUtils
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.MemberAdapter
+import com.appdev.split.Adapters.MyFriendSelectionAdapter
+import com.appdev.split.Model.Data.Friend
+import com.appdev.split.Model.Data.UiState
+import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.UI.Activity.EntryActivity
 import com.appdev.split.databinding.DialogMemberListBinding
 import com.appdev.split.databinding.FragmentAddGrpExpenseBinding
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class AddGrpExpenseFragment : Fragment() {
     private var _binding: FragmentAddGrpExpenseBinding? = null
     private val binding get() = _binding!!
     private val selectedMembers = mutableSetOf<String>()
+    val mainViewModel by viewModels<MainViewModel>()
+    private lateinit var adapter: MyFriendSelectionAdapter
+    private var friendsList = mutableListOf<Friend>()
+    val selectedFriends = mutableSetOf<Friend>()
+    val args: AddGrpExpenseFragmentArgs by navArgs()
+    lateinit var dialog: Dialog
+
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -32,7 +54,64 @@ class AddGrpExpenseFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         (activity as? EntryActivity)?.hideBottomBar()
+        dialog = Dialog(requireContext())
 
+        val isGroupExpense = args.isGroupExpense
+        if (isGroupExpense) {
+            binding.friendSelect.visibility = View.GONE
+            binding.memberSelect.visibility = View.VISIBLE
+        } else {
+            viewLifecycleOwner.lifecycleScope.launch {
+                repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    mainViewModel.contactsState.collect { state ->
+                        when (state) {
+                            is UiState.Loading -> showLoadingIndicator()
+                            is UiState.Success -> {
+                                hideLoadingIndicator()
+                                friendsList = state.data.toMutableList()
+                                Log.d("CHKMYFRI", "$friendsList")
+                                if (friendsList.isNotEmpty()) {
+                                    binding.selectedFrisRecyclerView.visibility = View.VISIBLE
+                                    binding.noFriends.visibility = View.GONE
+                                    adapter = MyFriendSelectionAdapter(
+                                        friendsList,
+                                        selectedFriends
+                                    ) { friend ->
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "${friend.name} clicked!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                    binding.selectedFrisRecyclerView.adapter = adapter
+                                    binding.selectedFrisRecyclerView.layoutManager =
+                                        LinearLayoutManager(
+                                            requireContext(),
+                                            LinearLayoutManager.HORIZONTAL,
+                                            false
+                                        )
+                                    adapter.notifyDataSetChanged()
+                                } else {
+                                    binding.selectedFrisRecyclerView.visibility = View.GONE
+                                    binding.noFriends.visibility = View.VISIBLE
+                                }
+                            }
+
+                            is UiState.Error -> showError(state.message)
+                        }
+                    }
+                }
+            }
+            binding.addFriends.setOnClickListener {
+                val action =
+                    AddGrpExpenseFragmentDirections.actionAddGrpExpenseFragmentToAddMembersFragment(
+                        false
+                    )
+                findNavController().navigate(action)
+            }
+            binding.memberSelect.visibility = View.GONE
+
+        }
         binding.currencySpinner.selectItemByIndex(0)
         binding.categorySpinner.selectItemByIndex(0)
         binding.memberSelect.setOnClickListener {
@@ -46,7 +125,28 @@ class AddGrpExpenseFragment : Fragment() {
             findNavController().navigate(R.id.action_addGrpExpenseFragment_to_splitAmountFragment)
         }
 
+        binding.closeIcon.setOnClickListener {
+            findNavController().navigateUp()
+        }
     }
+
+    private fun showError(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+    }
+
+    private fun showLoadingIndicator() {
+        dialog.setContentView(R.layout.progress_dialog)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.setCancelable(false)
+        dialog.show()
+    }
+
+    private fun hideLoadingIndicator() {
+        if (dialog.isShowing) {
+            dialog.dismiss()
+        }
+    }
+
     private fun showMemberDialog() {
         val dialogBinding = DialogMemberListBinding.inflate(layoutInflater)
 
@@ -102,7 +202,11 @@ class AddGrpExpenseFragment : Fragment() {
 
         dialog.show()
     }
-    private fun updateViewsVisibility(isAllMembersSelected: Boolean, binding: DialogMemberListBinding) {
+
+    private fun updateViewsVisibility(
+        isAllMembersSelected: Boolean,
+        binding: DialogMemberListBinding
+    ) {
         binding.apply {
             if (isAllMembersSelected) {
                 searchField.visibility = View.GONE
@@ -123,15 +227,19 @@ class AddGrpExpenseFragment : Fragment() {
             TextUtils.isEmpty(title) -> {
                 showToast("Title cannot be empty")
             }
+
             TextUtils.isEmpty(description) -> {
                 showToast("Description cannot be empty")
             }
+
             TextUtils.isEmpty(amount) -> {
                 showToast("Amount cannot be empty")
             }
+
             selectedMembers.isEmpty() -> {
                 showToast("Please select at least one member.")
             }
+
             else -> {
                 showToast("Expense saved successfully!")
                 // Perform save operation here

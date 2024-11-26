@@ -7,5 +7,5 @@ import androidx.room.PrimaryKey
 data class Friend(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     val name: String, val contact: String,
-    val profileImageUrl: String? = null
+    val profileImageUrl: String? = null, val amountOwed: String? = ""
 )

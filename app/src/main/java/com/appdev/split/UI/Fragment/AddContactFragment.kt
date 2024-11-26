@@ -49,7 +49,7 @@ class AddContactFragment : Fragment() {
                                 is UiState.Loading -> showLoadingIndicator()
                                 is UiState.Success -> {
                                     hideLoadingIndicator()
-                                    findNavController().popBackStack(R.id.home_page, false)
+                                    findNavController().navigateUp()
                                 }
 
                                 is UiState.Error -> showError(state.message)

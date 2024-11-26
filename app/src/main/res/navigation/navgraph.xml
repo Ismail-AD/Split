@@ -16,6 +16,9 @@
         <action
             android:id="@+id/action_home_page_to_addMembersFragment"
             app:destination="@id/addMembersFragment" />
+        <action
+            android:id="@+id/action_home_page_to_addGrpExpenseFragment"
+            app:destination="@id/addGrpExpenseFragment" />
     </fragment>
     <fragment
         android:id="@+id/history"
@@ -90,6 +93,12 @@
         <action
             android:id="@+id/action_addGrpExpenseFragment_to_splitAmountFragment"
             app:destination="@id/splitAmountFragment" />
+        <argument
+            android:name="isGroupExpense"
+            app:argType="boolean" />
+        <action
+            android:id="@+id/action_addGrpExpenseFragment_to_addMembersFragment"
+            app:destination="@id/addMembersFragment" />
     </fragment>
     <fragment
         android:id="@+id/splitAmountFragment"

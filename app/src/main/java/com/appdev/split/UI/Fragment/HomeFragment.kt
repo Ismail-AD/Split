@@ -110,7 +110,8 @@ class HomeFragment : Fragment() {
     }
 
     private fun onExpenseClicked() {
-        Toast.makeText(requireContext(), "Expense Clicked", Toast.LENGTH_SHORT).show()
+        val action = HomeFragmentDirections.actionHomePageToAddGrpExpenseFragment(false)
+        findNavController().navigate(action)
     }
 
     private fun shrinkFab() {

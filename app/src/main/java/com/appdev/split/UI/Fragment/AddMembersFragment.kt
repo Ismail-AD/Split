@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -49,6 +50,29 @@ class AddMembersFragment : Fragment() {
 
     private val selectedContacts = mutableListOf<Contact>()
     private lateinit var selectedContactsAdapter: SelectedContactsAdapter
+    private lateinit var permissionLauncher: ActivityResultLauncher<String>
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        permissionLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+                if (isGranted) {
+                    contactsList = getDeviceContacts()
+                    val updatedContacts = contactsList.map { contact ->
+                        contact.copy(isFriend = savedFriendsList.any { it.name == contact.name })
+                    }
+                    contactsAdapter.setContacts(updatedContacts)
+                } else {
+                    Toast.makeText(
+                        requireContext(),
+                        "Permission denied. Cannot access contacts.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -250,16 +274,6 @@ class AddMembersFragment : Fragment() {
     }
 
     private fun requestPermission() {
-        val permissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-                if (isGranted) {
-                    contactsList = getDeviceContacts()
-                    val updatedContacts = contactsList.map { contact ->
-                        contact.copy(isFriend = savedFriendsList.any { it.name == contact.name })
-                    }
-                    contactsAdapter.setContacts(updatedContacts)
-                }
-            }
         permissionLauncher.launch(android.Manifest.permission.READ_CONTACTS)
     }
 

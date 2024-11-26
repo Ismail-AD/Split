@@ -44,7 +44,9 @@ class GroupDetailFragment : Fragment() {
         }
 
         binding.addExp.setOnClickListener {
-            findNavController().navigate(R.id.action_groupDetailFragment_to_addGrpExpenseFragment)
+            val action =
+                GroupDetailFragmentDirections.actionGroupDetailFragmentToAddGrpExpenseFragment(true)
+            findNavController().navigate(action)
         }
     }
 
@@ -88,7 +90,8 @@ class GroupDetailFragment : Fragment() {
     }
 
     private fun openAppSettings() {
-        val intent = android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        val intent =
+            android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
         intent.data = android.net.Uri.fromParts("package", requireContext().packageName, null)
         startActivity(intent)
     }
