@@ -1,37 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
     android:gravity="center"
-    android:padding="12dp">
-    <ImageView
-        android:id="@+id/selected"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:background="@drawable/ripple_circle_background"
-        android:contentDescription="Remove"
-        android:elevation="4dp"
-        android:visibility="visible"
-        style="@style/iconTintColor"
-        android:layout_gravity="end"
-        android:src="@drawable/check" />
-    <com.google.android.material.imageview.ShapeableImageView
-        android:id="@+id/profileImage"
-        android:layout_width="45dp"
-        android:layout_height="45dp"
-        android:scaleType="centerCrop"
-        android:background="@color/gray"
-        app:shapeAppearanceOverlay="@style/CircleImageView" />
+    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/friendName"
+    <FrameLayout
         android:layout_width="wrap_content"
-        android:layout_marginTop="@dimen/_7sdp"
+        android:padding="@dimen/_2sdp"
         android:layout_height="wrap_content"
-        android:text="Mubeen"
-        android:textSize="16sp"
-        android:textColor="?android:attr/textColorPrimary" />
+        android:layout_gravity="end">
+
+        <ImageView
+            android:id="@+id/selected"
+            style="@style/iconTintColor"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="@drawable/ripple_circle_background"
+            android:contentDescription="Remove"
+            android:padding="3dp"
+            android:src="@drawable/check"
+            android:visibility="visible" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:paddingHorizontal="@dimen/_13sdp"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/profileImage"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:background="@color/gray"
+            android:scaleType="centerCrop"
+            app:shapeAppearanceOverlay="@style/CircleImageView" />
+
+        <TextView
+            android:id="@+id/friendName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_7sdp"
+            android:text="Mubeen"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="16sp" />
+    </LinearLayout>
 
 </LinearLayout>

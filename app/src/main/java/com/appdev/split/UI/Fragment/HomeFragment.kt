@@ -1,6 +1,7 @@
 package com.appdev.split.UI.Fragment
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +11,7 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -32,7 +34,8 @@ class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
     private lateinit var adapter: BillAdapter
-    val mainViewModel by viewModels<MainViewModel>()
+    val mainViewModel by activityViewModels<MainViewModel>()
+
     private var isExpanded = false
 
     private val fromBottomFabAnim: Animation by lazy {
@@ -55,7 +58,6 @@ class HomeFragment : Fragment() {
     }
 
 
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -71,11 +73,11 @@ class HomeFragment : Fragment() {
         }
 
         binding.contactFab.setOnClickListener { onContactClicked() }
-        binding.expenseFab.setOnClickListener { onExpenseClicked()}
-        val userId = FirebaseAuth.getInstance().currentUser?.uid
-        userId?.let {
-            mainViewModel.fetchUserData(it)
-        }
+        binding.expenseFab.setOnClickListener { onExpenseClicked() }
+        val mail = FirebaseAuth.getInstance().currentUser?.email
+
+        mail?.let { mainViewModel.fetchUserData(it) }
+
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 mainViewModel.userData.collect { user ->
@@ -105,6 +107,8 @@ class HomeFragment : Fragment() {
     }
 
     private fun onContactClicked() {
+        Log.d("CHKERR",mainViewModel.userData.value.toString() + "At home add member")
+
         val action = HomeFragmentDirections.actionHomePageToAddMembersFragment(false)
         findNavController().navigate(action)
     }
@@ -132,6 +136,7 @@ class HomeFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+
     fun goToDetails(bill: Bill) {
         val action = HomeFragmentDirections.actionHomePageToBillDetails(bill)
         findNavController().navigate(action)

@@ -5,6 +5,7 @@ import android.app.Dialog
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.ContactsContract
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +14,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -42,11 +44,9 @@ class AddMembersFragment : Fragment() {
     private lateinit var contactsAdapter: ContactsAdapter
     private lateinit var splitwiseFriendsAdapter: FriendsAdapter
     private val args: AddMembersFragmentArgs by navArgs()
-    val sampleFriends = listOf(
-        Friend(1, "Mubeen Fivver", contact ="0302030203")
-    )
+
     lateinit var dialog: Dialog
-    val mainViewModel by viewModels<MainViewModel>()
+    val mainViewModel by activityViewModels<MainViewModel>()
 
     private val selectedContacts = mutableListOf<Contact>()
     private lateinit var selectedContactsAdapter: SelectedContactsAdapter
@@ -78,6 +78,7 @@ class AddMembersFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentAddMembersBinding.inflate(layoutInflater, container, false)
+        Log.d("CHKERR",mainViewModel.userData.value.toString() + "At add member")
 
         contactsAdapter = ContactsAdapter { contact, isSelected ->
             if (isSelected) {
@@ -88,6 +89,7 @@ class AddMembersFragment : Fragment() {
             selectedContactsAdapter.updateContacts(selectedContacts.toList())
             updateFabVisibility()
         }
+
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -131,7 +133,6 @@ class AddMembersFragment : Fragment() {
             findNavController().navigateUp()
         }
         splitwiseFriendsAdapter = FriendsAdapter()
-        splitwiseFriendsAdapter.submitList(sampleFriends)
         binding.splitwiseFriendsRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = splitwiseFriendsAdapter

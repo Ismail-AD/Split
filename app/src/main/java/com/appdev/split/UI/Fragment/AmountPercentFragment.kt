@@ -8,12 +8,13 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.PercentageDistributeAdapter
+import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.Percentage
 import com.appdev.split.R
 import com.appdev.split.databinding.FragmentAmountPercentBinding
 import kotlin.math.abs
 
-class AmountPercentFragment : Fragment() {
+class AmountPercentFragment(friendsList: List<Friend>, totalAmount: Float) : Fragment() {
 
     private var _binding: FragmentAmountPercentBinding? = null
     private val binding get() = _binding!!

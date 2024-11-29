@@ -4,6 +4,9 @@ import android.content.Context
 import androidx.room.Room
 import com.appdev.split.Room.AppDatabase
 import com.appdev.split.Room.DaoClasses.ContactDao
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,4 +32,12 @@ object DatabaseModule {
     fun provideContactDao(database: AppDatabase): ContactDao {
         return database.contactDao()
     }
+    @Provides
+    @Singleton
+    fun provideFirebaseAuth(): FirebaseAuth = FirebaseAuth.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideFirebaseDatabase(): FirebaseDatabase = FirebaseDatabase.getInstance()
+
 }

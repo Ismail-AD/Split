@@ -104,5 +104,12 @@
         android:id="@+id/splitAmountFragment"
         android:name="com.appdev.split.UI.Fragment.SplitAmountFragment"
         android:label="fragment_split_amount"
-        tools:layout="@layout/fragment_split_amount" />
+        tools:layout="@layout/fragment_split_amount" >
+        <argument
+            android:name="FriendsList"
+            app:argType="com.appdev.split.Model.Data.Friend[]" />
+        <argument
+            android:name="totalAmount"
+            app:argType="float" />
+    </fragment>
 </navigation>

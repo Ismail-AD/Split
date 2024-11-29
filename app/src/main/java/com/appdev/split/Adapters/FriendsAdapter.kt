@@ -33,7 +33,7 @@ class FriendsAdapter : ListAdapter<Friend, FriendsAdapter.FriendViewHolder>(Frie
 
     class FriendDiffCallback : DiffUtil.ItemCallback<Friend>() {
         override fun areItemsTheSame(oldItem: Friend, newItem: Friend): Boolean {
-            return oldItem.id == newItem.id
+            return oldItem.contact == newItem.contact
         }
 
         override fun areContentsTheSame(oldItem: Friend, newItem: Friend): Boolean {

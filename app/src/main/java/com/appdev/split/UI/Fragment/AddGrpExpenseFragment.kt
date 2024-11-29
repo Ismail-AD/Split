@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -34,7 +35,8 @@ class AddGrpExpenseFragment : Fragment() {
     private var _binding: FragmentAddGrpExpenseBinding? = null
     private val binding get() = _binding!!
     private val selectedMembers = mutableSetOf<String>()
-    val mainViewModel by viewModels<MainViewModel>()
+    val mainViewModel by activityViewModels<MainViewModel>()
+
     private lateinit var adapter: MyFriendSelectionAdapter
     private var friendsList = mutableListOf<Friend>()
     val selectedFriends = mutableSetOf<Friend>()
@@ -119,18 +121,32 @@ class AddGrpExpenseFragment : Fragment() {
         }
 
         binding.doneTextView.setOnClickListener {
-            validateAndSave()
+            if (validateAndSave(isGroupExpense)) {
+
+            }
         }
         binding.Split.setOnClickListener {
-            findNavController().navigate(R.id.action_addGrpExpenseFragment_to_splitAmountFragment)
+            if (validateAndSave(isGroupExpense)) {
+                val action = binding.amount.editText?.let { it1 ->
+                    AddGrpExpenseFragmentDirections.actionAddGrpExpenseFragmentToSplitAmountFragment(
+                        selectedFriends.toList().toTypedArray(),
+                        it1.text.toString().toFloat()
+                    )
+                }
+                if (action != null) {
+                    findNavController().navigate(action)
+                }
+            }
         }
 
         binding.closeIcon.setOnClickListener {
             findNavController().navigateUp()
         }
+
     }
 
     private fun showError(message: String) {
+        Log.d("CHKERR",message)
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
 
@@ -218,7 +234,7 @@ class AddGrpExpenseFragment : Fragment() {
         }
     }
 
-    private fun validateAndSave() {
+    private fun validateAndSave(isGroupExpense: Boolean): Boolean {
         val title = binding.title.editText?.text.toString()
         val description = binding.description.editText?.text.toString()
         val amount = binding.amount.editText?.text.toString()
@@ -226,23 +242,31 @@ class AddGrpExpenseFragment : Fragment() {
         when {
             TextUtils.isEmpty(title) -> {
                 showToast("Title cannot be empty")
+                return false
             }
 
             TextUtils.isEmpty(description) -> {
                 showToast("Description cannot be empty")
+                return false
             }
 
             TextUtils.isEmpty(amount) -> {
                 showToast("Amount cannot be empty")
+                return false
             }
 
-            selectedMembers.isEmpty() -> {
+            isGroupExpense && selectedMembers.isEmpty() -> {
                 showToast("Please select at least one member.")
+                return false
+            }
+
+            !isGroupExpense && selectedFriends.isEmpty() -> {
+                showToast("Please select at least one friend.")
+                return false
             }
 
             else -> {
-                showToast("Expense saved successfully!")
-                // Perform save operation here
+                return true
             }
         }
     }

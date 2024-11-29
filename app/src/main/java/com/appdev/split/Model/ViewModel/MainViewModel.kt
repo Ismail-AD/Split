@@ -1,12 +1,14 @@
 package com.appdev.split.Model.ViewModel
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Repository.Repo
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +17,8 @@ import javax.inject.Inject
 
 
 @HiltViewModel
-class MainViewModel @Inject constructor(var repo: Repo) : ViewModel() {
+class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: FirebaseAuth) :
+    ViewModel() {
     private val _userData = MutableStateFlow<UserEntity?>(null)
     val userData: StateFlow<UserEntity?> = _userData
 
@@ -39,30 +42,37 @@ class MainViewModel @Inject constructor(var repo: Repo) : ViewModel() {
         _contactsState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                repo.getAllContacts().collect { contacts ->
-                    _contactsState.value = UiState.Success(contacts)
+                firebaseAuth.currentUser?.email?.let { mail ->
+                    repo.getAllContacts(mail).collect { contacts ->
+                        _contactsState.value = UiState.Success(contacts)
+                    }
                 }
             } catch (e: Exception) {
                 _contactsState.value = UiState.Error(e.message ?: "Failed to fetch contacts")
             }
         }
     }
+
     fun addContact(contact: Friend) {
         _operationState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                repo.insertContact(contact)
+                userData.value?.let { repo.insertContact(contact, it.email) }
                 _operationState.value = UiState.Success(Unit)
             } catch (e: Exception) {
                 _operationState.value = UiState.Error(e.message ?: "Failed to add contact")
             }
         }
     }
+
     fun addContacts(contacts: List<Friend>) {
         _operationState.value = UiState.Loading
+        Log.d("CHKUSER",userData.value.toString())
+
         viewModelScope.launch {
             try {
-                repo.insertContacts(contacts)
+                Log.d("CHKUSER", userData.value?.email ?: "no mail")
+                userData.value?.let { repo.insertContacts(contacts, it.email) }
                 _operationState.value = UiState.Success(Unit)
             } catch (e: Exception) {
                 _operationState.value = UiState.Error(e.message ?: "Failed to add contacts")
@@ -74,9 +84,21 @@ class MainViewModel @Inject constructor(var repo: Repo) : ViewModel() {
         _operationState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                repo.updateContact(contact)
+                userData.value?.let { repo.updateContact(contact, it.email) }
                 _operationState.value = UiState.Success(Unit)
                 fetchAllContacts()
+            } catch (e: Exception) {
+                _operationState.value = UiState.Error(e.message ?: "Failed to update contact")
+            }
+        }
+    }
+
+    fun updateContacts(contacts: List<Friend>) {
+        _operationState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                userData.value?.let { repo.updateContacts(contacts, it.email) }
+                _operationState.value = UiState.Success(Unit)
             } catch (e: Exception) {
                 _operationState.value = UiState.Error(e.message ?: "Failed to update contact")
             }
@@ -87,7 +109,7 @@ class MainViewModel @Inject constructor(var repo: Repo) : ViewModel() {
         _operationState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                repo.deleteContact(contact)
+                userData.value?.let { repo.deleteContact(contact, it.email) }
                 _operationState.value = UiState.Success(Unit)
                 fetchAllContacts()
             } catch (e: Exception) {
@@ -102,7 +124,7 @@ class MainViewModel @Inject constructor(var repo: Repo) : ViewModel() {
         userEntity: UserEntity,
         result: (message: String, success: Boolean) -> Unit
     ) {
-        repo.signUp(userEntity,uri) { message, success ->
+        repo.signUp(userEntity, uri) { message, success ->
             result(message, success)
         }
     }
@@ -118,10 +140,12 @@ class MainViewModel @Inject constructor(var repo: Repo) : ViewModel() {
 
         viewModelScope.launch {
             _loadingState.emit(true)
+
             repo.fetchUserData(userId) { user, _, success ->
                 viewModelScope.launch {
                     if (success) {
                         _userData.emit(user) // Cache the fetched user data
+                        Log.d("CHKUSER", userData.value?.email ?: "after fetch nah")
                     } else {
                         _userData.emit(null) // Emit null if fetching fails
                     }
@@ -130,7 +154,6 @@ class MainViewModel @Inject constructor(var repo: Repo) : ViewModel() {
             }
         }
     }
-
 
 
 }

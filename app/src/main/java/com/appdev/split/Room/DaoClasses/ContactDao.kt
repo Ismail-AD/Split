@@ -21,14 +21,17 @@ interface ContactDao {
     @Update
     suspend fun updateContact(contact: Friend)
 
+    @Update
+    suspend fun updateContacts(contacts: List<Friend>)
+
     @Delete
     suspend fun deleteContact(contact: Friend)
 
     @Query("SELECT * FROM friends ORDER BY name ASC")
     fun getAllContacts(): Flow<List<Friend>>
 
-    @Query("SELECT * FROM friends WHERE id = :id")
-    suspend fun getContactById(id: Int): Friend?
+    @Query("SELECT * FROM friends WHERE contact = :contact")
+    suspend fun getContactById(contact:String): Friend?
 
     @Query("SELECT * FROM friends WHERE name = :name")
     suspend fun getContactByName(name: String): Friend?

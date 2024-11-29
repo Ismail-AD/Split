@@ -1,23 +1,32 @@
 package com.appdev.split.Repository
 
 import android.net.Uri
-import com.appdev.split.Model.Data.Contact
+import android.util.Log
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Room.DaoClasses.ContactDao
+import com.appdev.split.Utils.Utils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-class Repo @Inject constructor(private val contactDao: ContactDao) {
-    var firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
+class Repo @Inject constructor(
+    private val contactDao: ContactDao,
+    private val firebaseDatabase: FirebaseDatabase,
+    val firebaseAuth: FirebaseAuth
+) {
 
+    val currentUser = firebaseAuth.currentUser
     fun signUp(
         userEntity: UserEntity,
         uri: Uri?,
         result: (message: String, success: Boolean) -> Unit
     ) {
+        val sanitizedMail = Utils.sanitizeEmailForFirebase(userEntity.email)
         firebaseAuth.createUserWithEmailAndPassword(userEntity.email, userEntity.password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -27,8 +36,7 @@ class Repo @Inject constructor(private val contactDao: ContactDao) {
                         "email" to userEntity.email
                     )
 
-                    val dbReference = FirebaseDatabase.getInstance().reference
-                    dbReference.child("users").child(userId).setValue(userProfile)
+                    firebaseDatabase.reference.child("profiles").child(sanitizedMail).setValue(userProfile)
                         .addOnSuccessListener {
                             result("Account created successfully", true)
                         }
@@ -45,12 +53,15 @@ class Repo @Inject constructor(private val contactDao: ContactDao) {
         userId: String,
         result: (userData: UserEntity?, message: String, success: Boolean) -> Unit
     ) {
-        val dbReference = FirebaseDatabase.getInstance().reference.child("users").child(userId)
-        dbReference.get()
+        val sanitizedMail = Utils.sanitizeEmailForFirebase(userId)
+        Log.d("CHKSHOT",userId)
+        Log.d("CHKSHOT",sanitizedMail)
+
+        firebaseDatabase.reference.child("profiles").child(sanitizedMail).get()
             .addOnSuccessListener { snapshot ->
                 val name = snapshot.child("name").value.toString()
                 val email = snapshot.child("email").value.toString()
-
+                 Log.d("CHKSHOT","Got it")
                 if (name != null && email != null) {
                     val user = UserEntity(name, email, "")
                     result(user, "User data fetched successfully", true)
@@ -59,6 +70,8 @@ class Repo @Inject constructor(private val contactDao: ContactDao) {
                 }
             }
             .addOnFailureListener {
+                Log.d("CHKSHOT","fail")
+
                 result(null, "Failed to fetch user data", false)
             }
     }
@@ -78,15 +91,131 @@ class Repo @Inject constructor(private val contactDao: ContactDao) {
 
     //--------------------------ADD CONTACT------------------------------
 
-    fun getAllContacts(): Flow<List<Friend>> = contactDao.getAllContacts()
+//    fun getAllContactsFromRoom(): Flow<List<Friend>> = contactDao.getAllContacts()
 
-    suspend fun insertContact(contact: Friend) = contactDao.insertContact(contact)
+    fun getAllContacts(email: String): Flow<List<Friend>> = flow {
+        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+        if (Utils.isInternetAvailable()) {
+            // Fetch from Firebase
+            val friendsList = mutableListOf<Friend>()
+            currentUser?.let { user ->
+                val snapshot =
+                    firebaseDatabase.reference.child("users").child(sanitizedMail).child("friends").get()
+                        .await()
+                for (data in snapshot.children) {
+                    data.getValue(Friend::class.java)?.let { friendsList.add(it) }
+                }
+            }
+            emit(friendsList)
+        } else {
+            emit(contactDao.getAllContacts().first())
+        }
+    }
 
-    suspend fun updateContact(contact: Friend) = contactDao.updateContact(contact)
+    suspend fun insertContact(contact: Friend, email: String) {
+        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+        contactDao.insertContact(contact)
+        if (Utils.isInternetAvailable()) {
+            currentUser?.let { user ->
+                firebaseDatabase.reference.child("users").child(sanitizedMail).child("friends")
+                    .child(contact.contact).setValue(contact).await()
+            }
+        }
+    }
 
-    suspend fun deleteContact(contact: Friend) = contactDao.deleteContact(contact)
+    // Update Contact
+    suspend fun updateContact(contact: Friend, email: String) {
+        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+        contactDao.updateContact(contact)
+        if (Utils.isInternetAvailable()) {
+            currentUser?.let { user ->
+                firebaseDatabase.reference.child("users").child(sanitizedMail).child("friends")
+                    .child(contact.contact).setValue(contact).await()
+            }
+        }
+    }
 
-    suspend fun insertContacts(contacts: List<Friend>) = contactDao.insertContacts(contacts)
-    suspend fun getContactById(id: Int): Friend? = contactDao.getContactById(id)
-    suspend fun getContactByName(name: String): Friend? = contactDao.getContactByName(name)
+    // Delete Contact
+    suspend fun deleteContact(contact: Friend, email: String) {
+        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+        contactDao.deleteContact(contact)
+        if (Utils.isInternetAvailable()) {
+            currentUser?.let { user ->
+                firebaseDatabase.reference.child("users").child(sanitizedMail).child("friends")
+                    .child(contact.contact).removeValue().await()
+            }
+        }
+    }
+
+    // Get Contact by Contact
+//    suspend fun getContactByContact(contact: String): Friend? {
+//        return if (Utils.isInternetAvailable()) {
+//            currentUser?.let { user ->
+//                val snapshot =
+//                    firebaseDatabase.reference.child("users").child(email).child("friends")
+//                        .child(contact).get().await()
+//                snapshot.getValue(Friend::class.java)
+//            }
+//        } else {
+//            contactDao.getContactByName(contact)
+//        }
+//    }
+
+    suspend fun insertContacts(contacts: List<Friend>, email: String) {
+        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+        // Insert into local Room database
+        contactDao.insertContacts(contacts)
+
+        // If internet is available, sync with Firebase
+        Log.d("CHKME", Utils.isInternetAvailable().toString())
+        if (Utils.isInternetAvailable()) {
+            currentUser?.let { user ->
+                val userFriendsRef = firebaseDatabase.reference
+                    .child("users")
+                    .child(sanitizedMail)
+                    .child("friends")
+
+                // Batch insert contacts to Firebase
+                contacts.forEach { contact ->
+                    userFriendsRef
+                        .child(contact.contact)
+                        .setValue(contact)
+                        .await()
+                }
+            }
+        }
+    }
+
+    suspend fun updateContacts(contacts: List<Friend>, email: String) {
+        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+        contactDao.updateContacts(contacts)
+        if (Utils.isInternetAvailable()) {
+            currentUser?.let { user ->
+                val userFriendsRef = firebaseDatabase.reference
+                    .child("users")
+                    .child(sanitizedMail)
+                    .child("friends")
+
+                // Batch insert contacts to Firebase
+                contacts.forEach { contact ->
+                    userFriendsRef
+                        .child(contact.contact)
+                        .setValue(contact)
+                        .await()
+                }
+            }
+        }
+    }
+
+    //    suspend fun insertContacts(contacts: List<Friend>) = contactDao.insertContacts(contacts)
+//    suspend fun getContactById(id: Int): Friend? = contactDao.getContactById(id)
+//    suspend fun getContactByName(name: String): Friend? = contactDao.getContactByName(name)
+
+//    suspend fun insertContact(contact: Friend) = contactDao.insertContact(contact)
+//
+//    suspend fun updateContact(contact: Friend) = contactDao.updateContact(contact)
+//    suspend fun updateContacts(contacts: List<Friend>) = contactDao.updateContacts(contacts)
+//
+//    suspend fun deleteContact(contact: Friend) = contactDao.deleteContact(contact)
+
 }
