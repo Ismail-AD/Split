@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.navArgs
 import com.appdev.split.Adapters.MyPagerAdapter
 import com.appdev.split.Model.Data.Friend
@@ -14,11 +13,9 @@ import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.databinding.FragmentSplitAmountBinding
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.ktx.app
 import dagger.hilt.android.AndroidEntryPoint
 
-//
+
 @AndroidEntryPoint
 class SplitAmountFragment : Fragment() {
     private var _binding: FragmentSplitAmountBinding? = null
@@ -30,6 +27,7 @@ class SplitAmountFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentSplitAmountBinding.inflate(inflater, container, false)
+
         return binding.root
     }
 
@@ -37,8 +35,14 @@ class SplitAmountFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val currentUser = FirebaseAuth.getInstance().currentUser
-        val list = args.friendsList.toMutableList()
+        val list = args.friendsList?.takeIf { it.isNotEmpty() }?.toMutableList() ?: mutableListOf()
+        val friend = args.myFriend
+        val selectedId = args.splitType
         val amount = args.totalAmount
+        if (list.isEmpty() && friend != null) {
+            list.add(friend)
+        }
+
         if (currentUser != null && mainViewModel.userData.value != null) {
             list.add(
                 Friend(
@@ -48,7 +52,14 @@ class SplitAmountFragment : Fragment() {
             )
         }
 
-        val pagerAdapter = MyPagerAdapter(this, list.toList(), amount)
+
+        val pagerAdapter = MyPagerAdapter(
+            this,
+            list.toList(),
+            amount,
+            selectedId,
+            mainViewModel.userData.value?.email ?: currentUser?.email ?: ""
+        )
         binding.viewPager.adapter = pagerAdapter
 
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->

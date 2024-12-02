@@ -19,6 +19,9 @@
         <action
             android:id="@+id/action_home_page_to_addGrpExpenseFragment"
             app:destination="@id/addGrpExpenseFragment" />
+        <action
+            android:id="@+id/action_home_page_to_personalExpenseFragment"
+            app:destination="@id/personalExpenseFragment" />
     </fragment>
     <fragment
         android:id="@+id/history"
@@ -107,9 +110,27 @@
         tools:layout="@layout/fragment_split_amount" >
         <argument
             android:name="FriendsList"
-            app:argType="com.appdev.split.Model.Data.Friend[]" />
+            app:argType="com.appdev.split.Model.Data.Friend[]"
+            app:nullable="true" />
         <argument
             android:name="totalAmount"
             app:argType="float" />
+        <argument
+            android:name="myFriend"
+            app:argType="com.appdev.split.Model.Data.Friend"
+            app:nullable="true" />
+        <argument
+            android:name="splitType"
+            app:argType="integer" />
+    </fragment>
+    <fragment
+        android:id="@+id/personalExpenseFragment"
+        android:name="com.appdev.split.PersonalExpenseFragment"
+        android:label="fragment_personal_expense"
+        tools:layout="@layout/fragment_personal_expense" >
+
+        <action
+            android:id="@+id/action_personalExpenseFragment_to_splitAmountFragment"
+            app:destination="@id/splitAmountFragment" />
     </fragment>
 </navigation>

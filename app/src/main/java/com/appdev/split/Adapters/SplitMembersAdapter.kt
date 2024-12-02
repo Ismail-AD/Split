@@ -7,13 +7,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.appdev.split.Model.Data.Member
 import com.appdev.split.databinding.ItemMemberBinding
 import com.appdev.split.databinding.ItemPersonInvolveBinding
-
 class SplitMembersAdapter(
     private val onPersonSelected: (List<Member>) -> Unit
 ) : RecyclerView.Adapter<SplitMembersAdapter.MemberViewHolder>() {
 
     private var members = listOf<Member>()
-    private var isSelectAllTriggered = false  // Flag to track if change is from "Select All"
+    private var isSelectAllTriggered = false
 
     fun updatePersons(newMembers: List<Member>) {
         members = newMembers
@@ -22,9 +21,9 @@ class SplitMembersAdapter(
 
     fun selectAll(isSelected: Boolean) {
         isSelectAllTriggered = true
-        members.forEach { it.isSelected = isSelected }
+        members = members.map { it.copy(isSelected = isSelected) }
         notifyDataSetChanged()
-        onPersonSelected(members)
+        onPersonSelected(members.filter { it.isSelected })
         isSelectAllTriggered = false
     }
 
@@ -50,14 +49,18 @@ class SplitMembersAdapter(
         fun bind(member: Member) {
             binding.nameText.text = member.name
 
-            // Remove old listener before setting new one to prevent callback loops
             binding.memberCheckBox.setOnCheckedChangeListener(null)
             binding.memberCheckBox.isChecked = member.isSelected
 
             binding.memberCheckBox.setOnCheckedChangeListener { _, isChecked ->
                 if (!isSelectAllTriggered) {
-                    member.isSelected = isChecked
-                    onPersonSelected(members)
+                    // Create a new list with updated selection
+                    val updatedMembers = members.map {
+                        if (it.id == member.id) it.copy(isSelected = isChecked)
+                        else it
+                    }
+                    members = updatedMembers
+                    onPersonSelected(updatedMembers.filter { it.isSelected })
                 }
             }
 

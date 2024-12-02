@@ -58,62 +58,6 @@ class AddGrpExpenseFragment : Fragment() {
         (activity as? EntryActivity)?.hideBottomBar()
         dialog = Dialog(requireContext())
 
-        val isGroupExpense = args.isGroupExpense
-        if (isGroupExpense) {
-            binding.friendSelect.visibility = View.GONE
-            binding.memberSelect.visibility = View.VISIBLE
-        } else {
-            viewLifecycleOwner.lifecycleScope.launch {
-                repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    mainViewModel.contactsState.collect { state ->
-                        when (state) {
-                            is UiState.Loading -> showLoadingIndicator()
-                            is UiState.Success -> {
-                                hideLoadingIndicator()
-                                friendsList = state.data.toMutableList()
-                                Log.d("CHKMYFRI", "$friendsList")
-                                if (friendsList.isNotEmpty()) {
-                                    binding.selectedFrisRecyclerView.visibility = View.VISIBLE
-                                    binding.noFriends.visibility = View.GONE
-                                    adapter = MyFriendSelectionAdapter(
-                                        friendsList,
-                                        selectedFriends
-                                    ) { friend ->
-                                        Toast.makeText(
-                                            requireContext(),
-                                            "${friend.name} clicked!",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                    binding.selectedFrisRecyclerView.adapter = adapter
-                                    binding.selectedFrisRecyclerView.layoutManager =
-                                        LinearLayoutManager(
-                                            requireContext(),
-                                            LinearLayoutManager.HORIZONTAL,
-                                            false
-                                        )
-                                    adapter.notifyDataSetChanged()
-                                } else {
-                                    binding.selectedFrisRecyclerView.visibility = View.GONE
-                                    binding.noFriends.visibility = View.VISIBLE
-                                }
-                            }
-
-                            is UiState.Error -> showError(state.message)
-                        }
-                    }
-                }
-            }
-            binding.addFriends.setOnClickListener {
-                val action =
-                    AddGrpExpenseFragmentDirections.actionAddGrpExpenseFragmentToAddMembersFragment(
-                        false
-                    )
-                findNavController().navigate(action)
-            }
-            binding.memberSelect.visibility = View.GONE
-
-        }
         binding.currencySpinner.selectItemByIndex(0)
         binding.categorySpinner.selectItemByIndex(0)
         binding.memberSelect.setOnClickListener {
@@ -121,22 +65,22 @@ class AddGrpExpenseFragment : Fragment() {
         }
 
         binding.doneTextView.setOnClickListener {
-            if (validateAndSave(isGroupExpense)) {
-
-            }
+//            if (validateAndSave(isGroupExpense)) {
+//
+//            }
         }
         binding.Split.setOnClickListener {
-            if (validateAndSave(isGroupExpense)) {
-                val action = binding.amount.editText?.let { it1 ->
-                    AddGrpExpenseFragmentDirections.actionAddGrpExpenseFragmentToSplitAmountFragment(
-                        selectedFriends.toList().toTypedArray(),
-                        it1.text.toString().toFloat()
-                    )
-                }
-                if (action != null) {
-                    findNavController().navigate(action)
-                }
-            }
+//            if (validateAndSave(isGroupExpense)) {
+//                val action = binding.amount.editText?.let { it1 ->
+//                    AddGrpExpenseFragmentDirections.actionAddGrpExpenseFragmentToSplitAmountFragment(
+//                        selectedFriends.toList().toTypedArray(),
+//                        it1.text.toString().toFloat()
+//                    )
+//                }
+//                if (action != null) {
+//                    findNavController().navigate(action)
+//                }
+//            }
         }
 
         binding.closeIcon.setOnClickListener {

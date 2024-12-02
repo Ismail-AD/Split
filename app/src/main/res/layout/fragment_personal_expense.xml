@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:padding="16dp"
     android:scrollbars="vertical"
-    tools:context=".UI.Fragment.AddGrpExpenseFragment">
+    tools:context=".PersonalExpenseFragment">
 
 
     <RelativeLayout
@@ -106,28 +106,6 @@
     </LinearLayout>
 
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/memberSelect"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_10sdp"
-        app:cardBackgroundColor="@color/green_2"
-        app:cardCornerRadius="@dimen/_5sdp">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:padding="@dimen/_10sdp"
-            android:text="Select members to be involved"
-            android:textAlignment="center"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-    </androidx.cardview.widget.CardView>
-
-
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/title"
         android:layout_width="match_parent"
@@ -215,13 +193,34 @@
         app:spinner_popup_elevation="14dp"
         app:spinner_popup_height="300dp" />
 
+    <androidx.cardview.widget.CardView
+        android:id="@+id/SplitType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_20sdp"
+        app:cardBackgroundColor="@color/green_2"
+        app:cardCornerRadius="@dimen/_5sdp">
+
+        <TextView
+            android:id="@+id/splitTypeText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:padding="@dimen/_10sdp"
+            android:text="Select Split Type"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </androidx.cardview.widget.CardView>
 
 
     <androidx.cardview.widget.CardView
         android:id="@+id/Split"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_20sdp"
+        android:layout_marginTop="@dimen/_10sdp"
         app:cardBackgroundColor="@color/green_2"
         app:cardCornerRadius="@dimen/_5sdp">
 
@@ -231,7 +230,7 @@
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:padding="@dimen/_10sdp"
-            android:text="Paid by you or split equally"
+            android:text="Split Further"
             android:textAlignment="center"
             android:textColor="@color/white"
             android:textSize="16sp"

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/bottom_sheet_background"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/splitTypeTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="Split Type"
+        android:textColor="@android:color/black"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <RadioGroup
+        android:id="@+id/splitTypeRadioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/youPaidSplit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="You paid and split amount"
+            android:textSize="14sp" />
+
+        <RadioButton
+            android:id="@+id/youOwnedFull"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="You owned full amount"
+            android:textSize="14sp" />
+
+        <RadioButton
+            android:id="@+id/friendPaidSplit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Friend's name paid and split amount"
+            android:textSize="14sp" />
+
+        <RadioButton
+            android:id="@+id/friendOwnedFull"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Friend's name owned full amount"
+            android:textSize="14sp" />
+    </RadioGroup>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/Save"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_20sdp"
+        app:cardBackgroundColor="@color/green_2"
+        app:cardCornerRadius="@dimen/_5sdp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:padding="@dimen/_10sdp"
+            android:text="Save"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </androidx.cardview.widget.CardView>
+</LinearLayout>

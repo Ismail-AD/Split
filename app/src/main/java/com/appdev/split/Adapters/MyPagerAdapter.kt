@@ -9,16 +9,18 @@ import com.appdev.split.UI.Fragment.AmountUnEquallyFragment
 
 class MyPagerAdapter(
     fragment: Fragment, private val friendsList: List<Friend>,
-    private val totalAmount: Float
+    private val totalAmount: Float,
+    val selectedId: Int,
+    val email: String
 ) : FragmentStateAdapter(fragment) {
     override fun getItemCount(): Int = 3
 
 
     override fun createFragment(position: Int): Fragment {
         return when (position) {
-            0 -> AmountEquallyFragment(friendsList,totalAmount)
-            1 -> AmountUnEquallyFragment(friendsList,totalAmount)
-            2 -> AmountPercentFragment(friendsList,totalAmount)
+            0 -> AmountEquallyFragment(friendsList,totalAmount,selectedId,email)
+            1 -> AmountUnEquallyFragment(friendsList,totalAmount,selectedId,email)
+            2 -> AmountPercentFragment(friendsList,totalAmount,selectedId,email)
             else -> throw IllegalArgumentException("Invalid tab position")
         }
     }

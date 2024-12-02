@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.appdev.split.Model.Data.ExpenseUserInput
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.Data.UserEntity
@@ -28,12 +29,42 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
     private val _operationState = MutableStateFlow<UiState<Unit>>(UiState.Success(Unit))
     val operationState: StateFlow<UiState<Unit>> = _operationState
 
+    private val _expenseToStore = MutableStateFlow<List<Friend>>(emptyList())
+    val expenseToStore: StateFlow<List<Friend>> get() = _expenseToStore
+
+    private val _expenseInput = MutableStateFlow(ExpenseUserInput())
+    val expenseInput: MutableStateFlow<ExpenseUserInput> get() = _expenseInput
+
+
+    var _newSelectedId = -1
 
     private val _loadingState = MutableStateFlow(false)
     val loadingState: StateFlow<Boolean> = _loadingState
 
     init {
         fetchAllContacts()
+    }
+
+    fun updateTitle(title: String) {
+        _expenseInput.value = _expenseInput.value.copy(title = title)
+    }
+
+    fun updateDescription(description: String) {
+        _expenseInput.value = _expenseInput.value.copy(description = description)
+    }
+
+    fun updateAmount(amount: Float) {
+        _expenseInput.value = _expenseInput.value.copy(amount = amount)
+    }
+
+    fun updateFriendsList(newList: List<Friend>, selectedId: Int) {
+        _expenseToStore.value = newList
+        _newSelectedId = selectedId
+        Log.d("CHKFRIE", selectedId.toString())
+        Log.d("CHKFRIE", newList.size.toString())
+       newList.forEach { fri->
+           Log.d("CHKFRIE", fri.toString())
+       }
     }
 
 
@@ -67,7 +98,7 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
 
     fun addContacts(contacts: List<Friend>) {
         _operationState.value = UiState.Loading
-        Log.d("CHKUSER",userData.value.toString())
+        Log.d("CHKUSER", userData.value.toString())
 
         viewModelScope.launch {
             try {

@@ -2,6 +2,7 @@ package com.appdev.split.UI.Fragment
 
 import android.app.Dialog
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +13,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.SplitMembersAdapter
@@ -29,18 +31,20 @@ import java.util.Date
 import java.util.Locale
 
 @AndroidEntryPoint
-class AmountEquallyFragment(friendsList: List<Friend>, totalAmount: Float) : Fragment() {
+class AmountEquallyFragment(
+    val friends: List<Friend>,
+    val totalAmount: Float,
+    val selectedId: Int,
+    val myEmail: String
+) : Fragment() {
     private var _binding: FragmentAmountEquallyBinding? = null
     val binding get() = _binding!!
     private lateinit var myadapter: SplitMembersAdapter
-    val totalAmount = totalAmount
-    val friends = friendsList
-    val persons: List<Member> by lazy {
-        friendsList.map { friend ->
-            Member(id = friend.contact, name = friend.name, isSelected = true)
-        }
+    var persons: List<Member> = friends.map { friend ->
+        Member(id = friend.contact, name = friend.name, isSelected = true)
     }
-    val mainViewModel by viewModels<MainViewModel>()
+
+    val mainViewModel by activityViewModels<MainViewModel>()
 
     lateinit var dialog: Dialog
 
@@ -60,18 +64,27 @@ class AmountEquallyFragment(friendsList: List<Friend>, totalAmount: Float) : Fra
         dialog = Dialog(requireContext())
 
         binding.fabAddMembers.setOnClickListener {
-            saveExpenses(friendsList = friends)
-            viewLifecycleOwner.lifecycleScope.launch {
-                repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    mainViewModel.operationState.collect { state ->
-                        when (state) {
-                            is UiState.Loading -> showLoadingIndicator()
-                            is UiState.Success -> {
-                                hideLoadingIndicator()
-                                findNavController().navigateUp()
-                            }
+            val selectedMembers = persons.filter { it.isSelected }
+            if (persons.find { it.id == myEmail } == null && (selectedId == R.id.friendPaidSplit || selectedId == R.id.friendOwnedFull) && selectedMembers.size == 1) {
+                Toast.makeText(
+                    requireContext(),
+                    "You cannot add expense that doesn't involve yourself !",
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                saveExpenses(friendsList = friends)
+                viewLifecycleOwner.lifecycleScope.launch {
+                    repeatOnLifecycle(Lifecycle.State.STARTED) {
+                        mainViewModel.operationState.collect { state ->
+                            when (state) {
+                                is UiState.Loading -> showLoadingIndicator()
+                                is UiState.Success -> {
+                                    hideLoadingIndicator()
+                                    findNavController().navigateUp()
+                                }
 
-                            is UiState.Error -> showError(state.message)
+                                is UiState.Error -> showError(state.message)
+                            }
                         }
                     }
                 }
@@ -100,7 +113,8 @@ class AmountEquallyFragment(friendsList: List<Friend>, totalAmount: Float) : Fra
     private fun setupRecyclerView() {
         myadapter = SplitMembersAdapter { selectedPersons ->
             updateUI(selectedPersons.filter { it.isSelected })
-
+            persons = selectedPersons
+            Log.d("CHKME", selectedPersons.toString())
             // Update "All" checkbox - should be checked only if ALL members are selected
             binding.selectAllCheckBox.setOnCheckedChangeListener(null)
             binding.selectAllCheckBox.isChecked = selectedPersons.all { it.isSelected }
@@ -117,6 +131,7 @@ class AmountEquallyFragment(friendsList: List<Friend>, totalAmount: Float) : Fra
         myadapter.updatePersons(initialMembers)
         updateUI(initialMembers)
     }
+
     private fun setupSelectAll() {
         binding.selectAllCheckBox.setOnCheckedChangeListener { _, isChecked ->
             myadapter.selectAll(isChecked)
@@ -131,6 +146,7 @@ class AmountEquallyFragment(friendsList: List<Friend>, totalAmount: Float) : Fra
                 binding.pricePerPerson.text = "Select at least one person"
                 binding.countPerson.visibility = View.GONE
             }
+
             else -> {
                 val amountPerPerson = totalAmount / selectedCount
                 binding.countPerson.visibility = View.VISIBLE
@@ -141,32 +157,73 @@ class AmountEquallyFragment(friendsList: List<Friend>, totalAmount: Float) : Fra
     }
 
 
-
     private fun saveExpenses(friendsList: List<Friend>) {
         val selectedMembers = persons.filter { it.isSelected }
+        val selectedFriends = selectedMembers.mapNotNull { member ->
+            friendsList.find { it.contact == member.id }
+        }
         val amountPerPerson = totalAmount / selectedMembers.size
+        val foundPerson = persons.find { it.id == myEmail }
+        var newId = selectedId
+        // if only my name is selected and first is the id nothing happens
+        Log.d("CHKER", foundPerson.toString())
+        Log.d("CHKER", selectedMembers.size.toString())
+        Log.d("CHKER", selectedMembers.toString())
+        Log.d("CHKER", myEmail)
+        Log.d("CHKER", (selectedId == R.id.friendOwnedFull).toString())
+        Log.d("CHKER", (selectedId == R.id.friendPaidSplit).toString())
+        if (selectedMembers.size == 1 && foundPerson != null && selectedId != R.id.friendOwnedFull && selectedId != R.id.friendPaidSplit) {
+            val navOptions = NavOptions.Builder()
+                .setPopUpTo(R.id.home_page, inclusive = true)
+                .build()
 
-        selectedMembers.forEach { member ->
-            // Find the corresponding Friend object
-            val friend = friendsList.find { it.contact == member.id }
-            friend?.let {
-                // Update the expense record for each friend
+            findNavController().navigate(R.id.home_page, null, navOptions)
+        }
+
+        // if i owe full amount i mean second id is selected friend is going to lent me full amount also uncheck my name from list
+        // then nothing to change except unchecked any column by user
+        if (selectedId == R.id.youPaidSplit || selectedId == R.id.youOwnedFull) {
+
+            if (selectedId == R.id.youPaidSplit && amountPerPerson == totalAmount) {
+                newId = R.id.youOwnedFull
+            } else if (selectedId == R.id.youOwnedFull && amountPerPerson < totalAmount) {
+                newId = R.id.youPaidSplit
+            }
+            selectedFriends.forEach { friend ->
                 val expenseRecord = ExpenseRecord(
                     paidAmount = totalAmount,
                     lentAmount = amountPerPerson,
-                    date = getCurrentDate() // You can create a utility function for current date
+                    date = getCurrentDate()
                 )
-                it.expenseRecords.add(expenseRecord)
+                friend.expenseRecords.add(expenseRecord)
+            }
+        } else {
+            if (selectedId == R.id.friendOwnedFull && amountPerPerson < totalAmount) {
+                newId = R.id.friendPaidSplit
+            } else if(selectedId == R.id.friendPaidSplit && amountPerPerson == totalAmount) {
+                newId = R.id.friendOwnedFull
+            }
+            selectedFriends.forEach { friend ->
+                val expenseRecord = ExpenseRecord(
+                    paidAmount = totalAmount,
+                    lentAmount = 0f,
+                    borrowedAmount = amountPerPerson,
+                    date = getCurrentDate()
+                )
+                friend.expenseRecords.add(expenseRecord)
             }
         }
-        mainViewModel.updateContacts(friendsList)
 
+        // if friend pay and split i borrow half amount then fill borrow and leave lent
 
-        // Now save the updated friend objects back to your database or wherever necessary
+        // if friend paid all then full borrow
+
+        //store selected id based on user selection in VM
+//        mainViewModel.updateContacts(friendsList)
+        mainViewModel.updateFriendsList(selectedFriends, newId)
     }
 
     private fun getCurrentDate(): String {
-        // Helper function to get current date
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     }
 
