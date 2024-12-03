@@ -2,7 +2,9 @@ package com.appdev.split.Repository
 
 import android.net.Uri
 import android.util.Log
+import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
+import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Room.DaoClasses.ContactDao
 import com.appdev.split.Utils.Utils
@@ -36,7 +38,8 @@ class Repo @Inject constructor(
                         "email" to userEntity.email
                     )
 
-                    firebaseDatabase.reference.child("profiles").child(sanitizedMail).setValue(userProfile)
+                    firebaseDatabase.reference.child("profiles").child(sanitizedMail)
+                        .setValue(userProfile)
                         .addOnSuccessListener {
                             result("Account created successfully", true)
                         }
@@ -54,14 +57,14 @@ class Repo @Inject constructor(
         result: (userData: UserEntity?, message: String, success: Boolean) -> Unit
     ) {
         val sanitizedMail = Utils.sanitizeEmailForFirebase(userId)
-        Log.d("CHKSHOT",userId)
-        Log.d("CHKSHOT",sanitizedMail)
+        Log.d("CHKSHOT", userId)
+        Log.d("CHKSHOT", sanitizedMail)
 
         firebaseDatabase.reference.child("profiles").child(sanitizedMail).get()
             .addOnSuccessListener { snapshot ->
                 val name = snapshot.child("name").value.toString()
                 val email = snapshot.child("email").value.toString()
-                 Log.d("CHKSHOT","Got it")
+                Log.d("CHKSHOT", "Got it")
                 if (name != null && email != null) {
                     val user = UserEntity(name, email, "")
                     result(user, "User data fetched successfully", true)
@@ -70,7 +73,7 @@ class Repo @Inject constructor(
                 }
             }
             .addOnFailureListener {
-                Log.d("CHKSHOT","fail")
+                Log.d("CHKSHOT", "fail")
 
                 result(null, "Failed to fetch user data", false)
             }
@@ -93,22 +96,31 @@ class Repo @Inject constructor(
 
 //    fun getAllContactsFromRoom(): Flow<List<Friend>> = contactDao.getAllContacts()
 
-    fun getAllContacts(email: String): Flow<List<Friend>> = flow {
+    fun getAllContacts(email: String): Flow<List<FriendContact>> = flow {
         val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
         if (Utils.isInternetAvailable()) {
             // Fetch from Firebase
-            val friendsList = mutableListOf<Friend>()
+            val friendsList = mutableListOf<FriendContact>()
             currentUser?.let { user ->
                 val snapshot =
-                    firebaseDatabase.reference.child("users").child(sanitizedMail).child("friends").get()
+                    firebaseDatabase.reference.child("users").child(sanitizedMail).child("friends")
+                        .get()
                         .await()
                 for (data in snapshot.children) {
-                    data.getValue(Friend::class.java)?.let { friendsList.add(it) }
+                    data.getValue(FriendContact::class.java)?.let { friendsList.add(it) }
                 }
             }
             emit(friendsList)
         } else {
-            emit(contactDao.getAllContacts().first())
+            val friendsRoom = contactDao.getAllContacts().first()
+            val newList = friendsRoom.map { friend ->
+                FriendContact(
+                    contact = friend.contact,
+                    name = friend.name,
+                    profileImageUrl = friend.profileImageUrl
+                )
+            }
+            emit(newList)
         }
     }
 
@@ -117,8 +129,13 @@ class Repo @Inject constructor(
         contactDao.insertContact(contact)
         if (Utils.isInternetAvailable()) {
             currentUser?.let { user ->
+                val friendContact = FriendContact(
+                    contact = contact.contact,
+                    name = contact.name,
+                    profileImageUrl = contact.profileImageUrl
+                )
                 firebaseDatabase.reference.child("users").child(sanitizedMail).child("friends")
-                    .child(contact.contact).setValue(contact).await()
+                    .child(contact.contact).setValue(friendContact).await()
             }
         }
     }
@@ -129,8 +146,13 @@ class Repo @Inject constructor(
         contactDao.updateContact(contact)
         if (Utils.isInternetAvailable()) {
             currentUser?.let { user ->
+                val friendContact = FriendContact(
+                    contact = contact.contact,
+                    name = contact.name,
+                    profileImageUrl = contact.profileImageUrl
+                )
                 firebaseDatabase.reference.child("users").child(sanitizedMail).child("friends")
-                    .child(contact.contact).setValue(contact).await()
+                    .child(contact.contact).setValue(friendContact).await()
             }
         }
     }
@@ -177,9 +199,14 @@ class Repo @Inject constructor(
 
                 // Batch insert contacts to Firebase
                 contacts.forEach { contact ->
+                    val friendContact = FriendContact(
+                        contact = contact.contact,
+                        name = contact.name,
+                        profileImageUrl = contact.profileImageUrl
+                    )
                     userFriendsRef
                         .child(contact.contact)
-                        .setValue(contact)
+                        .setValue(friendContact)
                         .await()
                 }
             }
@@ -198,9 +225,14 @@ class Repo @Inject constructor(
 
                 // Batch insert contacts to Firebase
                 contacts.forEach { contact ->
+                    val friendContact = FriendContact(
+                        contact = contact.contact,
+                        name = contact.name,
+                        profileImageUrl = contact.profileImageUrl
+                    )
                     userFriendsRef
                         .child(contact.contact)
-                        .setValue(contact)
+                        .setValue(friendContact)
                         .await()
                 }
             }
@@ -217,5 +249,39 @@ class Repo @Inject constructor(
 //    suspend fun updateContacts(contacts: List<Friend>) = contactDao.updateContacts(contacts)
 //
 //    suspend fun deleteContact(contact: Friend) = contactDao.deleteContact(contact)
+
+
+    //------------------------------Individual Expense---------------------------------------
+    suspend fun saveFriendExpense(
+        myEmail: String,
+        friendContact: String,
+        expense: ExpenseRecord,
+        onResult: (success: Boolean, message: String) -> Unit
+    ) {
+        try {
+            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
+            val sanitizedFriendContact = Utils.sanitizeEmailForFirebase(friendContact)
+
+            // Reference to Firebase node
+            val expenseRef = firebaseDatabase.reference
+                .child("expenses")
+                .child(sanitizedMyEmail)
+                .child(sanitizedFriendContact)
+
+            // Push new expense and get the unique key
+            val newExpenseRef = expenseRef.push()
+
+            // Set the expense object at the generated key
+            newExpenseRef.setValue(expense).await()
+
+            // Notify success
+            onResult(true, "Expense saved successfully!")
+        } catch (e: Exception) {
+            // Handle and log exceptions
+            Log.e("Repo", "Failed to save expense: ${e.message}")
+            onResult(false, "Failed to save expense: ${e.message}")
+        }
+    }
+
 
 }

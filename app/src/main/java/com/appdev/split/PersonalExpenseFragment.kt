@@ -17,16 +17,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.MyFriendSelectionAdapter
-import com.appdev.split.Model.Data.Friend
+import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.UI.Activity.EntryActivity
-import com.appdev.split.UI.Fragment.AddGrpExpenseFragmentArgs
 import com.appdev.split.UI.Fragment.AddGrpExpenseFragmentDirections
-import com.appdev.split.databinding.FragmentAddGrpExpenseBinding
 import com.appdev.split.databinding.FragmentPersonalExpenseBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.flow.combine
@@ -40,8 +37,8 @@ class PersonalExpenseFragment : Fragment() {
     val mainViewModel by activityViewModels<MainViewModel>()
 
     private lateinit var adapter: MyFriendSelectionAdapter
-    private var friendsList = mutableListOf<Friend>()
-    private var selectedFriend: Friend? = null
+    private var friendsList = mutableListOf<FriendContact>()
+    private var selectedFriend: FriendContact? = null
     var selectedId = R.id.youPaidSplit
 
     lateinit var dialog: Dialog
@@ -149,22 +146,9 @@ class PersonalExpenseFragment : Fragment() {
             }
         }
 
-        binding.Split.setOnClickListener {
-            if (validateAndSave()) {
-                Log.d("CHKITMVM",mainViewModel.expenseInput.value.toString())
-                val action = binding.amount.editText?.let { it1 ->
-                    PersonalExpenseFragmentDirections.actionPersonalExpenseFragmentToSplitAmountFragment(
-                        null,
-                        it1.text.toString()
-                            .toFloat(),
-                        selectedFriend, selectedId
-                    )
 
-                }
-                if (action != null) {
-                    findNavController().navigate(action)
-                }
-            }
+        binding.saveData.setOnClickListener {
+//            mainViewModel.saveFriendExpense()
         }
     }
 
@@ -198,6 +182,7 @@ class PersonalExpenseFragment : Fragment() {
                 mainViewModel.updateTitle(title)
                 mainViewModel.updateDescription(description)
                 mainViewModel.updateAmount(amount.toFloat())
+
                 return true
             }
         }
@@ -223,33 +208,54 @@ class PersonalExpenseFragment : Fragment() {
         var new_id = selectedId
 
         val radioGroup = view.findViewById<RadioGroup>(R.id.splitTypeRadioGroup)
-        val save = view.findViewById<CardView>(R.id.Save)
+        val more = view.findViewById<CardView>(R.id.Save)
         radioGroup.check(selectedId)
 
         val friendPaidSplitRadioButton = view.findViewById<RadioButton>(R.id.friendPaidSplit)
         val friendOwnedFullRadioButton = view.findViewById<RadioButton>(R.id.friendOwnedFull)
 
-        friendPaidSplitRadioButton.text = "$friendName paid and split amount"
-        friendOwnedFullRadioButton.text = "$friendName owned full amount"
+        val enteredAmount = binding.amount.editText?.text.toString().toFloatOrNull() ?: 0f
+
+        // Calculate owed amounts based on the entered value
+        val halfAmount = enteredAmount / 2
+
+        friendPaidSplitRadioButton.text = "$friendName paid and split amount \n You owe $friendName $halfAmount"
+        friendOwnedFullRadioButton.text =
+            "$friendName owned full amount \n You owe $friendName $enteredAmount"
 
         radioGroup.setOnCheckedChangeListener { _, checkedId ->
             // Don't update splitTypeText immediately
-            new_id = checkedId // Update the selectedId for saving
+            new_id = checkedId
+            selectedId = new_id
+            val selectedOption = when (new_id) {
+                R.id.youPaidSplit -> "You paid and split amount\n $friendName owes you $halfAmount"
+                R.id.youOwnedFull -> "You owned full amount\n $friendName owes you $enteredAmount"
+                R.id.friendPaidSplit -> "$friendName paid and split amount\nYou owe $friendName $halfAmount"
+                R.id.friendOwnedFull -> "$friendName owned full amount\nYou owe $friendName $halfAmount"
+                else -> ""
+            }
+            binding.splitTypeText.text = selectedOption // Now update the text when Save is clicked
+//            bottomSheetDialog.dismiss() // Dismiss the bottom sheet after saving
         }
 
 
-        save.setOnClickListener {
-            // Update the splitTypeText with the selected option only when Save is clicked
-            val selectedOption = when (new_id) {
-                R.id.youPaidSplit -> "You paid and split amount"
-                R.id.youOwnedFull -> "You owned full amount"
-                R.id.friendPaidSplit -> "$friendName paid and split amount"
-                R.id.friendOwnedFull -> "$friendName owned full amount"
-                else -> ""
+        more.setOnClickListener {
+            bottomSheetDialog.dismiss()
+            if (validateAndSave()) {
+                Log.d("CHKITMVM",mainViewModel.expenseInput.value.toString())
+                val action = binding.amount.editText?.let { it1 ->
+                    PersonalExpenseFragmentDirections.actionPersonalExpenseFragmentToSplitAmountFragment(
+                        null,
+                        it1.text.toString()
+                            .toFloat(),
+                        selectedFriend, selectedId
+                    )
+
+                }
+                if (action != null) {
+                    findNavController().navigate(action)
+                }
             }
-            selectedId = new_id
-            binding.splitTypeText.text = selectedOption // Now update the text when Save is clicked
-            bottomSheetDialog.dismiss() // Dismiss the bottom sheet after saving
         }
 
         bottomSheetDialog.show()

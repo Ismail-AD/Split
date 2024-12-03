@@ -2,13 +2,13 @@ package com.appdev.split.Adapters
 
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.appdev.split.Model.Data.Friend
+import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.UI.Fragment.AmountEquallyFragment
 import com.appdev.split.UI.Fragment.AmountPercentFragment
 import com.appdev.split.UI.Fragment.AmountUnEquallyFragment
 
 class MyPagerAdapter(
-    fragment: Fragment, private val friendsList: List<Friend>,
+    fragment: Fragment, private val friendsList: List<FriendContact>,
     private val totalAmount: Float,
     val selectedId: Int,
     val email: String

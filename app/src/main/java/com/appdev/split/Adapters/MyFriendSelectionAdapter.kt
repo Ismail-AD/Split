@@ -5,17 +5,18 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.appdev.split.Model.Data.Friend
+import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.databinding.MyfriendsLayoutItemBinding
 class MyFriendSelectionAdapter(
-    private val friendsList: List<Friend>,
-    private var selectedFriend: Friend?, // Track the single selected friend
-    private val onFriendClick: (Friend?) -> Unit
+    private val friendsList: List<FriendContact>,
+    private var selectedFriend: FriendContact?, // Track the single selected friend
+    private val onFriendClick: (FriendContact?) -> Unit
 ) : RecyclerView.Adapter<MyFriendSelectionAdapter.FriendViewHolder>() {
 
     inner class FriendViewHolder(private val binding: MyfriendsLayoutItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(friend: Friend, isSelected: Boolean) {
+        fun bind(friend: FriendContact, isSelected: Boolean) {
             binding.friendName.text = friend.name
             binding.selected.visibility = if (isSelected) View.VISIBLE else View.INVISIBLE
 

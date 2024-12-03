@@ -27,6 +27,7 @@ import com.appdev.split.Adapters.FriendsAdapter
 import com.appdev.split.Adapters.SelectedContactsAdapter
 import com.appdev.split.Model.Data.Contact
 import com.appdev.split.Model.Data.Friend
+import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
@@ -38,7 +39,7 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class AddMembersFragment : Fragment() {
     private var contactsList = listOf<Contact>()
-    private var savedFriendsList = listOf<Friend>()
+    private var savedFriendsList = listOf<FriendContact>()
     private var _binding: FragmentAddMembersBinding? = null
     private val binding get() = _binding!!
     private lateinit var contactsAdapter: ContactsAdapter

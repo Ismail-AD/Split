@@ -8,7 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.navArgs
 import com.appdev.split.Adapters.MyPagerAdapter
-import com.appdev.split.Model.Data.Friend
+import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.databinding.FragmentSplitAmountBinding
 import com.google.android.material.tabs.TabLayoutMediator
@@ -45,7 +45,7 @@ class SplitAmountFragment : Fragment() {
 
         if (currentUser != null && mainViewModel.userData.value != null) {
             list.add(
-                Friend(
+                FriendContact(
                     name = mainViewModel.userData.value!!.name,
                     contact = mainViewModel.userData.value!!.email
                 )

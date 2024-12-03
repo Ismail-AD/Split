@@ -9,7 +9,6 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -19,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.PercentageDistributeAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
+import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.Percentage
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
@@ -31,7 +31,7 @@ import java.util.Locale
 import kotlin.math.abs
 
 class AmountPercentFragment(
-    val friendsList: List<Friend>,
+    val friendsList: List<FriendContact>,
     val totalAmount: Float,
     val selectedId: Int,
     val myEmail: String
@@ -161,7 +161,7 @@ class AmountPercentFragment(
         }
     }
 
-    private fun saveExpenses(friendsList: List<Friend>) {
+    private fun saveExpenses(friendsList: List<FriendContact>) {
         val selectedPayments = payments.filter { it.percentage > 0 }
         val selectedFriends = selectedPayments.mapNotNull { payment ->
             friendsList.find { it.contact == payment.id }
@@ -169,6 +169,8 @@ class AmountPercentFragment(
 
         val foundPerson = selectedPayments.find { it.id == myEmail }
         var newId = selectedId
+        var expenseRecord = ExpenseRecord()
+
 
         // Similar logic for handling single selection
         if (selectedPayments.size == 1 && foundPerson != null &&
@@ -189,16 +191,14 @@ class AmountPercentFragment(
                 newId = R.id.youPaidSplit
             }
 
-            selectedFriends.forEach { friend ->
-                val payment = selectedPayments.find { it.id == friend.contact }
-                val calculatedAmount = payment?.let { (it.percentage / 100) * totalAmount } ?: 0f
-                val expenseRecord = ExpenseRecord(
-                    paidAmount = totalAmount,
-                    lentAmount = calculatedAmount,
-                    date = getCurrentDate()
-                )
-                friend.expenseRecords.add(expenseRecord)
-            }
+            val payment = selectedPayments.find { it.id != myEmail }
+            val calculatedAmount = payment?.let { (it.percentage / 100) * totalAmount } ?: 0f
+            expenseRecord = ExpenseRecord(
+                paidAmount = totalAmount,
+                lentAmount = calculatedAmount,
+                date = getCurrentDate()
+            )
+
         } else {
             if (selectedId == R.id.friendOwnedFull && selectedFriends.size > 1) {
                 newId = R.id.friendPaidSplit
@@ -206,20 +206,18 @@ class AmountPercentFragment(
                 newId = R.id.friendOwnedFull
             }
 
-            selectedFriends.forEach { friend ->
-                val payment = selectedPayments.find { it.id == friend.contact }
-                val calculatedAmount = payment?.let { (it.percentage / 100) * totalAmount } ?: 0f
-                val expenseRecord = ExpenseRecord(
-                    paidAmount = totalAmount,
-                    lentAmount = 0f,
-                    borrowedAmount = calculatedAmount,
-                    date = getCurrentDate()
-                )
-                friend.expenseRecords.add(expenseRecord)
-            }
+
+            val payment = selectedPayments.find { it.id == myEmail }
+            val calculatedAmount = payment?.let { (it.percentage / 100) * totalAmount } ?: 0f
+            expenseRecord = ExpenseRecord(
+                paidAmount = totalAmount,
+                lentAmount = 0f,
+                borrowedAmount = calculatedAmount,
+                date = getCurrentDate()
+            )
         }
 
-        mainViewModel.updateFriendsList(selectedFriends, newId)
+        mainViewModel.updateFriendsList(expenseRecord, newId)
     }
 
 //    private fun saveExpenses(friendsList: List<Friend>) {

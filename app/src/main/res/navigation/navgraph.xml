@@ -110,14 +110,14 @@
         tools:layout="@layout/fragment_split_amount" >
         <argument
             android:name="FriendsList"
-            app:argType="com.appdev.split.Model.Data.Friend[]"
+            app:argType="com.appdev.split.Model.Data.FriendContact[]"
             app:nullable="true" />
         <argument
             android:name="totalAmount"
             app:argType="float" />
         <argument
             android:name="myFriend"
-            app:argType="com.appdev.split.Model.Data.Friend"
+            app:argType="com.appdev.split.Model.Data.FriendContact"
             app:nullable="true" />
         <argument
             android:name="splitType"

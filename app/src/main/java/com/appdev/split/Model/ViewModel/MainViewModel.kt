@@ -4,8 +4,10 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.ExpenseUserInput
 import com.appdev.split.Model.Data.Friend
+import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Repository.Repo
@@ -23,8 +25,8 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
     private val _userData = MutableStateFlow<UserEntity?>(null)
     val userData: StateFlow<UserEntity?> = _userData
 
-    private val _contactsState = MutableStateFlow<UiState<List<Friend>>>(UiState.Loading)
-    val contactsState: StateFlow<UiState<List<Friend>>> = _contactsState
+    private val _contactsState = MutableStateFlow<UiState<List<FriendContact>>>(UiState.Loading)
+    val contactsState: StateFlow<UiState<List<FriendContact>>> = _contactsState
 
     private val _operationState = MutableStateFlow<UiState<Unit>>(UiState.Success(Unit))
     val operationState: StateFlow<UiState<Unit>> = _operationState
@@ -35,6 +37,8 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
     private val _expenseInput = MutableStateFlow(ExpenseUserInput())
     val expenseInput: MutableStateFlow<ExpenseUserInput> get() = _expenseInput
 
+    private val _expenseToPush = MutableStateFlow(ExpenseRecord())
+    val expensePush: MutableStateFlow<ExpenseRecord> get() = _expenseToPush
 
     var _newSelectedId = -1
 
@@ -43,6 +47,33 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
 
     init {
         fetchAllContacts()
+    }
+
+    //---------------------Friend Expense----------------------
+    fun saveFriendExpense(
+        expenseRecord: ExpenseRecord,
+        friendsContact: String
+    ) {
+        _operationState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.email?.let { mail ->
+                    repo.saveFriendExpense(
+                        mail,
+                        friendsContact,
+                        expenseRecord
+                    ) { success, message ->
+                        if (success) {
+                            _operationState.value = UiState.Success(Unit)
+                        } else {
+                            _operationState.value = UiState.Error(message)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _operationState.value = UiState.Error(e.message ?: "Failed to save expense")
+            }
+        }
     }
 
     fun updateTitle(title: String) {
@@ -57,14 +88,17 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
         _expenseInput.value = _expenseInput.value.copy(amount = amount)
     }
 
-    fun updateFriendsList(newList: List<Friend>, selectedId: Int) {
-        _expenseToStore.value = newList
+
+    fun updateFriendsList(expenseRecord: ExpenseRecord, selectedId: Int) {
+
+        _expenseToPush.value = expenseRecord.copy(
+            title = expenseInput.value.title,
+            description = expenseInput.value.description,
+            amount = expenseInput.value.amount
+        )
         _newSelectedId = selectedId
         Log.d("CHKFRIE", selectedId.toString())
-        Log.d("CHKFRIE", newList.size.toString())
-       newList.forEach { fri->
-           Log.d("CHKFRIE", fri.toString())
-       }
+        Log.d("CHKFRIE", expenseRecord.toString())
     }
 
 

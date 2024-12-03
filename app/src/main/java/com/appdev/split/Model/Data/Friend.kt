@@ -14,8 +14,7 @@ data class Friend(
     val name: String,
     val profileImageUrl: String? = null,
     @TypeConverters(Converters::class) // Use the converter
-    val expenseRecords: MutableList<ExpenseRecord> = mutableListOf(),
-    var totalAmountOwedNoGroup: Float = 0f
+    val expenseRecords: MutableList<ExpenseRecord> = mutableListOf()
 ) : Parcelable {
     constructor() : this("", "")
 }
