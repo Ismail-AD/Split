@@ -31,12 +31,6 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
     private val _operationState = MutableStateFlow<UiState<Unit>>(UiState.Success(Unit))
     val operationState: StateFlow<UiState<Unit>> = _operationState
 
-    private val _expenseToStore = MutableStateFlow<List<Friend>>(emptyList())
-    val expenseToStore: StateFlow<List<Friend>> get() = _expenseToStore
-
-    private val _expenseInput = MutableStateFlow(ExpenseUserInput())
-    val expenseInput: MutableStateFlow<ExpenseUserInput> get() = _expenseInput
-
     private val _expenseToPush = MutableStateFlow(ExpenseRecord())
     val expensePush: MutableStateFlow<ExpenseRecord> get() = _expenseToPush
 
@@ -65,6 +59,7 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
                     ) { success, message ->
                         if (success) {
                             _operationState.value = UiState.Success(Unit)
+
                         } else {
                             _operationState.value = UiState.Error(message)
                         }
@@ -76,29 +71,28 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
         }
     }
 
-    fun updateTitle(title: String) {
-        _expenseInput.value = _expenseInput.value.copy(title = title)
+
+    fun updateGeneralInfo(expenseRecord: ExpenseRecord) {
+        _expenseToPush.value = expenseRecord.copy(
+            title = expenseRecord.title,
+            description = expenseRecord.description,
+            amount = expenseRecord.amount,
+            currency = expenseRecord.currency,
+            expenseFor = expenseRecord.expenseFor
+        )
     }
 
-    fun updateDescription(description: String) {
-        _expenseInput.value = _expenseInput.value.copy(description = description)
-    }
-
-    fun updateAmount(amount: Float) {
-        _expenseInput.value = _expenseInput.value.copy(amount = amount)
-    }
-
-
-    fun updateFriendsList(expenseRecord: ExpenseRecord, selectedId: Int) {
+    fun updateFriendExpense(expenseRecord: ExpenseRecord, selectedId: Int) {
 
         _expenseToPush.value = expenseRecord.copy(
-            title = expenseInput.value.title,
-            description = expenseInput.value.description,
-            amount = expenseInput.value.amount
+            paidAmount = expenseRecord.paidAmount,
+            lentAmount = expenseRecord.lentAmount,
+            borrowedAmount = expenseRecord.borrowedAmount,
+            date = expenseRecord.date
         )
         _newSelectedId = selectedId
         Log.d("CHKFRIE", selectedId.toString())
-        Log.d("CHKFRIE", expenseRecord.toString())
+        Log.d("CHKFRIE", _expenseToPush.value.toString())
     }
 
 

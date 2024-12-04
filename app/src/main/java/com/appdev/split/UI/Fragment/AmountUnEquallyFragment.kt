@@ -245,7 +245,7 @@ class AmountUnEquallyFragment(
                 )
         }
 
-        mainViewModel.updateFriendsList(expenseRecord, newId)
+        mainViewModel.updateFriendExpense(expenseRecord, newId)
     }
 //    private fun saveExpenses(friendsList: List<Friend>) {
 //        friendsList.forEach { friend ->

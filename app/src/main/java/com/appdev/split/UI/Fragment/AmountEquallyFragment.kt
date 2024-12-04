@@ -215,7 +215,7 @@ class AmountEquallyFragment(
 
         //store selected id based on user selection in VM
 //        mainViewModel.updateContacts(friendsList)
-        mainViewModel.updateFriendsList(expenseRecord, newId)
+        mainViewModel.updateFriendExpense(expenseRecord, newId)
     }
 
     private fun getCurrentDate(): String {

@@ -9,4 +9,6 @@ data class FriendContact(
     val contact: String,
     val name: String,
     val profileImageUrl: String? = null
-) : Parcelable
+) : Parcelable{
+    constructor():this("","",null)
+}

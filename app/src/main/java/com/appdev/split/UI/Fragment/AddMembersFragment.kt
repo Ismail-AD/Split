@@ -90,6 +90,7 @@ class AddMembersFragment : Fragment() {
             selectedContactsAdapter.updateContacts(selectedContacts.toList())
             updateFabVisibility()
         }
+        mainViewModel.fetchAllContacts()
 
 
         viewLifecycleOwner.lifecycleScope.launch {

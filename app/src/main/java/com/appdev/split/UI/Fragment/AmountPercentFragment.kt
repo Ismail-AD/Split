@@ -217,7 +217,7 @@ class AmountPercentFragment(
             )
         }
 
-        mainViewModel.updateFriendsList(expenseRecord, newId)
+        mainViewModel.updateFriendExpense(expenseRecord, newId)
     }
 
 //    private fun saveExpenses(friendsList: List<Friend>) {

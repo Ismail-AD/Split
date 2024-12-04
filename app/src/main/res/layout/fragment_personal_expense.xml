@@ -151,26 +151,60 @@
             android:textColorHint="@color/green_2" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <com.skydoves.powerspinner.PowerSpinnerView
-        android:id="@+id/categorySpinner"
-        style="@style/hintSpinnerWordColor"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/_50sdp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
         android:layout_marginTop="@dimen/_20sdp"
-        android:gravity="start|center_vertical"
-        android:hint="Select a category"
-        android:padding="10dp"
-        android:textSize="@dimen/_14sdp"
-        app:spinner_arrow_gravity="end"
-        app:spinner_arrow_padding="8dp"
-        app:spinner_divider_color="@color/textsmall"
-        app:spinner_divider_show="true"
-        app:spinner_divider_size="0.4dp"
-        app:spinner_item_array="@array/categories"
-        app:spinner_item_height="46dp"
-        app:spinner_popup_animation="dropdown"
-        app:spinner_popup_elevation="14dp"
-        app:spinner_popup_height="330dp" />
+        android:layout_height="wrap_content">
+        <com.skydoves.powerspinner.PowerSpinnerView
+            android:id="@+id/categorySpinner"
+            style="@style/hintSpinnerWordColor"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="@dimen/_50sdp"
+            android:gravity="start|center_vertical"
+            android:hint="Select a category"
+            android:padding="10dp"
+            android:textSize="@dimen/_14sdp"
+            app:spinner_arrow_gravity="end"
+            app:spinner_arrow_padding="8dp"
+            app:spinner_divider_color="@color/textsmall"
+            app:spinner_divider_show="true"
+            android:layout_marginEnd="@dimen/_10sdp"
+            app:spinner_divider_size="0.4dp"
+            app:spinner_item_array="@array/categories"
+            app:spinner_item_height="46dp"
+            app:spinner_popup_animation="dropdown"
+            app:spinner_popup_elevation="14dp"
+            app:spinner_popup_height="330dp" />
+
+       <RelativeLayout
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content">
+           <ImageView
+               android:id="@+id/closeButton"
+               android:layout_width="40dp"
+               android:layout_height="40dp"
+               android:clickable="true"
+               android:focusable="true"
+               android:background="?attr/selectableItemBackground"
+               android:contentDescription="Remove"
+               android:layout_marginBottom="@dimen/_8sdp"
+               android:src="@drawable/calendar" />
+           <TextView
+               android:id="@+id/dateCheck"
+               style="@style/billWordColor"
+               android:layout_width="wrap_content"
+               android:layout_height="wrap_content"
+               android:layout_centerHorizontal="true"
+               android:layout_centerVertical="true"
+               android:text="24"
+               android:textSize="16sp"
+               android:textStyle="bold" />
+       </RelativeLayout>
+
+    </LinearLayout>
 
     <com.skydoves.powerspinner.PowerSpinnerView
         android:id="@+id/currencySpinner"

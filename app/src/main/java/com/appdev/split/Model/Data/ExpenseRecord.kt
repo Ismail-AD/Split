@@ -11,5 +11,7 @@ data class ExpenseRecord(
     val date: String = "",
     var title: String = "",
     var description: String = "",
-    var amount: Float = 0f
+    var amount: Float = 0f,
+    val expenseFor:String="",
+    val currency:String="",
 ) : Parcelable

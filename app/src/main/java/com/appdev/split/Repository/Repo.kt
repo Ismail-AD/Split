@@ -110,6 +110,7 @@ class Repo @Inject constructor(
                     data.getValue(FriendContact::class.java)?.let { friendsList.add(it) }
                 }
             }
+            Log.d("CHKJA",friendsList.toString())
             emit(friendsList)
         } else {
             val friendsRoom = contactDao.getAllContacts().first()
