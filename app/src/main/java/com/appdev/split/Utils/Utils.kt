@@ -23,4 +23,7 @@ object Utils {
     fun getCurrentDate(): String {
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     }
+    fun getCurrentDay(): String {
+        return SimpleDateFormat("dd", Locale.getDefault()).format(Date())
+    }
 }

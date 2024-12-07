@@ -224,8 +224,7 @@ class AmountUnEquallyFragment(
             val payment = selectedPayments.find { it.id != myEmail }
             expenseRecord = ExpenseRecord(
                 paidAmount = totalAmount,
-                lentAmount = payment?.amount ?: 0f,
-                date = getCurrentDate()
+                lentAmount = payment?.amount ?: 0f
             )
 
         } else {
@@ -240,8 +239,7 @@ class AmountUnEquallyFragment(
                 expenseRecord = ExpenseRecord(
                     paidAmount = totalAmount,
                     lentAmount = 0f,
-                    borrowedAmount = payment?.amount ?: 0f,
-                    date = getCurrentDate()
+                    borrowedAmount = payment?.amount ?: 0f
                 )
         }
 

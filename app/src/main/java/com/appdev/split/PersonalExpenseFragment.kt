@@ -1,5 +1,6 @@
 package com.appdev.split
 
+import android.app.DatePickerDialog
 import android.app.Dialog
 import android.os.Bundle
 import android.text.TextUtils
@@ -30,6 +31,7 @@ import com.appdev.split.databinding.FragmentPersonalExpenseBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 
 class PersonalExpenseFragment : Fragment() {
@@ -42,7 +44,7 @@ class PersonalExpenseFragment : Fragment() {
     private var friendsList = mutableListOf<FriendContact>()
     private var selectedFriend: FriendContact? = null
     var selectedId = R.id.youPaidSplit
-
+    var selectedDate = Utils.getCurrentDate()
     lateinit var dialog: Dialog
 
     override fun onCreateView(
@@ -68,6 +70,7 @@ class PersonalExpenseFragment : Fragment() {
             binding.splitTypeText.text = getSelectedRadioButtonText(selectedId)
         }
 
+        binding.dateCheck.text = Utils.getCurrentDay()
 
         binding.currencySpinner.selectItemByIndex(0)
         binding.categorySpinner.selectItemByIndex(0)
@@ -149,6 +152,23 @@ class PersonalExpenseFragment : Fragment() {
             }
         }
 
+        binding.calender.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            val year = calendar.get(Calendar.YEAR)
+            val month = calendar.get(Calendar.MONTH)
+            val day = calendar.get(Calendar.DAY_OF_MONTH)
+            val datePickerDialog = DatePickerDialog(
+                requireContext(),
+                { _, selectedYear, selectedMonth, selectedDay ->
+                    // Update the TextView with the selected date
+                    selectedDate = "$selectedYear-${selectedMonth + 1}-$selectedDay"
+                    binding.dateCheck.text = selectedDay.toString()
+                },
+                year, month, day
+            )
+            datePickerDialog.show()
+        }
+
 
         binding.saveData.setOnClickListener {
             Log.d("CHKSPIN", binding.currencySpinner.text.toString())
@@ -157,7 +177,7 @@ class PersonalExpenseFragment : Fragment() {
             val description = binding.description.editText?.text.toString()
             val amount = binding.amount.editText?.text.toString()
             val amountHalf = (amount.toFloat()) / 2
-            if (mainViewModel.expensePush.value.date == "") {
+            if (mainViewModel.expensePush.value.date == "" || mainViewModel.expensePush.value.paidAmount < 1f) {
 
                 selectedFriend?.let { friend ->
                     when (selectedId) {
@@ -167,7 +187,7 @@ class PersonalExpenseFragment : Fragment() {
                                     paidAmount = amount.toFloat(),
                                     lentAmount = amountHalf,
                                     borrowedAmount = 0f,
-                                    date = Utils.getCurrentDate()
+                                    date = selectedDate
                                 ), selectedId
                             )
                         }
@@ -178,7 +198,7 @@ class PersonalExpenseFragment : Fragment() {
                                     paidAmount = amount.toFloat(),
                                     lentAmount = amount.toFloat(),
                                     borrowedAmount = 0f,
-                                    date = Utils.getCurrentDate()
+                                    date = selectedDate
                                 ), selectedId
                             )
                         }
@@ -189,7 +209,7 @@ class PersonalExpenseFragment : Fragment() {
                                     paidAmount = amount.toFloat(),
                                     lentAmount = 0f,
                                     borrowedAmount = amountHalf,
-                                    date = Utils.getCurrentDate()
+                                    date = selectedDate
                                 ), selectedId
                             )
                         }
@@ -200,7 +220,7 @@ class PersonalExpenseFragment : Fragment() {
                                     paidAmount = amount.toFloat(),
                                     lentAmount = 0f,
                                     borrowedAmount = amount.toFloat(),
-                                    date = Utils.getCurrentDate()
+                                    date = selectedDate
                                 ), selectedId
                             )
                         }
@@ -215,6 +235,7 @@ class PersonalExpenseFragment : Fragment() {
             selectedFriend?.let { friend ->
                 mainViewModel.saveFriendExpense(
                     mainViewModel.expensePush.value.copy(
+                        date = selectedDate,
                         title = title,
                         description = description,
                         amount = amount.toFloat(),

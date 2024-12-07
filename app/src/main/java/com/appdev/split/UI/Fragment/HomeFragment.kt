@@ -1,5 +1,6 @@
 package com.appdev.split.UI.Fragment
 
+import android.app.Dialog
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -20,7 +21,9 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.BillAdapter
 import com.appdev.split.Model.Data.Bill
+import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.TransactionItem
+import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.databinding.FragmentHomeBinding
@@ -35,7 +38,9 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var adapter: BillAdapter
     val mainViewModel by activityViewModels<MainViewModel>()
+    var expenses: Map<String, List<ExpenseRecord>> = mapOf()
 
+    lateinit var dialog: Dialog
     private var isExpanded = false
 
     private val fromBottomFabAnim: Animation by lazy {
@@ -68,8 +73,33 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        dialog = Dialog(requireContext())
         binding.mainFab.setOnClickListener {
             if (isExpanded) shrinkFab() else expandFab()
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                mainViewModel.allExpensesState.collect { state ->
+                    when (state) {
+                        is UiState.Loading -> showLoadingIndicator()
+                        is UiState.Success -> {
+                            hideLoadingIndicator()
+                            expenses = state.data
+                            expenses.entries.groupBy { it.key }
+                                .mapValues { entry ->
+                                    entry.value.lastOrNull()
+                                }
+                                .values
+                                .filterNotNull() // Remove nulls, in case there are contacts with no expenses
+                                .toList()
+                            updateRecyclerView(expenses)
+                        }
+
+                        is UiState.Error -> showError(state.message)
+                    }
+                }
+            }
         }
 
         binding.contactFab.setOnClickListener { onContactClicked() }
@@ -89,21 +119,39 @@ class HomeFragment : Fragment() {
                 }
             }
         }
-        val billList = emptyList<Bill>()
 
-        if (billList.isEmpty()) {
+    }
+
+    private fun updateRecyclerView(expenses: Map<String, List<ExpenseRecord>>) {
+
+
+        if (expenses.isEmpty()) {
             binding.noBill.visibility = View.VISIBLE
             binding.recyclerViewRecentBills.visibility = View.GONE
         } else {
             binding.noBill.visibility = View.GONE
             binding.recyclerViewRecentBills.visibility = View.VISIBLE
-            adapter = BillAdapter(billList, ::goToDetails)
+            // Update adapter with the new data
+            adapter = BillAdapter(expenses, ::goToDetails)
             binding.recyclerViewRecentBills.adapter = adapter
             binding.recyclerViewRecentBills.layoutManager = LinearLayoutManager(requireContext())
         }
+    }
+    private fun showError(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+    }
 
-        // Set up the RecyclerView
+    private fun showLoadingIndicator() {
+        dialog.setContentView(R.layout.progress_dialog)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.setCancelable(false)
+        dialog.show()
+    }
 
+    private fun hideLoadingIndicator() {
+        if (dialog.isShowing) {
+            dialog.dismiss()
+        }
     }
 
     private fun onContactClicked() {
@@ -137,8 +185,8 @@ class HomeFragment : Fragment() {
         _binding = null
     }
 
-    fun goToDetails(bill: Bill) {
-        val action = HomeFragmentDirections.actionHomePageToBillDetails(bill)
+    fun goToDetails(expenseList: List<ExpenseRecord>) {
+        val action = HomeFragmentDirections.actionHomePageToFriendsAllExpenses(expenseList.toTypedArray())
         findNavController().navigate(action)
     }
 }

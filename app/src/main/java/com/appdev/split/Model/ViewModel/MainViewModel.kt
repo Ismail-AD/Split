@@ -31,6 +31,13 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
     private val _operationState = MutableStateFlow<UiState<Unit>>(UiState.Success(Unit))
     val operationState: StateFlow<UiState<Unit>> = _operationState
 
+    private val _individualExpensesState = MutableStateFlow<UiState<List<ExpenseRecord>>>(UiState.Loading)
+    val individualExpensesState: StateFlow<UiState<List<ExpenseRecord>>> get() = _individualExpensesState
+
+    private val _allExpensesState = MutableStateFlow<UiState<Map<String, List<ExpenseRecord>>>>(UiState.Loading)
+    val allExpensesState: StateFlow<UiState<Map<String, List<ExpenseRecord>>>> get() = _allExpensesState
+
+
     private val _expenseToPush = MutableStateFlow(ExpenseRecord())
     val expensePush: MutableStateFlow<ExpenseRecord> get() = _expenseToPush
 
@@ -41,6 +48,7 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
 
     init {
         fetchAllContacts()
+        getAllFriendExpenses()
     }
 
     //---------------------Friend Expense----------------------
@@ -70,6 +78,53 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
             }
         }
     }
+
+    // For getting expenses of an individual friend
+    fun getIndividualFriendExpenses(friendContact: String) {
+        _individualExpensesState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.email?.let { mail ->
+                    repo.getIndividualFriendExpenses(
+                        myEmail = mail,
+                        friendContact = friendContact
+                    ) { success, expenses, message ->
+                        if (success && expenses != null) {
+                            _individualExpensesState.value = UiState.Success(expenses)
+                        } else {
+                            _individualExpensesState.value = UiState.Error(message)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _individualExpensesState.value = UiState.Error(e.message ?: "Failed to retrieve expenses")
+            }
+        }
+    }
+
+    // For getting all friends' expenses
+    fun getAllFriendExpenses() {
+        _allExpensesState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.email?.let { mail ->
+                    repo.getAllFriendExpenses(
+                        myEmail = mail
+                    ) { success, allExpenses, message ->
+                        if (success && allExpenses != null) {
+                            _allExpensesState.value = UiState.Success(allExpenses)
+                        } else {
+                            _allExpensesState.value = UiState.Error(message)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _allExpensesState.value = UiState.Error(e.message ?: "Failed to retrieve all expenses")
+            }
+        }
+    }
+
+
 
 
     fun updateGeneralInfo(expenseRecord: ExpenseRecord) {

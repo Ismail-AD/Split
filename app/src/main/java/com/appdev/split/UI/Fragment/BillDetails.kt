@@ -29,10 +29,10 @@ class BillDetails : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val bill: Bill = args.billData
+        val bill = args.billData
 
         binding.rvTransactionItems.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvTransactionItems.adapter = TransactionItemAdapter(bill.listOfTransaction)
+        binding.rvTransactionItems.adapter = TransactionItemAdapter(billList)
 
         binding.tvName.text = bill.name
         binding.tvDate.text = bill.date

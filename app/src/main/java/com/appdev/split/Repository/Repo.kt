@@ -284,5 +284,72 @@ class Repo @Inject constructor(
         }
     }
 
+    suspend fun getIndividualFriendExpenses(
+        myEmail: String,
+        friendContact: String,
+        onResult: (success: Boolean, expenses: List<ExpenseRecord>?, message: String) -> Unit
+    ) {
+        try {
+            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
+            val sanitizedFriendContact = Utils.sanitizeEmailForFirebase(friendContact)
+
+            // Reference to Firebase node for a specific friend
+            val expenseRef = firebaseDatabase.reference
+                .child("expenses")
+                .child(sanitizedMyEmail)
+                .child(sanitizedFriendContact)
+
+            // Retrieve data
+            val snapshot = expenseRef.get().await()
+
+            if (snapshot.exists()) {
+                val expenses = snapshot.children.mapNotNull { it.getValue(ExpenseRecord::class.java) }
+                onResult(true, expenses, "Expenses retrieved successfully!")
+            } else {
+                onResult(false, null, "No expenses found for the friend.")
+            }
+        } catch (e: Exception) {
+            Log.e("Repo", "Failed to retrieve expenses: ${e.message}")
+            onResult(false, null, "Failed to retrieve expenses: ${e.message}")
+        }
+    }
+
+
+
+    suspend fun getAllFriendExpenses(
+        myEmail: String,
+        onResult: (success: Boolean, expenses: Map<String, List<ExpenseRecord>>?, message: String) -> Unit
+    ) {
+        try {
+            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
+
+            // Reference to Firebase node for all friends
+            val expenseRef = firebaseDatabase.reference
+                .child("expenses")
+                .child(sanitizedMyEmail)
+
+            // Retrieve data
+            val snapshot = expenseRef.get().await()
+
+            if (snapshot.exists()) {
+                val allExpenses = mutableMapOf<String, List<ExpenseRecord>>()
+
+                for (friendSnapshot in snapshot.children) {
+                    val friendContact = friendSnapshot.key ?: continue
+                    val friendExpenses = friendSnapshot.children.mapNotNull { it.getValue(ExpenseRecord::class.java) }
+                    allExpenses[friendContact] = friendExpenses
+                }
+
+                onResult(true, allExpenses, "All expenses retrieved successfully!")
+            } else {
+                onResult(false, null, "No expenses found for any friend.")
+            }
+        } catch (e: Exception) {
+            Log.e("Repo", "Failed to retrieve all expenses: ${e.message}")
+            onResult(false, null, "Failed to retrieve all expenses: ${e.message}")
+        }
+    }
+
+
 
 }

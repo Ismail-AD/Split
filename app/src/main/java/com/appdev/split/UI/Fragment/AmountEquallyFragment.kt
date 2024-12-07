@@ -192,8 +192,7 @@ class AmountEquallyFragment(
             }
             expenseRecord = ExpenseRecord(
                 paidAmount = totalAmount,
-                lentAmount = amountPerPerson,
-                date = getCurrentDate()
+                lentAmount = amountPerPerson
             )
         } else {
             if (selectedId == R.id.friendOwnedFull && amountPerPerson < totalAmount) {
@@ -204,8 +203,7 @@ class AmountEquallyFragment(
             expenseRecord = ExpenseRecord(
                 paidAmount = totalAmount,
                 lentAmount = 0f,
-                borrowedAmount = amountPerPerson,
-                date = getCurrentDate()
+                borrowedAmount = amountPerPerson
             )
         }
 

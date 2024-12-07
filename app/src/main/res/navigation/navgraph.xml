@@ -10,9 +10,7 @@
         android:name="com.appdev.split.UI.Fragment.HomeFragment"
         android:label="fragment_home"
         tools:layout="@layout/fragment_home" >
-        <action
-            android:id="@+id/action_home_page_to_billDetails"
-            app:destination="@id/billDetails" />
+
         <action
             android:id="@+id/action_home_page_to_addMembersFragment"
             app:destination="@id/addMembersFragment" />
@@ -22,6 +20,9 @@
         <action
             android:id="@+id/action_home_page_to_personalExpenseFragment"
             app:destination="@id/personalExpenseFragment" />
+        <action
+            android:id="@+id/action_home_page_to_friendsAllExpenses"
+            app:destination="@id/friendsAllExpenses" />
     </fragment>
     <fragment
         android:id="@+id/history"
@@ -40,7 +41,7 @@
         tools:layout="@layout/fragment_bill_details" >
         <argument
             android:name="BillData"
-            app:argType="com.appdev.split.Model.Data.Bill" />
+            app:argType="com.appdev.split.Model.Data.ExpenseRecord" />
     </fragment>
     <fragment
         android:id="@+id/group"
@@ -132,5 +133,17 @@
         <action
             android:id="@+id/action_personalExpenseFragment_to_splitAmountFragment"
             app:destination="@id/splitAmountFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/friendsAllExpenses"
+        android:name="com.appdev.split.FriendsAllExpenses"
+        android:label="fragment_friends_all_expenses"
+        tools:layout="@layout/fragment_friends_all_expenses" >
+        <action
+            android:id="@+id/action_friendsAllExpenses_to_billDetails"
+            app:destination="@id/billDetails" />
+        <argument
+            android:name="BilList"
+            app:argType="com.appdev.split.Model.Data.ExpenseRecord[]" />
     </fragment>
 </navigation>

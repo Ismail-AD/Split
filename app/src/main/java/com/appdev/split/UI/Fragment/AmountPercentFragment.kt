@@ -195,8 +195,7 @@ class AmountPercentFragment(
             val calculatedAmount = payment?.let { (it.percentage / 100) * totalAmount } ?: 0f
             expenseRecord = ExpenseRecord(
                 paidAmount = totalAmount,
-                lentAmount = calculatedAmount,
-                date = getCurrentDate()
+                lentAmount = calculatedAmount
             )
 
         } else {
@@ -212,8 +211,7 @@ class AmountPercentFragment(
             expenseRecord = ExpenseRecord(
                 paidAmount = totalAmount,
                 lentAmount = 0f,
-                borrowedAmount = calculatedAmount,
-                date = getCurrentDate()
+                borrowedAmount = calculatedAmount
             )
         }
 

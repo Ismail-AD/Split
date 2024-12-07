@@ -4,16 +4,14 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.appdev.split.Model.Data.Bill
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.databinding.ItemRecentBillBinding
 import kotlin.random.Random
-class BillAdapter(
-    private val groupedExpenses: Map<String, List<ExpenseRecord>>, // Updated to receive grouped data by contact
-    val navigate: (List<ExpenseRecord>) -> Unit // Navigate with a list of ExpenseRecord
-) : RecyclerView.Adapter<BillAdapter.BillViewHolder>() {
 
-    private val contactIds: List<String> = groupedExpenses.keys.toList()
+class AllFriendExpenseAdapter(
+    private val expenses: List<ExpenseRecord>, // Change to ExpenseRecord
+    val navigate: (ExpenseRecord) -> Unit
+) : RecyclerView.Adapter<AllFriendExpenseAdapter.BillViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BillViewHolder {
         val binding = ItemRecentBillBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -21,25 +19,19 @@ class BillAdapter(
     }
 
     override fun onBindViewHolder(holder: BillViewHolder, position: Int) {
-        val contactId = contactIds[position]
-        val expenseRecords = groupedExpenses[contactId] ?: emptyList()
-        holder.bind(contactId, expenseRecords)
+        val expense = expenses[position]
+        holder.bind(expense)
     }
 
-    override fun getItemCount(): Int = contactIds.size
+    override fun getItemCount(): Int = expenses.size
 
     inner class BillViewHolder(private val binding: ItemRecentBillBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(contactId: String, expenses: List<ExpenseRecord>) {
-            // Here we use the first expense to display the contact info
-            val expense = expenses.firstOrNull()
-
-            if (expense != null) {
-                binding.billName.text = expense.title // Assuming ExpenseRecord has a 'title' field
-                binding.billDate.text = expense.date // Assuming ExpenseRecord has a 'date' field
-                binding.billAmount.text = expense.amount.toString() // Assuming ExpenseRecord has 'amount'
-            }
+        fun bind(expense: ExpenseRecord) { // Changed from Bill to ExpenseRecord
+            binding.billName.text = expense.title // Assuming ExpenseRecord has a 'name' field
+            binding.billDate.text = expense.date // Assuming ExpenseRecord has a 'date' field
+            binding.billAmount.text = expense.amount.toString() // Assuming ExpenseRecord has 'amount'
 
             val lightColor = getLightRandomColor()
             binding.cardView.setCardBackgroundColor(lightColor)
@@ -47,10 +39,8 @@ class BillAdapter(
             // Generate a slightly darker version of the light color for the image tint
             val darkColor = getDarkerColor(lightColor)
             binding.imageView.setColorFilter(darkColor)
-
-            // Set the click listener to navigate with the list of ExpenseRecord for this contactId
             binding.parent.setOnClickListener {
-                navigate(expenses) // Send the list of expenses for this contact
+                navigate(expense)
             }
         }
 
