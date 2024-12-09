@@ -185,8 +185,8 @@ class HomeFragment : Fragment() {
         _binding = null
     }
 
-    fun goToDetails(expenseList: List<ExpenseRecord>) {
-        val action = HomeFragmentDirections.actionHomePageToFriendsAllExpenses(expenseList.toTypedArray())
+    fun goToDetails(expenseList: List<ExpenseRecord> ,email:String) {
+        val action = HomeFragmentDirections.actionHomePageToFriendsAllExpenses(expenseList.toTypedArray(),email)
         findNavController().navigate(action)
     }
 }

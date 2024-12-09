@@ -31,17 +31,23 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
     private val _operationState = MutableStateFlow<UiState<Unit>>(UiState.Success(Unit))
     val operationState: StateFlow<UiState<Unit>> = _operationState
 
-    private val _individualExpensesState = MutableStateFlow<UiState<List<ExpenseRecord>>>(UiState.Loading)
+    private val _individualExpensesState =
+        MutableStateFlow<UiState<List<ExpenseRecord>>>(UiState.Loading)
     val individualExpensesState: StateFlow<UiState<List<ExpenseRecord>>> get() = _individualExpensesState
 
-    private val _allExpensesState = MutableStateFlow<UiState<Map<String, List<ExpenseRecord>>>>(UiState.Loading)
+    private val _allExpensesState =
+        MutableStateFlow<UiState<Map<String, List<ExpenseRecord>>>>(UiState.Loading)
     val allExpensesState: StateFlow<UiState<Map<String, List<ExpenseRecord>>>> get() = _allExpensesState
 
+
+    private val _individualFriendState = MutableStateFlow<UiState<Friend>>(UiState.Loading)
+    val FriendState: StateFlow<UiState<Friend>> get() = _individualFriendState
 
     private val _expenseToPush = MutableStateFlow(ExpenseRecord())
     val expensePush: MutableStateFlow<ExpenseRecord> get() = _expenseToPush
 
     var _newSelectedId = -1
+    private var cachedFriend: Friend? = null // Cache variable for storing friend data
 
     private val _loadingState = MutableStateFlow(false)
     val loadingState: StateFlow<Boolean> = _loadingState
@@ -97,7 +103,8 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
                     }
                 }
             } catch (e: Exception) {
-                _individualExpensesState.value = UiState.Error(e.message ?: "Failed to retrieve expenses")
+                _individualExpensesState.value =
+                    UiState.Error(e.message ?: "Failed to retrieve expenses")
             }
         }
     }
@@ -119,12 +126,36 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
                     }
                 }
             } catch (e: Exception) {
-                _allExpensesState.value = UiState.Error(e.message ?: "Failed to retrieve all expenses")
+                _allExpensesState.value =
+                    UiState.Error(e.message ?: "Failed to retrieve all expenses")
             }
         }
     }
 
-
+    fun getFriendNameById(contactId: String) {
+        if (cachedFriend != null && cachedFriend?.contact == contactId) {
+            // If the cached friend's contact ID matches, use the cached data
+            _individualFriendState.value = UiState.Success(cachedFriend!!)
+            return
+        }
+        _individualFriendState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.email?.let { mail ->
+                    val friend = repo.getFriendByContactId(mail, contactId)
+                    if (friend != null) {
+                        cachedFriend = friend
+                        _individualFriendState.value = UiState.Success(friend)
+                    } else {
+                        _individualFriendState.value = UiState.Error("Something went wrong")
+                    }
+                }
+            } catch (e: Exception) {
+                _individualFriendState.value =
+                    UiState.Error(e.message ?: "Failed to retrieve friend info")
+            }
+        }
+    }
 
 
     fun updateGeneralInfo(expenseRecord: ExpenseRecord) {

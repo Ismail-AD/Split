@@ -26,4 +26,15 @@ object Utils {
     fun getCurrentDay(): String {
         return SimpleDateFormat("dd", Locale.getDefault()).format(Date())
     }
+    fun formatDate(inputDate: String): String {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("dd MMM, yyyy", Locale.getDefault())
+        val date = inputFormat.parse(inputDate) // Parse input string to Date
+        return outputFormat.format(date!!) // Format Date to desired string
+    }
+
+    fun extractCurrencyCode(input: String): String {
+        // Find the substring within parentheses
+        return input.substringAfter("(").substringBefore(")")
+    }
 }

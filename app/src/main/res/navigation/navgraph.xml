@@ -42,6 +42,9 @@
         <argument
             android:name="BillData"
             app:argType="com.appdev.split.Model.Data.ExpenseRecord" />
+        <argument
+            android:name="friendName"
+            app:argType="string" />
     </fragment>
     <fragment
         android:id="@+id/group"
@@ -145,5 +148,8 @@
         <argument
             android:name="BilList"
             app:argType="com.appdev.split.Model.Data.ExpenseRecord[]" />
+        <argument
+            android:name="NameOfFriend"
+            app:argType="string" />
     </fragment>
 </navigation>

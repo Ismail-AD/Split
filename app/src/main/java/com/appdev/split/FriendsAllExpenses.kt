@@ -45,6 +45,7 @@ class FriendsAllExpenses : Fragment() {
         (activity as? EntryActivity)?.hideBottomBar()
         val billList = args.bilList.toList()
         updateRecyclerView(billList)
+
     }
 
     private fun updateRecyclerView(expenses: List<ExpenseRecord>) {
@@ -62,7 +63,7 @@ class FriendsAllExpenses : Fragment() {
     }
 
     fun goToDetails(expenseList: ExpenseRecord) {
-        val action = FriendsAllExpensesDirections.actionFriendsAllExpensesToBillDetails(expenseList)
+        val action = FriendsAllExpensesDirections.actionFriendsAllExpensesToBillDetails(expenseList,args.nameOfFriend)
         findNavController().navigate(action)
     }
 }

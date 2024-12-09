@@ -240,6 +240,31 @@ class Repo @Inject constructor(
         }
     }
 
+    suspend fun getFriendByContactId(email: String, contactId: String): Friend? {
+        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+
+        return if (Utils.isInternetAvailable()) {
+            // Fetch from Firebase if internet is available
+            val friendRef = firebaseDatabase.reference
+                .child("users")
+                .child(sanitizedMail)
+                .child("friends")
+                .child(contactId)
+
+            try {
+                val snapshot = friendRef.get().await()
+                snapshot.getValue(Friend::class.java) // Deserialize to Friend object
+            } catch (e: Exception) {
+                Log.e("Repo", "Failed to fetch friend: ${e.message}")
+                null
+            }
+        } else {
+            // Fallback to local Room database if offline
+            contactDao.getContactById(contactId)
+        }
+    }
+
+
     //    suspend fun insertContacts(contacts: List<Friend>) = contactDao.insertContacts(contacts)
 //    suspend fun getContactById(id: Int): Friend? = contactDao.getContactById(id)
 //    suspend fun getContactByName(name: String): Friend? = contactDao.getContactByName(name)

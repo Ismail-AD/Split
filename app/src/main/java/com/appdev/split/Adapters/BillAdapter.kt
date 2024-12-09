@@ -10,7 +10,7 @@ import com.appdev.split.databinding.ItemRecentBillBinding
 import kotlin.random.Random
 class BillAdapter(
     private val groupedExpenses: Map<String, List<ExpenseRecord>>, // Updated to receive grouped data by contact
-    val navigate: (List<ExpenseRecord>) -> Unit // Navigate with a list of ExpenseRecord
+    val navigate: (List<ExpenseRecord>,String) -> Unit // Navigate with a list of ExpenseRecord
 ) : RecyclerView.Adapter<BillAdapter.BillViewHolder>() {
 
     private val contactIds: List<String> = groupedExpenses.keys.toList()
@@ -50,7 +50,7 @@ class BillAdapter(
 
             // Set the click listener to navigate with the list of ExpenseRecord for this contactId
             binding.parent.setOnClickListener {
-                navigate(expenses) // Send the list of expenses for this contact
+                navigate(expenses,contactId) // Send the list of expenses for this contact
             }
         }
 
