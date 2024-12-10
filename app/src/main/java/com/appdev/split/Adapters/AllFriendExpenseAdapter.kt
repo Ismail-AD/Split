@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.appdev.split.Model.Data.ExpenseRecord
+import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.ItemRecentBillBinding
 import kotlin.random.Random
 
@@ -31,7 +32,28 @@ class AllFriendExpenseAdapter(
         fun bind(expense: ExpenseRecord) { // Changed from Bill to ExpenseRecord
             binding.billName.text = expense.title // Assuming ExpenseRecord has a 'name' field
             binding.billDate.text = expense.date // Assuming ExpenseRecord has a 'date' field
-            binding.billAmount.text = expense.amount.toString() // Assuming ExpenseRecord has 'amount'
+            val amount: Float
+            val label: String
+            binding.currency.text = Utils.extractCurrencyCode(expense.currency)
+            if (expense.borrowedAmount > 0f) {
+                amount = expense.paidAmount - expense.borrowedAmount
+                label = "You borrowed "
+                binding.amount.text = if (expense.borrowedAmount == expense.paidAmount) {
+                    expense.paidAmount.toString()
+                } else {
+                    amount.toString()
+                }
+            } else {
+                amount = expense.paidAmount - expense.lentAmount
+                label = "You lent "
+                binding.amount.text = if (expense.lentAmount == expense.paidAmount) {
+                    expense.paidAmount.toString()
+                } else {
+                    amount.toString()
+                }
+            }
+
+            binding.youBorrowOrLent.text = label
 
             val lightColor = getLightRandomColor()
             binding.cardView.setCardBackgroundColor(lightColor)

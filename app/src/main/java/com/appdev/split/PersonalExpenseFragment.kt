@@ -18,6 +18,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.MyFriendSelectionAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
@@ -47,6 +48,7 @@ class PersonalExpenseFragment : Fragment() {
     var selectedDate = Utils.getCurrentDate()
     lateinit var dialog: Dialog
 
+    val args: PersonalExpenseFragmentArgs by navArgs()
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -61,80 +63,32 @@ class PersonalExpenseFragment : Fragment() {
         (activity as? EntryActivity)?.hideBottomBar()
         dialog = Dialog(requireContext())
 
-        if (mainViewModel._newSelectedId != -1) {
-            selectedId = mainViewModel._newSelectedId
-            binding.splitTypeText.text = getSelectedRadioButtonText(selectedId)
-            Log.d("CHKFRIE", "$selectedId at main")
-            mainViewModel._newSelectedId = -1
+        if (args.expenseRecord != null) {
+            setupEditExpenseMode(args.expenseRecord!!)
+            setCalendarFromDate(args.expenseRecord!!.date)
+            selectedFriend =
+                FriendContact(name = args.friendName!!, contact = args.friendsContact!!)
         } else {
-            binding.splitTypeText.text = getSelectedRadioButtonText(selectedId)
+            setupNewExpenseMode()
+            setCalendarFromDate(null)
         }
 
-        binding.dateCheck.text = Utils.getCurrentDay()
+        handleSplitTypeChanges()
 
-        binding.currencySpinner.selectItemByIndex(0)
-        binding.categorySpinner.selectItemByIndex(0)
-        mainViewModel.fetchAllContacts()
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                combine(
-                    mainViewModel.contactsState,
-                    mainViewModel.expensePush
-                ) { contactsState, expenseInput ->
-                    // Handle both states together
-                    when (contactsState) {
-                        is UiState.Loading -> showLoadingIndicator()
-                        is UiState.Success -> {
-                            hideLoadingIndicator()
-                            friendsList = contactsState.data.toMutableList()
-                            Log.d("CHKMYFRI", "$friendsList")
-
-                            // Update friends list UI
-                            if (friendsList.isNotEmpty()) {
-                                binding.selectedFrisRecyclerView.visibility = View.VISIBLE
-                                binding.noFriends.visibility = View.GONE
-                                adapter = MyFriendSelectionAdapter(
-                                    friendsList,
-                                    selectedFriend
-                                ) { friend ->
-                                    selectedFriend = friend
-                                }
-                                binding.selectedFrisRecyclerView.adapter = adapter
-                                binding.selectedFrisRecyclerView.layoutManager =
-                                    LinearLayoutManager(
-                                        requireContext(),
-                                        LinearLayoutManager.HORIZONTAL,
-                                        false
-                                    )
-                                adapter.notifyDataSetChanged()
-                            } else {
-                                binding.selectedFrisRecyclerView.visibility = View.GONE
-                                binding.noFriends.visibility = View.VISIBLE
-                            }
-                        }
-
-                        is UiState.Error -> showError(contactsState.message)
-                        else -> {}
-                    }
-
-                    // Update input fields
-                    Log.d("CHKITMVM", expenseInput.toString())
-                    binding.apply {
-                        if (title.editText?.text.isNullOrEmpty()) {
-                            title.editText?.setText(expenseInput.title)
-                        }
-                        if (description.editText?.text.isNullOrEmpty()) {
-                            description.editText?.setText(expenseInput.description)
-                        }
-                        if (amount.editText?.text.isNullOrEmpty() && expenseInput.amount != 0f) {
-                            amount.editText?.setText(expenseInput.amount.toString())
-                        }
-                    }
-                }.collect {
-
-                }
-            }
+        if (args.expenseRecord == null) {
+            mainViewModel.fetchAllContacts()
+            observeContacts()
         }
+
+        observeExpenseInput()
+        setupNavigationListeners()
+        setupSaveData()
+
+
+    }
+
+
+    private fun setupNavigationListeners() {
         binding.addFriends.setOnClickListener {
             val action =
                 AddGrpExpenseFragmentDirections.actionAddGrpExpenseFragmentToAddMembersFragment(
@@ -152,111 +106,254 @@ class PersonalExpenseFragment : Fragment() {
             }
         }
 
-        binding.calender.setOnClickListener {
-            val calendar = Calendar.getInstance()
-            val year = calendar.get(Calendar.YEAR)
-            val month = calendar.get(Calendar.MONTH)
-            val day = calendar.get(Calendar.DAY_OF_MONTH)
-            val datePickerDialog = DatePickerDialog(
-                requireContext(),
-                { _, selectedYear, selectedMonth, selectedDay ->
-                    // Update the TextView with the selected date
-                    selectedDate = "$selectedYear-${selectedMonth + 1}-$selectedDay"
-                    binding.dateCheck.text = selectedDay.toString()
-                },
-                year, month, day
-            )
-            datePickerDialog.show()
+    }
+
+    fun setCalendarFromDate(dateString: String?) {
+        val calendar = Calendar.getInstance()
+        var year: Int
+        var month: Int
+        var day: Int
+        if (!dateString.isNullOrEmpty()) {
+            val parts = dateString.split("-")
+            if (parts.size == 3) {
+                year = parts[0].toInt()
+                month = parts[1].toInt() - 1 // Calendar months are 0-based
+                day = parts[2].toInt()
+
+                calendar.set(year, month, day)
+            }
         }
 
+        year = calendar.get(Calendar.YEAR)
+        month = calendar.get(Calendar.MONTH)
+        day = calendar.get(Calendar.DAY_OF_MONTH)
 
+        // Open DatePicker with the specified date
+        val datePickerDialog = DatePickerDialog(
+            requireContext(),
+            { _, selectedYear, selectedMonth, selectedDay ->
+                selectedDate = "$selectedYear-${selectedMonth + 1}-$selectedDay"
+                binding.dateCheck.text = selectedDay.toString()
+            },
+            year, month, day
+        )
+        binding.calender.setOnClickListener {
+            datePickerDialog.show()
+        }
+    }
+
+    private fun setupSaveData() {
         binding.saveData.setOnClickListener {
-            Log.d("CHKSPIN", binding.currencySpinner.text.toString())
-            Log.d("CHKSPIN", binding.categorySpinner.text.toString())
-            val title = binding.title.editText?.text.toString()
-            val description = binding.description.editText?.text.toString()
-            val amount = binding.amount.editText?.text.toString()
-            val amountHalf = (amount.toFloat()) / 2
-            if (mainViewModel.expensePush.value.date == "" || mainViewModel.expensePush.value.paidAmount < 1f) {
+            if (validateAndSave()) {
+                observeOperationState()
+                val title = binding.title.editText?.text.toString()
+                val description = binding.description.editText?.text.toString()
+                val amount = binding.amount.editText?.text.toString()
+                val amountHalf = amount.toFloat() / 2
 
-                selectedFriend?.let { friend ->
-                    when (selectedId) {
-                        R.id.youPaidSplit -> {
-                            mainViewModel.updateFriendExpense(
-                                ExpenseRecord(
-                                    paidAmount = amount.toFloat(),
-                                    lentAmount = amountHalf,
-                                    borrowedAmount = 0f,
-                                    date = selectedDate
-                                ), selectedId
-                            )
-                        }
-
-                        R.id.youOwnedFull -> {
-                            mainViewModel.updateFriendExpense(
-                                ExpenseRecord(
-                                    paidAmount = amount.toFloat(),
-                                    lentAmount = amount.toFloat(),
-                                    borrowedAmount = 0f,
-                                    date = selectedDate
-                                ), selectedId
-                            )
-                        }
-
-                        R.id.friendPaidSplit -> {
-                            mainViewModel.updateFriendExpense(
-                                ExpenseRecord(
-                                    paidAmount = amount.toFloat(),
-                                    lentAmount = 0f,
-                                    borrowedAmount = amountHalf,
-                                    date = selectedDate
-                                ), selectedId
-                            )
-                        }
-
-                        R.id.friendOwnedFull -> {
-                            mainViewModel.updateFriendExpense(
-                                ExpenseRecord(
-                                    paidAmount = amount.toFloat(),
-                                    lentAmount = 0f,
-                                    borrowedAmount = amount.toFloat(),
-                                    date = selectedDate
-                                ), selectedId
-                            )
-                        }
-
-                        else -> {
-
+                if (mainViewModel.expensePush.value.date.isEmpty() || mainViewModel.expensePush.value.paidAmount < 1f) {
+                    if (args.expenseRecord != null) {
+                        handleExpenseSplit(amount.toFloat(), amountHalf)
+                    } else {
+                        selectedFriend?.let { friend ->
+                            handleExpenseSplit(amount.toFloat(), amountHalf)
                         }
                     }
+                }
 
+                if (args.expenseRecord != null) {
+                    mainViewModel.updateFriendExpenseDetail(
+                        mainViewModel.expensePush.value.copy(
+                            date = selectedDate,
+                            title = title,
+                            description = description,
+                            amount = amount.toFloat(),
+                            currency = binding.currencySpinner.text.toString(),
+                            expenseFor = binding.categorySpinner.text.toString()
+                        ), args.expenseRecord!!.expenseId,
+                        args.friendsContact!!
+                    )
+                } else {
+                    selectedFriend?.let { friend ->
+                        mainViewModel.saveFriendExpense(
+                            mainViewModel.expensePush.value.copy(
+                                date = selectedDate,
+                                title = title,
+                                description = description,
+                                amount = amount.toFloat(),
+                                currency = binding.currencySpinner.text.toString(),
+                                expenseFor = binding.categorySpinner.text.toString()
+                            ),
+                            friend.contact
+                        )
+                    }
                 }
             }
-            selectedFriend?.let { friend ->
-                mainViewModel.saveFriendExpense(
-                    mainViewModel.expensePush.value.copy(
-                        date = selectedDate,
-                        title = title,
-                        description = description,
-                        amount = amount.toFloat(),
-                        currency = binding.currencySpinner.text.toString(),
-                        expenseFor = binding.categorySpinner.text.toString()
-                    ),
-                    friend.contact
+        }
+    }
+
+    private fun handleExpenseSplit(amount: Float, amountHalf: Float) {
+        when (selectedId) {
+            R.id.youPaidSplit -> {
+                mainViewModel.updateFriendExpense(
+                    ExpenseRecord(
+                        paidAmount = amount,
+                        lentAmount = amountHalf,
+                        borrowedAmount = 0f,
+                        date = selectedDate
+                    ), selectedId
                 )
             }
-            viewLifecycleOwner.lifecycleScope.launch {
-                mainViewModel.operationState.collect { state ->
-                    when (state) {
-                        is UiState.Error -> showError(state.message)
-                        UiState.Loading -> showLoadingIndicator()
-                        is UiState.Success -> {
-                            hideLoadingIndicator()
-                            findNavController().navigateUp()
-                        }
+
+            R.id.youOwnedFull -> {
+                mainViewModel.updateFriendExpense(
+                    ExpenseRecord(
+                        paidAmount = amount,
+                        lentAmount = amount,
+                        borrowedAmount = 0f,
+                        date = selectedDate
+                    ), selectedId
+                )
+            }
+
+            R.id.friendPaidSplit -> {
+                mainViewModel.updateFriendExpense(
+                    ExpenseRecord(
+                        paidAmount = amount,
+                        lentAmount = 0f,
+                        borrowedAmount = amountHalf,
+                        date = selectedDate
+                    ), selectedId
+                )
+            }
+
+            R.id.friendOwnedFull -> {
+                mainViewModel.updateFriendExpense(
+                    ExpenseRecord(
+                        paidAmount = amount,
+                        lentAmount = 0f,
+                        borrowedAmount = amount,
+                        date = selectedDate
+                    ), selectedId
+                )
+            }
+        }
+    }
+
+    private fun observeOperationState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            mainViewModel.operationState.collect { state ->
+                when (state) {
+                    is UiState.Error -> showError(state.message)
+                    UiState.Loading -> showLoadingIndicator()
+                    is UiState.Success -> {
+                        hideLoadingIndicator()
+                        findNavController().navigateUp()
                     }
                 }
             }
+        }
+    }
+
+
+    private fun setupEditExpenseMode(expenseRecord: ExpenseRecord) {
+        binding.apply {
+            dateCheck.text = Utils.getCurrentDay(expenseRecord.date)
+            currencySpinner.selectItemByIndex(getCurrencyIndex(expenseRecord.currency))
+            categorySpinner.selectItemByIndex(getCategoryIndex(expenseRecord.expenseFor))
+            title.editText?.setText(expenseRecord.title)
+            description.editText?.setText(expenseRecord.description)
+            amount.editText?.setText(expenseRecord.amount.toString())
+        }
+
+        // Hide contact list as it's not required when editing
+        binding.selectedFrisRecyclerView.visibility = View.GONE
+        binding.noFriends.visibility = View.GONE
+        binding.titleFriends.visibility = View.GONE
+        binding.titleTextView.text = "Update expense"
+    }
+
+    private fun setupNewExpenseMode() {
+        binding.apply {
+            dateCheck.text = Utils.getCurrentDay(null)
+            currencySpinner.selectItemByIndex(0)
+            categorySpinner.selectItemByIndex(0)
+        }
+        binding.titleTextView.text = "Add expense"
+    }
+
+    private fun handleSplitTypeChanges() {
+        if (args.expenseRecord != null) {
+            val expense = args.expenseRecord!!
+            selectedId = when {
+                expense.lentAmount > 0f -> {
+                    val amount = expense.paidAmount - expense.lentAmount
+                    if (amount > 0) R.id.youPaidSplit else R.id.youOwnedFull
+                }
+
+                else -> {
+                    val amount = expense.paidAmount - expense.borrowedAmount
+                    if (amount > 0) R.id.friendPaidSplit else R.id.friendOwnedFull
+                }
+            }
+        } else if (mainViewModel._newSelectedId != -1) {
+            selectedId = mainViewModel._newSelectedId
+            mainViewModel._newSelectedId = -1
+        }
+
+        binding.splitTypeText.text = getSelectedRadioButtonText(selectedId)
+    }
+
+    private fun observeContacts() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            mainViewModel.contactsState.collect { contactsState ->
+                when (contactsState) {
+                    is UiState.Loading -> showLoadingIndicator()
+                    is UiState.Success -> {
+                        hideLoadingIndicator()
+                        updateFriendsList(contactsState.data)
+                    }
+
+                    is UiState.Error -> showError(contactsState.message)
+                    else -> {}
+                }
+            }
+        }
+    }
+
+    private fun observeExpenseInput() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            mainViewModel.expensePush.collect { expenseInput ->
+                binding.apply {
+                    if (title.editText?.text.isNullOrEmpty()) {
+                        title.editText?.setText(expenseInput.title)
+                    }
+                    if (description.editText?.text.isNullOrEmpty()) {
+                        description.editText?.setText(expenseInput.description)
+                    }
+                    if (amount.editText?.text.isNullOrEmpty() && expenseInput.amount != 0f) {
+                        amount.editText?.setText(expenseInput.amount.toString())
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateFriendsList(friends: List<FriendContact>) {
+        friendsList = friends.toMutableList()
+        if (friendsList.isNotEmpty()) {
+            binding.selectedFrisRecyclerView.visibility = View.VISIBLE
+            binding.noFriends.visibility = View.GONE
+            adapter = MyFriendSelectionAdapter(friendsList, selectedFriend) { friend ->
+                selectedFriend = friend
+            }
+            binding.selectedFrisRecyclerView.adapter = adapter
+            binding.selectedFrisRecyclerView.layoutManager =
+                LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            adapter.notifyDataSetChanged()
+        } else {
+            binding.selectedFrisRecyclerView.visibility = View.GONE
+            binding.noFriends.visibility = View.VISIBLE
         }
     }
 
@@ -281,7 +378,7 @@ class PersonalExpenseFragment : Fragment() {
                 return false
             }
 
-            selectedFriend == null -> {
+            selectedFriend == null && args.expenseRecord == null -> {
                 showToast("Please select at least one friend.")
                 return false
             }
@@ -291,6 +388,27 @@ class PersonalExpenseFragment : Fragment() {
             }
         }
     }
+
+    fun getCurrencyIndex(name: String): Int {
+        val array = resources.getStringArray(R.array.currencies)
+        val index = array.indexOf(name)
+        return if (index >= 0) {
+            index
+        } else {
+            0
+        }
+    }
+
+    fun getCategoryIndex(name: String): Int {
+        val array = resources.getStringArray(R.array.categories)
+        val index = array.indexOf(name)
+        return if (index >= 0) {
+            index
+        } else {
+            0
+        }
+    }
+
 
     private fun showToast(message: String) {
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
@@ -375,6 +493,8 @@ class PersonalExpenseFragment : Fragment() {
     }
 
     private fun showLoadingIndicator() {
+        Log.d("CHKERR", "Loading from input")
+
         dialog.setContentView(R.layout.progress_dialog)
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         dialog.setCancelable(false)
@@ -382,10 +502,13 @@ class PersonalExpenseFragment : Fragment() {
     }
 
     private fun hideLoadingIndicator() {
-        if (dialog.isShowing) {
-            dialog.dismiss()
-        }
+        Log.d("CHKERR", "hiding from input")
+        dialog.dismiss()
     }
 
+    override fun onDestroyView() {
+        dialog.dismiss()
+        super.onDestroyView()
+    }
 }
 

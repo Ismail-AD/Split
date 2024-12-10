@@ -23,9 +23,18 @@ object Utils {
     fun getCurrentDate(): String {
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     }
-    fun getCurrentDay(): String {
-        return SimpleDateFormat("dd", Locale.getDefault()).format(Date())
+    fun getCurrentDay(input: String?): String {
+        return if (!input.isNullOrEmpty()) {
+            // Parse the input date and extract the day
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val date = dateFormat.parse(input)
+            SimpleDateFormat("dd", Locale.getDefault()).format(date!!)
+        } else {
+            // Get the current day
+            SimpleDateFormat("dd", Locale.getDefault()).format(Date())
+        }
     }
+
     fun formatDate(inputDate: String): String {
         val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val outputFormat = SimpleDateFormat("dd MMM, yyyy", Locale.getDefault())

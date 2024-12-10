@@ -110,7 +110,7 @@ class Repo @Inject constructor(
                     data.getValue(FriendContact::class.java)?.let { friendsList.add(it) }
                 }
             }
-            Log.d("CHKJA",friendsList.toString())
+            Log.d("CHKJA", friendsList.toString())
             emit(friendsList)
         } else {
             val friendsRoom = contactDao.getAllContacts().first()
@@ -242,6 +242,7 @@ class Repo @Inject constructor(
 
     suspend fun getFriendByContactId(email: String, contactId: String): Friend? {
         val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+        Log.d("CHKIS", "$email $contactId")
 
         return if (Utils.isInternetAvailable()) {
             // Fetch from Firebase if internet is available
@@ -288,26 +289,76 @@ class Repo @Inject constructor(
             val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
             val sanitizedFriendContact = Utils.sanitizeEmailForFirebase(friendContact)
 
-            // Reference to Firebase node
             val expenseRef = firebaseDatabase.reference
                 .child("expenses")
                 .child(sanitizedMyEmail)
-                .child(sanitizedFriendContact)
+                .child(sanitizedFriendContact).push()
 
-            // Push new expense and get the unique key
-            val newExpenseRef = expenseRef.push()
-
-            // Set the expense object at the generated key
-            newExpenseRef.setValue(expense).await()
-
-            // Notify success
-            onResult(true, "Expense saved successfully!")
+            expenseRef.key?.let {
+                val expenseWithId = expense.copy(expenseId = it, timeStamp = System.currentTimeMillis())
+                expenseRef.setValue(expenseWithId).await()
+                onResult(true, "Expense saved successfully!")
+            }
         } catch (e: Exception) {
             // Handle and log exceptions
             Log.e("Repo", "Failed to save expense: ${e.message}")
             onResult(false, "Failed to save expense: ${e.message}")
         }
     }
+
+    suspend fun updateFriendExpense(
+        myEmail: String,
+        friendContact: String,
+        expenseId: String,
+        updatedExpense: ExpenseRecord,
+        onResult: (success: Boolean, message: String) -> Unit
+    ) {
+        try {
+            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
+            val sanitizedFriendContact = Utils.sanitizeEmailForFirebase(friendContact)
+
+            // Reference to the specific expense in Firebase
+            val expenseRef = firebaseDatabase.reference
+                .child("expenses")
+                .child(sanitizedMyEmail)
+                .child(sanitizedFriendContact)
+                .child(expenseId)
+
+            // Update the expense
+            expenseRef.setValue(updatedExpense).await()
+            onResult(true, "Expense updated successfully!")
+        } catch (e: Exception) {
+            Log.e("Repo", "Failed to update expense: ${e.message}")
+            onResult(false, "Failed to update expense: ${e.message}")
+        }
+    }
+
+    suspend fun deleteFriendExpense(
+        myEmail: String,
+        friendContact: String,
+        expenseId: String,
+        onResult: (success: Boolean, message: String) -> Unit
+    ) {
+        try {
+            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
+            val sanitizedFriendContact = Utils.sanitizeEmailForFirebase(friendContact)
+
+            // Reference to the specific expense in Firebase
+            val expenseRef = firebaseDatabase.reference
+                .child("expenses")
+                .child(sanitizedMyEmail)
+                .child(sanitizedFriendContact)
+                .child(expenseId)
+
+            // Delete the expense
+            expenseRef.removeValue().await()
+            onResult(true, "Expense deleted successfully!")
+        } catch (e: Exception) {
+            Log.e("Repo", "Failed to delete expense: ${e.message}")
+            onResult(false, "Failed to delete expense: ${e.message}")
+        }
+    }
+
 
     suspend fun getIndividualFriendExpenses(
         myEmail: String,
@@ -328,7 +379,8 @@ class Repo @Inject constructor(
             val snapshot = expenseRef.get().await()
 
             if (snapshot.exists()) {
-                val expenses = snapshot.children.mapNotNull { it.getValue(ExpenseRecord::class.java) }
+                val expenses =
+                    snapshot.children.mapNotNull { it.getValue(ExpenseRecord::class.java) }
                 onResult(true, expenses, "Expenses retrieved successfully!")
             } else {
                 onResult(false, null, "No expenses found for the friend.")
@@ -338,7 +390,6 @@ class Repo @Inject constructor(
             onResult(false, null, "Failed to retrieve expenses: ${e.message}")
         }
     }
-
 
 
     suspend fun getAllFriendExpenses(
@@ -361,7 +412,8 @@ class Repo @Inject constructor(
 
                 for (friendSnapshot in snapshot.children) {
                     val friendContact = friendSnapshot.key ?: continue
-                    val friendExpenses = friendSnapshot.children.mapNotNull { it.getValue(ExpenseRecord::class.java) }
+                    val friendExpenses =
+                        friendSnapshot.children.mapNotNull { it.getValue(ExpenseRecord::class.java) }
                     allExpenses[friendContact] = friendExpenses
                 }
 
@@ -374,7 +426,6 @@ class Repo @Inject constructor(
             onResult(false, null, "Failed to retrieve all expenses: ${e.message}")
         }
     }
-
 
 
 }

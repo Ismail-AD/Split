@@ -26,10 +26,20 @@ import com.appdev.split.Model.Data.TransactionItem
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
+import com.appdev.split.UI.Activity.EntryActivity
+import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentHomeBinding
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
@@ -39,6 +49,14 @@ class HomeFragment : Fragment() {
     private lateinit var adapter: BillAdapter
     val mainViewModel by activityViewModels<MainViewModel>()
     var expenses: Map<String, List<ExpenseRecord>> = mapOf()
+
+    @Inject
+    lateinit var firebaseDatabase: FirebaseDatabase
+
+    @Inject
+    lateinit var firebaseAuth: FirebaseAuth
+    var eventListener: ValueEventListener? = null
+    lateinit var expenseRef: DatabaseReference
 
     lateinit var dialog: Dialog
     private var isExpanded = false
@@ -62,27 +80,90 @@ class HomeFragment : Fragment() {
         AnimationUtils.loadAnimation(requireContext(), R.anim.to_bottom_anim)
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
+
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        (activity as? EntryActivity)?.showBottomBar()
         dialog = Dialog(requireContext())
         binding.mainFab.setOnClickListener {
             if (isExpanded) shrinkFab() else expandFab()
         }
 
+        firebaseAuth.currentUser?.email?.let { mail ->
+            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(mail)
+            expenseRef = firebaseDatabase.reference
+                .child("expenses")
+                .child(sanitizedMyEmail)
+
+            // Create a value event listener
+            eventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val newExpenses = mutableMapOf<String, List<ExpenseRecord>>()
+
+                    for (friendSnapshot in snapshot.children) {
+                        val friendContact = friendSnapshot.key ?: continue
+                        val friendExpenses = friendSnapshot.children.mapNotNull {
+                            it.getValue(ExpenseRecord::class.java)
+                        }
+                        newExpenses[friendContact] = friendExpenses
+                    }
+
+                    // Normalize both existing and new expenses for comparison
+                    val existingNormalizedExpenses = expenses.entries.groupBy { it.key }
+                        .mapValues { entry ->
+                            entry.value.lastOrNull()
+                        }
+                        .values
+                        .filterNotNull()
+                        .toList()
+
+                    val newNormalizedExpenses = newExpenses.entries.groupBy { it.key }
+                        .mapValues { entry ->
+                            entry.value.lastOrNull()
+                        }
+                        .values
+                        .filterNotNull()
+                        .toList()
+
+                    // Compare the normalized expenses
+                    if (existingNormalizedExpenses != newNormalizedExpenses) {
+                        // Data has changed, trigger fetch
+                        mainViewModel.getAllFriendExpenses()
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+
+                }
+            }
+            eventListener?.let {
+                expenseRef.addValueEventListener(it)
+            }
+        }
+
+
+
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 mainViewModel.allExpensesState.collect { state ->
                     when (state) {
-                        is UiState.Loading -> showLoadingIndicator()
+                        is UiState.Loading -> {
+                            Log.d("CALLED", "loading.....")
+                            showLoadingIndicator()
+                        }
+
                         is UiState.Success -> {
                             hideLoadingIndicator()
                             expenses = state.data
@@ -96,11 +177,23 @@ class HomeFragment : Fragment() {
                             updateRecyclerView(expenses)
                         }
 
-                        is UiState.Error -> showError(state.message)
+                        is UiState.Error -> {
+                            hideLoadingIndicator()
+                            if (expenses.isEmpty()) {
+                                binding.noBill.visibility = View.VISIBLE
+                                binding.recyclerViewRecentBills.visibility = View.GONE
+                            }
+                        }
                     }
                 }
             }
         }
+
+
+
+
+
+
 
         binding.contactFab.setOnClickListener { onContactClicked() }
         binding.expenseFab.setOnClickListener { onExpenseClicked() }
@@ -122,6 +215,7 @@ class HomeFragment : Fragment() {
 
     }
 
+
     private fun updateRecyclerView(expenses: Map<String, List<ExpenseRecord>>) {
 
 
@@ -137,6 +231,7 @@ class HomeFragment : Fragment() {
             binding.recyclerViewRecentBills.layoutManager = LinearLayoutManager(requireContext())
         }
     }
+
     private fun showError(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
@@ -155,14 +250,14 @@ class HomeFragment : Fragment() {
     }
 
     private fun onContactClicked() {
-        Log.d("CHKERR",mainViewModel.userData.value.toString() + "At home add member")
+        Log.d("CHKERR", mainViewModel.userData.value.toString() + "At home add member")
 
         val action = HomeFragmentDirections.actionHomePageToAddMembersFragment(false)
         findNavController().navigate(action)
     }
 
     private fun onExpenseClicked() {
-        val action = HomeFragmentDirections.actionHomePageToPersonalExpenseFragment()
+        val action = HomeFragmentDirections.actionHomePageToPersonalExpenseFragment(null, null)
         findNavController().navigate(action)
     }
 
@@ -182,11 +277,17 @@ class HomeFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        eventListener?.let {
+            expenseRef.removeEventListener(it)
+        }
         _binding = null
     }
 
-    fun goToDetails(expenseList: List<ExpenseRecord> ,email:String) {
-        val action = HomeFragmentDirections.actionHomePageToFriendsAllExpenses(expenseList.toTypedArray(),email)
+    fun goToDetails(expenseList: List<ExpenseRecord>, email: String) {
+        val action = HomeFragmentDirections.actionHomePageToFriendsAllExpenses(
+            expenseList.toTypedArray(),
+            email
+        )
         findNavController().navigate(action)
     }
 }

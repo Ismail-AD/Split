@@ -6,17 +6,20 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.appdev.split.Model.Data.Bill
 import com.appdev.split.Model.Data.ExpenseRecord
+import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.ItemRecentBillBinding
 import kotlin.random.Random
+
 class BillAdapter(
     private val groupedExpenses: Map<String, List<ExpenseRecord>>, // Updated to receive grouped data by contact
-    val navigate: (List<ExpenseRecord>,String) -> Unit // Navigate with a list of ExpenseRecord
+    val navigate: (List<ExpenseRecord>, String) -> Unit // Navigate with a list of ExpenseRecord
 ) : RecyclerView.Adapter<BillAdapter.BillViewHolder>() {
 
     private val contactIds: List<String> = groupedExpenses.keys.toList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BillViewHolder {
-        val binding = ItemRecentBillBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding =
+            ItemRecentBillBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return BillViewHolder(binding)
     }
 
@@ -38,7 +41,28 @@ class BillAdapter(
             if (expense != null) {
                 binding.billName.text = expense.title // Assuming ExpenseRecord has a 'title' field
                 binding.billDate.text = expense.date // Assuming ExpenseRecord has a 'date' field
-                binding.billAmount.text = expense.amount.toString() // Assuming ExpenseRecord has 'amount'
+                val amount: Float
+                val label: String
+                binding.currency.text = Utils.extractCurrencyCode(expense.currency)
+                if (expense.borrowedAmount > 0f) {
+                    amount = expense.paidAmount - expense.borrowedAmount
+                    label = "You borrowed "
+                    binding.amount.text = if (expense.borrowedAmount == expense.paidAmount) {
+                        expense.paidAmount.toString()
+                    } else {
+                        amount.toString()
+                    }
+                } else {
+                    amount = expense.paidAmount - expense.lentAmount
+                    label = "You lent "
+                    binding.amount.text = if (expense.lentAmount == expense.paidAmount) {
+                        expense.paidAmount.toString()
+                    } else {
+                        amount.toString()
+                    }
+                }
+
+                binding.youBorrowOrLent.text = label
             }
 
             val lightColor = getLightRandomColor()
@@ -50,7 +74,7 @@ class BillAdapter(
 
             // Set the click listener to navigate with the list of ExpenseRecord for this contactId
             binding.parent.setOnClickListener {
-                navigate(expenses,contactId) // Send the list of expenses for this contact
+                navigate(expenses, contactId) // Send the list of expenses for this contact
             }
         }
 

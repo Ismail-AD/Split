@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/parent"
     style="@style/backBillData"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:id="@+id/parent"
     android:layout_marginBottom="8dp"
     android:orientation="horizontal"
     android:padding="12dp">
 
     <androidx.cardview.widget.CardView
+        android:id="@+id/cardView"
         android:layout_width="@dimen/_50sdp"
         android:layout_height="@dimen/_50sdp"
-        android:id="@+id/cardView"
         app:cardBackgroundColor="@color/teal_200"
-        app:cardCornerRadius="@dimen/_10sdp">
+        app:cardCornerRadius="@dimen/_10sdp"
+        app:cardElevation="0dp">
 
         <ImageView
             android:id="@+id/imageView"
@@ -60,20 +61,32 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/bill_amount"
-            style="@style/billWordColor"
+            android:id="@+id/youBorrowOrLent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="$123.45"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/person_count"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="3 persons"
+            android:text="you borrowed"
             android:textColor="#8C8C8E"
             android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/currency"
+                style="@style/billWordColor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="$"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/amount"
+                style="@style/billWordColor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="100"
+                android:textSize="14sp" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

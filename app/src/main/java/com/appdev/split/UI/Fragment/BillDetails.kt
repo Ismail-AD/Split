@@ -11,12 +11,14 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.TransactionItemAdapter
 import com.appdev.split.Model.Data.Bill
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
+import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
@@ -45,31 +47,28 @@ class BillDetails : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         dialog = Dialog(requireContext())
-
+        binding.backBtn.setOnClickListener {
+            findNavController().navigateUp()
+        }
         bill = args.billData
-        mainViewModel.getFriendNameById(args.friendName)
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                mainViewModel.FriendState.collect { state ->
-                    when (state) {
-                        is UiState.Loading -> showLoadingIndicator()
-                        is UiState.Success -> {
-                            hideLoadingIndicator()
-                            friendContact = state.data
-                            updateData()
-                        }
+        friendContact = Friend(contact = args.friendContact, name = args.friendName)
+        updateData()
+        observeOperationState()
 
-                        is UiState.Error -> showError(state.message)
-                    }
-                }
-            }
+
+
+        binding.edit.setOnClickListener {
+
+        }
+        binding.delete.setOnClickListener {
+            mainViewModel.deleteFriendExpenseDetail(bill.expenseId,args.friendContact)
         }
 
 
 
         binding.title.text = bill.title
         binding.date.text = Utils.formatDate(bill.date)
-        binding.totalAmount.text = Utils.extractCurrencyCode(bill.currency ) + bill.amount.toString()
+        binding.totalAmount.text = Utils.extractCurrencyCode(bill.currency) + bill.amount.toString()
 
 
 
@@ -123,6 +122,21 @@ class BillDetails : Fragment() {
     private fun hideLoadingIndicator() {
         if (dialog.isShowing) {
             dialog.dismiss()
+        }
+    }
+
+    private fun observeOperationState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            mainViewModel.operationState.collect { state ->
+                when (state) {
+                    is UiState.Error -> showError(state.message)
+                    UiState.Loading -> showLoadingIndicator()
+                    is UiState.Success -> {
+                        hideLoadingIndicator()
+                        findNavController().navigateUp()
+                    }
+                }
+            }
         }
     }
 

@@ -11,7 +11,9 @@ import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Repository.Repo
+import com.appdev.split.Utils.Utils
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +22,7 @@ import javax.inject.Inject
 
 
 @HiltViewModel
-class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: FirebaseAuth) :
+class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: FirebaseAuth,val firebaseDatabase: FirebaseDatabase) :
     ViewModel() {
     private val _userData = MutableStateFlow<UserEntity?>(null)
     val userData: StateFlow<UserEntity?> = _userData
@@ -36,7 +38,7 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
     val individualExpensesState: StateFlow<UiState<List<ExpenseRecord>>> get() = _individualExpensesState
 
     private val _allExpensesState =
-        MutableStateFlow<UiState<Map<String, List<ExpenseRecord>>>>(UiState.Loading)
+        MutableStateFlow<UiState<Map<String, List<ExpenseRecord>>>>(UiState.Success(emptyMap()))
     val allExpensesState: StateFlow<UiState<Map<String, List<ExpenseRecord>>>> get() = _allExpensesState
 
 
@@ -70,6 +72,63 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
                         mail,
                         friendsContact,
                         expenseRecord
+                    ) { success, message ->
+                        if (success) {
+                            _operationState.value = UiState.Success(Unit)
+
+                        } else {
+                            _operationState.value = UiState.Error(message)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _operationState.value = UiState.Error(e.message ?: "Failed to save expense")
+            }
+        }
+    }
+
+    fun updateFriendExpenseDetail(
+        expenseRecord: ExpenseRecord,
+        expenseId: String,
+        friendsContact: String
+    ) {
+        _operationState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.email?.let { mail ->
+                    repo.updateFriendExpense(
+                        mail,
+                        friendsContact,
+                        expenseId,
+                        expenseRecord
+                    ) { success, message ->
+                        if (success) {
+                            _operationState.value = UiState.Success(Unit)
+
+                        } else {
+                            _operationState.value = UiState.Error(message)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _operationState.value = UiState.Error(e.message ?: "Failed to save expense")
+            }
+        }
+    }
+
+
+    fun deleteFriendExpenseDetail(
+        expenseId: String,
+        friendsContact: String
+    ) {
+        _operationState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.email?.let { mail ->
+                    repo.deleteFriendExpense(
+                        mail,
+                        friendsContact,
+                        expenseId
                     ) { success, message ->
                         if (success) {
                             _operationState.value = UiState.Success(Unit)
@@ -133,6 +192,7 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
     }
 
     fun getFriendNameById(contactId: String) {
+        Log.d("CHKIS", "id of friend: $contactId")
         if (cachedFriend != null && cachedFriend?.contact == contactId) {
             // If the cached friend's contact ID matches, use the cached data
             _individualFriendState.value = UiState.Success(cachedFriend!!)

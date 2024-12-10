@@ -5,6 +5,7 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class ExpenseRecord(
+    val expenseId:String = "",
     val paidAmount: Float = 0f,
     val lentAmount: Float = 0f,
     val borrowedAmount: Float = 0f,
@@ -14,4 +15,5 @@ data class ExpenseRecord(
     var amount: Float = 0f,
     val expenseFor:String="",
     val currency:String="",
+    val timeStamp:Long = 0L
 ) : Parcelable
