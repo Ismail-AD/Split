@@ -101,57 +101,57 @@ class HomeFragment : Fragment() {
             if (isExpanded) shrinkFab() else expandFab()
         }
 
-        firebaseAuth.currentUser?.email?.let { mail ->
-            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(mail)
-            expenseRef = firebaseDatabase.reference
-                .child("expenses")
-                .child(sanitizedMyEmail)
-
-            // Create a value event listener
-            eventListener = object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val newExpenses = mutableMapOf<String, List<ExpenseRecord>>()
-
-                    for (friendSnapshot in snapshot.children) {
-                        val friendContact = friendSnapshot.key ?: continue
-                        val friendExpenses = friendSnapshot.children.mapNotNull {
-                            it.getValue(ExpenseRecord::class.java)
-                        }
-                        newExpenses[friendContact] = friendExpenses
-                    }
-
-                    // Normalize both existing and new expenses for comparison
-                    val existingNormalizedExpenses = expenses.entries.groupBy { it.key }
-                        .mapValues { entry ->
-                            entry.value.lastOrNull()
-                        }
-                        .values
-                        .filterNotNull()
-                        .toList()
-
-                    val newNormalizedExpenses = newExpenses.entries.groupBy { it.key }
-                        .mapValues { entry ->
-                            entry.value.lastOrNull()
-                        }
-                        .values
-                        .filterNotNull()
-                        .toList()
-
-                    // Compare the normalized expenses
-                    if (existingNormalizedExpenses != newNormalizedExpenses) {
-                        // Data has changed, trigger fetch
-                        mainViewModel.getAllFriendExpenses()
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-
-                }
-            }
-            eventListener?.let {
-                expenseRef.addValueEventListener(it)
-            }
-        }
+//        firebaseAuth.currentUser?.email?.let { mail ->
+//            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(mail)
+//            expenseRef = firebaseDatabase.reference
+//                .child("expenses")
+//                .child(sanitizedMyEmail)
+//
+//            // Create a value event listener
+//            eventListener = object : ValueEventListener {
+//                override fun onDataChange(snapshot: DataSnapshot) {
+//                    val newExpenses = mutableMapOf<String, List<ExpenseRecord>>()
+//
+//                    for (friendSnapshot in snapshot.children) {
+//                        val friendContact = friendSnapshot.key ?: continue
+//                        val friendExpenses = friendSnapshot.children.mapNotNull {
+//                            it.getValue(ExpenseRecord::class.java)
+//                        }
+//                        newExpenses[friendContact] = friendExpenses
+//                    }
+//
+//                    // Normalize both existing and new expenses for comparison
+//                    val existingNormalizedExpenses = expenses.entries.groupBy { it.key }
+//                        .mapValues { entry ->
+//                            entry.value.lastOrNull()
+//                        }
+//                        .values
+//                        .filterNotNull()
+//                        .toList()
+//
+//                    val newNormalizedExpenses = newExpenses.entries.groupBy { it.key }
+//                        .mapValues { entry ->
+//                            entry.value.lastOrNull()
+//                        }
+//                        .values
+//                        .filterNotNull()
+//                        .toList()
+//
+//                    // Compare the normalized expenses
+//                    if (existingNormalizedExpenses != newNormalizedExpenses) {
+//                        // Data has changed, trigger fetch
+//                        mainViewModel.getAllFriendExpenses()
+//                    }
+//                }
+//
+//                override fun onCancelled(error: DatabaseError) {
+//
+//                }
+//            }
+//            eventListener?.let {
+//                expenseRef.addValueEventListener(it)
+//            }
+//        }
 
 
 
@@ -184,6 +184,8 @@ class HomeFragment : Fragment() {
                                 binding.recyclerViewRecentBills.visibility = View.GONE
                             }
                         }
+
+                        UiState.Stable -> TODO()
                     }
                 }
             }
@@ -257,7 +259,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun onExpenseClicked() {
-        val action = HomeFragmentDirections.actionHomePageToPersonalExpenseFragment(null, null)
+        val action = HomeFragmentDirections.actionHomePageToPersonalExpenseFragment(null,null, null)
         findNavController().navigate(action)
     }
 

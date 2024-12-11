@@ -55,6 +55,9 @@ class AddContactFragment : Fragment() {
                                 }
 
                                 is UiState.Error -> showError(state.message)
+                                UiState.Stable -> {
+
+                                }
                             }
                         }
                     }

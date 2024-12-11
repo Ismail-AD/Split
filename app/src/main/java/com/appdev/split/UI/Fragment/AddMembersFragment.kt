@@ -105,6 +105,7 @@ class AddMembersFragment : Fragment() {
                         }
 
                         is UiState.Error -> showError(state.message)
+                        UiState.Stable -> TODO()
                     }
                 }
             }
@@ -174,6 +175,9 @@ class AddMembersFragment : Fragment() {
                                 }
 
                                 is UiState.Error -> showError(state.message)
+                                UiState.Stable -> {
+
+                                }
                             }
                         }
                     }

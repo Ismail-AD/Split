@@ -250,6 +250,8 @@ class PersonalExpenseFragment : Fragment() {
                         hideLoadingIndicator()
                         findNavController().navigateUp()
                     }
+
+                    UiState.Stable -> {}
                 }
             }
         }

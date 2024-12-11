@@ -113,6 +113,9 @@ class AmountPercentFragment(
                                     }
 
                                     is UiState.Error -> showError(state.message)
+                                    UiState.Stable -> {
+
+                                    }
                                 }
                             }
                         }

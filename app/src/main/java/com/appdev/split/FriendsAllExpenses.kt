@@ -2,6 +2,7 @@ package com.appdev.split
 
 import android.app.Dialog
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -15,17 +16,12 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.AllFriendExpenseAdapter
-import com.appdev.split.Adapters.BillAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.UI.Activity.EntryActivity
-import com.appdev.split.UI.Fragment.BillDetailsArgs
-import com.appdev.split.UI.Fragment.HomeFragmentDirections
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentFriendsAllExpensesBinding
-import com.appdev.split.databinding.FragmentHomeBinding
-import com.appdev.split.databinding.FragmentPersonalExpenseBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -45,6 +41,7 @@ class FriendsAllExpenses : Fragment() {
     val mainViewModel by activityViewModels<MainViewModel>()
     private val args: FriendsAllExpensesArgs by navArgs()
     lateinit var dialog: Dialog
+
     @Inject
     lateinit var firebaseDatabase: FirebaseDatabase
 
@@ -67,9 +64,54 @@ class FriendsAllExpenses : Fragment() {
         binding.backButton.setOnClickListener {
             findNavController().navigateUp()
         }
+        Log.d("CHKIAMG", "I am at list")
+        mainViewModel.updateStateToStable()
         (activity as? EntryActivity)?.hideBottomBar()
         var billList = args.bilList.toList()
         updateRecyclerView(billList)
+
+        firebaseAuth.currentUser?.email?.let { mail ->
+            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(mail)
+            val friendMail = Utils.sanitizeEmailForFirebase(args.nameOfFriend)
+            expenseRef = firebaseDatabase.reference
+                .child("expenses")
+                .child(sanitizedMyEmail).child(friendMail)
+
+            // Create a value event listener
+            eventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    // List to store all expenses
+                    val newExpenses = mutableListOf<ExpenseRecord>()
+
+                    snapshot.children.forEach {
+                        Log.d("CHKSS", it.toString()) // Log the raw snapshot to debug
+
+                        // Attempt to map the child to an ExpenseRecord
+                        val expenseRecord = it.getValue(ExpenseRecord::class.java)
+                        if (expenseRecord != null) {
+                            newExpenses.add(expenseRecord)
+                        } else {
+                            Log.e("CHKSS", "Failed to parse ExpenseRecord: ${it.value}")
+                        }
+                    }
+
+
+                    // Compare with the existing list
+                    if (billList != newExpenses) {
+                        billList = newExpenses
+                        updateRecyclerView(billList)
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    // Handle any potential error here
+                }
+            }
+
+            eventListener?.let {
+                expenseRef.addValueEventListener(it)
+            }
+        }
 
         mainViewModel.getFriendNameById(args.nameOfFriend)
         viewLifecycleOwner.lifecycleScope.launch {
@@ -83,48 +125,15 @@ class FriendsAllExpenses : Fragment() {
                         }
 
                         is UiState.Error -> showError(state.message)
+                        UiState.Stable -> {
+
+                        }
                     }
                 }
             }
         }
-
-
-
-
-        firebaseAuth.currentUser?.email?.let { mail ->
-            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(mail)
-            expenseRef = firebaseDatabase.reference
-                .child("expenses")
-                .child(sanitizedMyEmail)  .child("friends")
-                .child(args.nameOfFriend)
-
-            // Create a value event listener
-            eventListener = object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val newExpenses = mutableListOf<ExpenseRecord>()
-
-                    for (expenseSnapshot in snapshot.children) {
-                        val expense = expenseSnapshot.getValue(ExpenseRecord::class.java)
-                        expense?.let { newExpenses.add(it) }
-                    }
-
-                    if (newExpenses != billList) {
-                        billList = newExpenses
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-
-                }
-            }
-            eventListener?.let {
-                expenseRef.addValueEventListener(it)
-            }
-        }
-
-
-
     }
+
     private fun showError(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
@@ -141,6 +150,7 @@ class FriendsAllExpenses : Fragment() {
             dialog.dismiss()
         }
     }
+
     private fun updateRecyclerView(expenses: List<ExpenseRecord>) {
         if (expenses.isEmpty()) {
             binding.nobill.visibility = View.VISIBLE
@@ -151,12 +161,15 @@ class FriendsAllExpenses : Fragment() {
 
             adapter = AllFriendExpenseAdapter(expenses, ::goToDetails)
             binding.recyclerViewTransactionItems.adapter = adapter
-            binding.recyclerViewTransactionItems.layoutManager = LinearLayoutManager(requireContext())
+            binding.recyclerViewTransactionItems.layoutManager =
+                LinearLayoutManager(requireContext())
         }
     }
 
     fun goToDetails(expenseList: ExpenseRecord) {
-        val action = FriendsAllExpensesDirections.actionFriendsAllExpensesToBillDetails(expenseList,args.nameOfFriend,
+        Log.d("CHKIAMG", "I am going in")
+        val action = FriendsAllExpensesDirections.actionFriendsAllExpensesToBillDetails(
+            expenseList, args.nameOfFriend,
             binding.contact.text.toString()
         )
         findNavController().navigate(action)

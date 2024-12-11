@@ -2,6 +2,7 @@ package com.appdev.split.UI.Fragment
 
 import android.app.Dialog
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +16,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.TransactionItemAdapter
+import com.appdev.split.FriendsAllExpensesDirections
 import com.appdev.split.Model.Data.Bill
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
@@ -46,22 +48,32 @@ class BillDetails : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        mainViewModel.updateStateToStable()
+
         dialog = Dialog(requireContext())
         binding.backBtn.setOnClickListener {
             findNavController().navigateUp()
         }
+        Log.d("CHKIAMG", "I am here")
+
         bill = args.billData
         friendContact = Friend(contact = args.friendContact, name = args.friendName)
         updateData()
-        observeOperationState()
 
 
 
         binding.edit.setOnClickListener {
+            val action = BillDetailsDirections.actionBillDetailsToPersonalExpenseFragment(
+                args.billData,
+                args.friendContact,
+                args.friendName
+            )
+            findNavController().navigate(action)
 
         }
         binding.delete.setOnClickListener {
-            mainViewModel.deleteFriendExpenseDetail(bill.expenseId,args.friendContact)
+            observeOperationState()
+            mainViewModel.deleteFriendExpenseDetail(bill.expenseId, args.friendContact)
         }
 
 
@@ -134,6 +146,10 @@ class BillDetails : Fragment() {
                     is UiState.Success -> {
                         hideLoadingIndicator()
                         findNavController().navigateUp()
+                    }
+
+                    UiState.Stable -> {
+
                     }
                 }
             }

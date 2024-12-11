@@ -22,7 +22,11 @@ import javax.inject.Inject
 
 
 @HiltViewModel
-class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: FirebaseAuth,val firebaseDatabase: FirebaseDatabase) :
+class MainViewModel @Inject constructor(
+    var repo: Repo,
+    val firebaseAuth: FirebaseAuth,
+    val firebaseDatabase: FirebaseDatabase
+) :
     ViewModel() {
     private val _userData = MutableStateFlow<UserEntity?>(null)
     val userData: StateFlow<UserEntity?> = _userData
@@ -30,7 +34,7 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
     private val _contactsState = MutableStateFlow<UiState<List<FriendContact>>>(UiState.Loading)
     val contactsState: StateFlow<UiState<List<FriendContact>>> = _contactsState
 
-    private val _operationState = MutableStateFlow<UiState<Unit>>(UiState.Success(Unit))
+    private val _operationState = MutableStateFlow<UiState<Unit>>(UiState.Stable)
     val operationState: StateFlow<UiState<Unit>> = _operationState
 
     private val _individualExpensesState =
@@ -57,6 +61,10 @@ class MainViewModel @Inject constructor(var repo: Repo, val firebaseAuth: Fireba
     init {
         fetchAllContacts()
         getAllFriendExpenses()
+    }
+
+    fun updateStateToStable() {
+        _operationState.value = UiState.Stable
     }
 
     //---------------------Friend Expense----------------------
