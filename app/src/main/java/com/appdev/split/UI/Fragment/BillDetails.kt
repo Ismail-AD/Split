@@ -26,8 +26,17 @@ import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentBillDetailsBinding
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class BillDetails : Fragment() {
 
     private var _binding: FragmentBillDetailsBinding? = null
@@ -38,6 +47,13 @@ class BillDetails : Fragment() {
     var friendContact: Friend? = null
     var bill: ExpenseRecord = ExpenseRecord()
 
+    @Inject
+    lateinit var firebaseDatabase: FirebaseDatabase
+
+    @Inject
+    lateinit var firebaseAuth: FirebaseAuth
+    var eventListener: ValueEventListener? = null
+    lateinit var expenseRef: DatabaseReference
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -58,9 +74,36 @@ class BillDetails : Fragment() {
 
         bill = args.billData
         friendContact = Friend(contact = args.friendContact, name = args.friendName)
+
+        firebaseAuth.currentUser?.email?.let { mail ->
+            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(mail)
+            val friendMail = Utils.sanitizeEmailForFirebase(args.friendContact)
+            expenseRef = firebaseDatabase.reference
+                .child("expenses")
+                .child(sanitizedMyEmail).child(friendMail).child(bill.expenseId)
+
+            // Create a value event listener
+            eventListener = object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+
+                    val expenseRecord = snapshot.getValue(ExpenseRecord::class.java)
+
+                    if (expenseRecord !=null && expenseRecord != bill) {
+                        bill = expenseRecord
+                        updateData()
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    // Handle any potential error here
+                }
+            }
+
+            eventListener?.let {
+                expenseRef.addValueEventListener(it)
+            }
+        }
         updateData()
-
-
 
         binding.edit.setOnClickListener {
             val action = BillDetailsDirections.actionBillDetailsToPersonalExpenseFragment(
@@ -134,6 +177,13 @@ class BillDetails : Fragment() {
     private fun hideLoadingIndicator() {
         if (dialog.isShowing) {
             dialog.dismiss()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        eventListener?.let {
+            expenseRef.removeEventListener(it)
         }
     }
 
