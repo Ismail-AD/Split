@@ -97,6 +97,8 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         (activity as? EntryActivity)?.showBottomBar()
         dialog = Dialog(requireContext())
+        setupShimmer()
+        setupShimmerTopBar()
         binding.mainFab.setOnClickListener {
             if (isExpanded) shrinkFab() else expandFab()
         }
@@ -161,11 +163,11 @@ class HomeFragment : Fragment() {
                     when (state) {
                         is UiState.Loading -> {
                             Log.d("CALLED", "loading.....")
-                            showLoadingIndicator()
+                            showShimmer()
                         }
 
                         is UiState.Success -> {
-                            hideLoadingIndicator()
+                            hideShimmer()
                             expenses = state.data
                             expenses.entries.groupBy { it.key }
                                 .mapValues { entry ->
@@ -178,7 +180,7 @@ class HomeFragment : Fragment() {
                         }
 
                         is UiState.Error -> {
-                            hideLoadingIndicator()
+                            hideShimmer()
                             if (expenses.isEmpty()) {
                                 binding.noBill.visibility = View.VISIBLE
                                 binding.recyclerViewRecentBills.visibility = View.GONE
@@ -208,12 +210,70 @@ class HomeFragment : Fragment() {
                 mainViewModel.userData.collect { user ->
                     user?.let {
                         binding.name.text = "Hello, ${it.name} ✌\uFE0F"
-                        binding.progres.visibility = View.GONE
                         binding.name.visibility = View.VISIBLE
                     }
                 }
             }
         }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                mainViewModel.loadingState.collect { user ->
+                    if(user){
+                        showShimmerTopBar()
+                    } else{
+                        hideShimmerTopBar()
+                    }
+                }
+            }
+        }
+
+    }
+
+    private fun setupShimmerTopBar() {
+        // Set the layout for the ViewStub
+        binding.shimmerViewBar.layoutResource = R.layout.top_bar_shimmer
+        binding.shimmerViewBar.inflate()
+
+        // Start shimmer animation
+        binding.shimmerViewContainer.startShimmer()
+    }
+
+    private fun showShimmerTopBar() {
+        binding.shimmerViewTop.visibility = View.VISIBLE
+        binding.shimmerViewTop.startShimmer()
+
+        // Hide actual content while shimmer is showing
+        binding.topLayer.visibility = View.GONE
+    }
+
+    private fun hideShimmerTopBar() {
+        binding.shimmerViewTop.stopShimmer()
+        binding.shimmerViewTop.visibility = View.GONE
+        binding.topLayer.visibility = View.VISIBLE
+
+    }
+
+    private fun setupShimmer() {
+        // Set the layout for the ViewStub
+        binding.shimmerViewHome.layoutResource = R.layout.home_page_shimmer
+        binding.shimmerViewHome.inflate()
+
+        // Start shimmer animation
+        binding.shimmerViewContainer.startShimmer()
+    }
+
+    private fun showShimmer() {
+        binding.shimmerViewContainer.visibility = View.VISIBLE
+        binding.shimmerViewContainer.startShimmer()
+
+        // Hide actual content while shimmer is showing
+        binding.mainBody.visibility = View.GONE
+    }
+
+    private fun hideShimmer() {
+        binding.shimmerViewContainer.stopShimmer()
+        binding.shimmerViewContainer.visibility = View.GONE
+        binding.mainBody.visibility = View.VISIBLE
 
     }
 

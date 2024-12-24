@@ -349,6 +349,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun fetchUserData(userId: String) {
+
         if (_userData.value != null) return // Prevent re-fetching if data is already available
 
         viewModelScope.launch {

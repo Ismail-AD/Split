@@ -32,7 +32,9 @@
 
 
 
-
+    <color name="color_grey_soft">#BCBEC1</color>
+    <color name="color_grey_medium">#96989A</color>
+    <color name="color_grey_dark">#797979</color>
 
     <color name="chip_selected_background">@color/primary</color>
     <color name="chip_selected_text">@color/white</color>

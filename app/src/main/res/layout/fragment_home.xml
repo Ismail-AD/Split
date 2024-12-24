@@ -9,7 +9,37 @@
     android:padding="16dp"
     tools:context=".UI.Fragment.HomeFragment">
 
-    <!-- Greeting Header -->
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmer_view_top"
+        android:layout_width="match_parent"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_height="wrap_content"
+        app:shimmer_duration="1000">
+
+        <ViewStub
+            android:id="@+id/shimmer_view_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </com.facebook.shimmer.ShimmerFrameLayout>
+
+
+
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmer_view_container"
+        android:layout_below="@id/shimmer_view_top"
+        android:layout_width="match_parent"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_height="match_parent"
+        app:shimmer_duration="1000">
+
+        <ViewStub
+            android:id="@+id/shimmer_view_home"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </com.facebook.shimmer.ShimmerFrameLayout>
+
     <LinearLayout
         android:id="@+id/topLayer"
         android:layout_width="match_parent"
@@ -18,13 +48,6 @@
         android:orientation="horizontal"
         android:paddingBottom="8dp">
 
-        <ProgressBar
-            android:id="@+id/progres"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:indeterminateTint="@color/gray"
-            android:visibility="visible" />
 
         <TextView
             android:id="@+id/name"
@@ -33,8 +56,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Hello, Margo ✌️"
-            android:textSize="18sp"
-            android:visibility="gone" />
+            android:textSize="18sp"/>
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/circular_image"
@@ -45,160 +67,167 @@
             app:shapeAppearanceOverlay="@style/CircularImageStyle" />
     </LinearLayout>
 
-    <!-- Title -->
-    <TextView
-        android:id="@+id/heyMessage"
-        style="@style/billWordColor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:id="@+id/mainBody"
         android:layout_below="@id/topLayer"
-        android:paddingBottom="16dp"
-        android:text="Split your bill"
-        android:textSize="32sp"
-        android:textStyle="bold" />
+        android:layout_height="match_parent">
+        <!-- Greeting Header -->
 
-    <!-- Card View Section -->
-    <LinearLayout
-        android:id="@+id/cameraInput"
-        android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:layout_below="@id/heyMessage"
-        android:layout_marginBottom="16dp"
-        android:background="@drawable/rounded_card_background"
-        android:gravity="center"
-        android:orientation="vertical">
-
+        <!-- Title -->
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Need to divide amount?"
-            android:textColor="#1C1C1E"
-            android:textSize="18sp" />
-
-        <Button
-            android:id="@+id/open_camera_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/_7sdp"
-            android:backgroundTint="#1C1C1E"
-            android:text="Open camera or upload bill"
-            android:textColor="#FFFFFF" />
-    </LinearLayout>
-
-    <!-- Recent Bills Header -->
-    <LinearLayout
-        android:id="@+id/recentTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/cameraInput"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <TextView
-            style="@style/billWordColor"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Recent bills"
-            android:textSize="18sp" />
-
-        <TextView
-            android:id="@+id/see_all"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:text="See all"
-            android:textColor="#8A56AC"
-            android:textSize="14sp" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/noBill"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/recentTitle"
-        android:gravity="center"
-        android:visibility="gone">
-
-        <TextView
+            android:id="@+id/heyMessage"
             style="@style/billWordColor"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No bills created yet!"
-            android:textSize="18sp" />
-    </LinearLayout>
+            android:paddingBottom="16dp"
+            android:text="Split your bill"
+            android:textSize="32sp"
+            android:textStyle="bold" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view_recent_bills"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/recentTitle"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="@dimen/_50sdp"
-        android:clipToPadding="false" />
+        <!-- Card View Section -->
+        <LinearLayout
+            android:id="@+id/cameraInput"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:layout_below="@id/heyMessage"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/rounded_card_background"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Need to divide amount?"
+                android:textColor="#1C1C1E"
+                android:textSize="18sp" />
+
+            <Button
+                android:id="@+id/open_camera_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/_7sdp"
+                android:backgroundTint="#1C1C1E"
+                android:text="Open camera or upload bill"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- Recent Bills Header -->
+        <LinearLayout
+            android:id="@+id/recentTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/cameraInput"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/billWordColor"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Recent bills"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/see_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:text="See all"
+                android:textColor="#8A56AC"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/noBill"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/recentTitle"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <TextView
+                style="@style/billWordColor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No bills created yet!"
+                android:textSize="18sp" />
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_view_recent_bills"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/recentTitle"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="@dimen/_50sdp"
+            android:clipToPadding="false" />
 
 
-    <!-- FAB Menu -->
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraintFabMenu"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="@dimen/_42sdp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/mainFab"
+        <!-- FAB Menu -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraintFabMenu"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="15dp"
-            android:layout_marginEnd="15dp"
-            android:layout_marginBottom="8dp"
-            app:backgroundTint="@color/green"
-            app:borderWidth="0dp"
-            app:elevation="6dp"
-            app:fabCustomSize="56dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="@dimen/_42sdp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:maxImageSize="24dp"
-            app:srcCompat="@drawable/list"
-            app:tint="@color/white" />
+            app:layout_constraintEnd_toEndOf="parent">
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/contactFab"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="invisible"
-            app:layout_constraintBottom_toTopOf="@id/mainFab"
-            app:layout_constraintEnd_toEndOf="@id/mainFab"
-            android:layout_marginBottom="@dimen/_10sdp"
-            app:backgroundTint="@color/green"
-            app:srcCompat="@drawable/add_contac"
-            app:tint="@color/white"
-            app:fabCustomSize="56dp"
-            app:maxImageSize="24dp"
-            app:borderWidth="0dp"
-            app:elevation="6dp" />
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/mainFab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:layout_marginBottom="8dp"
+                app:backgroundTint="@color/green"
+                app:borderWidth="0dp"
+                app:elevation="6dp"
+                app:fabCustomSize="56dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:maxImageSize="24dp"
+                app:srcCompat="@drawable/list"
+                app:tint="@color/white" />
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/expenseFab"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:visibility="invisible"
-            app:backgroundTint="@color/green"
-            app:layout_constraintBottom_toTopOf="@id/contactFab"
-            app:layout_constraintEnd_toEndOf="@id/contactFab"
-            app:srcCompat="@drawable/history_night"
-            app:tint="@color/white"
-            app:fabCustomSize="56dp"
-            app:maxImageSize="24dp"
-            app:borderWidth="0dp"
-            app:elevation="6dp" />
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/contactFab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="invisible"
+                app:layout_constraintBottom_toTopOf="@id/mainFab"
+                app:layout_constraintEnd_toEndOf="@id/mainFab"
+                android:layout_marginBottom="@dimen/_10sdp"
+                app:backgroundTint="@color/green"
+                app:srcCompat="@drawable/add_contac"
+                app:tint="@color/white"
+                app:fabCustomSize="56dp"
+                app:maxImageSize="24dp"
+                app:borderWidth="0dp"
+                app:elevation="6dp" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/expenseFab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:visibility="invisible"
+                app:backgroundTint="@color/green"
+                app:layout_constraintBottom_toTopOf="@id/contactFab"
+                app:layout_constraintEnd_toEndOf="@id/contactFab"
+                app:srcCompat="@drawable/history_night"
+                app:tint="@color/white"
+                app:fabCustomSize="56dp"
+                app:maxImageSize="24dp"
+                app:borderWidth="0dp"
+                app:elevation="6dp" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </RelativeLayout>
 
 </RelativeLayout>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F2F3F5">
+
+    <!-- Title Shimmer -->
+    <View
+        android:id="@+id/heyMessage"
+        android:layout_width="200dp"
+        android:layout_height="58dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_shimmer" />
+
+    <!-- Card View Section Shimmer -->
+    <LinearLayout
+        android:id="@+id/cameraInput"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_below="@id/heyMessage"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_shimmer"
+        android:orientation="vertical" />
+
+    <!-- Recent Bills Header Shimmer -->
+    <LinearLayout
+        android:id="@+id/recentTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/cameraInput"
+        android:orientation="horizontal">
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="24dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="@dimen/_10sdp"
+            android:background="@drawable/bg_shimmer" />
+
+        <View
+            android:layout_width="60dp"
+            android:layout_height="24dp"
+            android:background="@drawable/bg_shimmer" />
+    </LinearLayout>
+
+    <!-- Recycler Items Shimmer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/recentTitle"
+        android:layout_marginTop="18dp"
+        android:orientation="vertical">
+
+        <!-- Repeat this for multiple items -->
+        <include layout="@layout/item_bill_shimmer" />
+        <include layout="@layout/item_bill_shimmer" />
+        <include layout="@layout/item_bill_shimmer" />
+        <include layout="@layout/item_bill_shimmer" />
+    </LinearLayout>
+
+</RelativeLayout>

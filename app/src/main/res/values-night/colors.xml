@@ -13,4 +13,8 @@
     <color name="tabtext">#FFFFFF</color>
     <color name="error_red">#FF5252</color>
 
+
+    <color name="color_grey_soft">#BCBEC1</color>
+    <color name="color_grey_medium">#96989A</color>
+    <color name="color_grey_dark">#797979</color>
 </resources>
