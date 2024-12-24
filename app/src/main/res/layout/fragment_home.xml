@@ -9,36 +9,34 @@
     android:padding="16dp"
     tools:context=".UI.Fragment.HomeFragment">
 
-    <com.facebook.shimmer.ShimmerFrameLayout
-        android:id="@+id/shimmer_view_top"
+    <RelativeLayout
+        android:id="@+id/shimmerContainer"
         android:layout_width="match_parent"
-        android:layout_alignWithParentIfMissing="true"
-        android:layout_height="wrap_content"
-        app:shimmer_duration="1000">
+        android:layout_height="match_parent">
 
-        <ViewStub
-            android:id="@+id/shimmer_view_bar"
+        <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/shimmer_view_top"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            app:shimmer_duration="1000">
+            <ViewStub
+                android:id="@+id/shimmer_view_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.facebook.shimmer.ShimmerFrameLayout>
 
-    </com.facebook.shimmer.ShimmerFrameLayout>
-
-
-
-    <com.facebook.shimmer.ShimmerFrameLayout
-        android:id="@+id/shimmer_view_container"
-        android:layout_below="@id/shimmer_view_top"
-        android:layout_width="match_parent"
-        android:layout_alignWithParentIfMissing="true"
-        android:layout_height="match_parent"
-        app:shimmer_duration="1000">
-
-        <ViewStub
-            android:id="@+id/shimmer_view_home"
+        <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/shimmer_view_container"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-    </com.facebook.shimmer.ShimmerFrameLayout>
+            android:layout_height="match_parent"
+            android:layout_below="@id/shimmer_view_top"
+            app:shimmer_duration="1000">
+            <ViewStub
+                android:id="@+id/shimmer_view_home"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.facebook.shimmer.ShimmerFrameLayout>
+    </RelativeLayout>
 
     <LinearLayout
         android:id="@+id/topLayer"

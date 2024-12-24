@@ -52,6 +52,8 @@ class HomeFragment : Fragment() {
 
     @Inject
     lateinit var firebaseDatabase: FirebaseDatabase
+    private var isTopDataReady = false
+    private var isMainDataReady = false
 
     @Inject
     lateinit var firebaseAuth: FirebaseAuth
@@ -98,7 +100,6 @@ class HomeFragment : Fragment() {
         (activity as? EntryActivity)?.showBottomBar()
         dialog = Dialog(requireContext())
         setupShimmer()
-        setupShimmerTopBar()
         binding.mainFab.setOnClickListener {
             if (isExpanded) shrinkFab() else expandFab()
         }
@@ -156,18 +157,19 @@ class HomeFragment : Fragment() {
 //        }
 
 
-
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 mainViewModel.allExpensesState.collect { state ->
                     when (state) {
                         is UiState.Loading -> {
-                            Log.d("CALLED", "loading.....")
-                            showShimmer()
+                            if (!returnShimmerState()) {
+                                showShimmer()
+                            }
                         }
 
                         is UiState.Success -> {
-                            hideShimmer()
+                            isMainDataReady = true
+                            checkAndShowContent()
                             expenses = state.data
                             expenses.entries.groupBy { it.key }
                                 .mapValues { entry ->
@@ -180,14 +182,17 @@ class HomeFragment : Fragment() {
                         }
 
                         is UiState.Error -> {
-                            hideShimmer()
+                            isMainDataReady = true
+                            checkAndShowContent()
                             if (expenses.isEmpty()) {
                                 binding.noBill.visibility = View.VISIBLE
                                 binding.recyclerViewRecentBills.visibility = View.GONE
                             }
                         }
 
-                        UiState.Stable -> TODO()
+                        UiState.Stable -> {
+                            isMainDataReady = true
+                        }
                     }
                 }
             }
@@ -209,6 +214,7 @@ class HomeFragment : Fragment() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 mainViewModel.userData.collect { user ->
                     user?.let {
+                        isTopDataReady = true
                         binding.name.text = "Hello, ${it.name} ✌\uFE0F"
                         binding.name.visibility = View.VISIBLE
                     }
@@ -218,10 +224,12 @@ class HomeFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 mainViewModel.loadingState.collect { user ->
-                    if(user){
-                        showShimmerTopBar()
-                    } else{
-                        hideShimmerTopBar()
+                    if (user) {
+                        if (!returnShimmerState()) {
+                            showShimmer()
+                        }
+                    } else {
+                        checkAndShowContent()
                     }
                 }
             }
@@ -229,52 +237,45 @@ class HomeFragment : Fragment() {
 
     }
 
-    private fun setupShimmerTopBar() {
-        // Set the layout for the ViewStub
-        binding.shimmerViewBar.layoutResource = R.layout.top_bar_shimmer
-        binding.shimmerViewBar.inflate()
-
-        // Start shimmer animation
-        binding.shimmerViewContainer.startShimmer()
-    }
-
-    private fun showShimmerTopBar() {
-        binding.shimmerViewTop.visibility = View.VISIBLE
-        binding.shimmerViewTop.startShimmer()
-
-        // Hide actual content while shimmer is showing
-        binding.topLayer.visibility = View.GONE
-    }
-
-    private fun hideShimmerTopBar() {
-        binding.shimmerViewTop.stopShimmer()
-        binding.shimmerViewTop.visibility = View.GONE
-        binding.topLayer.visibility = View.VISIBLE
-
-    }
 
     private fun setupShimmer() {
         // Set the layout for the ViewStub
         binding.shimmerViewHome.layoutResource = R.layout.home_page_shimmer
         binding.shimmerViewHome.inflate()
+        binding.shimmerViewBar.layoutResource = R.layout.top_bar_shimmer
+        binding.shimmerViewBar.inflate()
 
-        // Start shimmer animation
-        binding.shimmerViewContainer.startShimmer()
+    }
+
+    fun returnShimmerState(): Boolean {
+        return binding.shimmerViewTop.isShimmerStarted
     }
 
     private fun showShimmer() {
-        binding.shimmerViewContainer.visibility = View.VISIBLE
-        binding.shimmerViewContainer.startShimmer()
-
-        // Hide actual content while shimmer is showing
+        binding.shimmerContainer.visibility = View.VISIBLE
+        binding.topLayer.visibility = View.GONE
         binding.mainBody.visibility = View.GONE
+        binding.shimmerViewTop.startShimmer()
+        binding.shimmerViewContainer.startShimmer()
+    }
+
+    private fun checkAndShowContent() {
+        if (isTopDataReady && isMainDataReady) {
+            hideShimmer()
+        }
     }
 
     private fun hideShimmer() {
-        binding.shimmerViewContainer.stopShimmer()
-        binding.shimmerViewContainer.visibility = View.GONE
-        binding.mainBody.visibility = View.VISIBLE
+        // Only show content when both top and main data are ready
+        if (isTopDataReady && isMainDataReady) {
+            binding.shimmerContainer.visibility = View.GONE
+            binding.shimmerViewTop.stopShimmer()
+            binding.shimmerViewContainer.stopShimmer()
 
+            // Show both layouts together
+            binding.topLayer.visibility = View.VISIBLE
+            binding.mainBody.visibility = View.VISIBLE
+        }
     }
 
 
@@ -319,7 +320,8 @@ class HomeFragment : Fragment() {
     }
 
     private fun onExpenseClicked() {
-        val action = HomeFragmentDirections.actionHomePageToPersonalExpenseFragment(null,null, null)
+        val action =
+            HomeFragmentDirections.actionHomePageToPersonalExpenseFragment(null, null, null)
         findNavController().navigate(action)
     }
 

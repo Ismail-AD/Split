@@ -1,4 +1,4 @@
-package com.appdev.split
+package com.appdev.split.UI.Activity
 
 import android.app.Dialog
 import android.os.Bundle
@@ -19,7 +19,7 @@ import com.appdev.split.Adapters.AllFriendExpenseAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
-import com.appdev.split.UI.Activity.EntryActivity
+import com.appdev.split.R
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentFriendsAllExpensesBinding
 import com.google.firebase.auth.FirebaseAuth
@@ -54,7 +54,7 @@ class FriendsAllExpenses : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentFriendsAllExpensesBinding.inflate(layoutInflater, container, false)
-
+        setupShimmer()
         return binding.root
     }
 
@@ -118,20 +118,51 @@ class FriendsAllExpenses : Fragment() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 mainViewModel.FriendState.collect { state ->
                     when (state) {
-                        is UiState.Loading -> showLoadingIndicator()
+                        is UiState.Loading -> showShimmer()
                         is UiState.Success -> {
-                            hideLoadingIndicator()
+                            hideShimmer()
                             binding.contact.text = state.data.name
                         }
 
-                        is UiState.Error -> showError(state.message)
+                        is UiState.Error -> {
+                            hideShimmer()
+                            showError(state.message)
+                        }
                         UiState.Stable -> {
-
+                            hideShimmer()
                         }
                     }
                 }
             }
         }
+    }
+
+    private fun setupShimmer() {
+        // Set the layout for the ViewStub
+        binding.shimmerViewFriendExpenses.layoutResource = R.layout.shimmer_friend_all_expense
+        binding.shimmerViewFriendExpenses.inflate()
+
+        binding.shimmerViewContainer.startShimmer()
+    }
+
+    private fun showShimmer() {
+        binding.shimmerViewContainer.visibility = View.VISIBLE
+        binding.shimmerViewContainer.startShimmer()
+
+        // Hide actual content while shimmer is showing
+        binding.topBar.visibility = View.GONE
+        binding.ImageOfExpense.visibility = View.GONE
+        binding.BottomAllContent.visibility = View.GONE
+    }
+
+    private fun hideShimmer() {
+        binding.shimmerViewContainer.stopShimmer()
+        binding.shimmerViewContainer.visibility = View.GONE
+        // Hide actual content while shimmer is showing
+        binding.topBar.visibility = View.VISIBLE
+        binding.ImageOfExpense.visibility = View.VISIBLE
+        binding.BottomAllContent.visibility = View.VISIBLE
+
     }
 
     private fun showError(message: String) {

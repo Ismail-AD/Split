@@ -5,10 +5,25 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    tools:context=".FriendsAllExpenses">
+    tools:context=".UI.Activity.FriendsAllExpenses">
 
-    <!-- Header with Gradient -->
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmer_view_container"
+        android:layout_below="@id/shimmer_view_top"
+        android:layout_width="match_parent"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_height="match_parent"
+        app:shimmer_duration="1000">
+
+        <ViewStub
+            android:id="@+id/shimmer_view_friendExpenses"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </com.facebook.shimmer.ShimmerFrameLayout>
+
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="@dimen/_80sdp">
 
@@ -47,6 +62,7 @@
     <ImageView
         android:layout_width="76dp"
         android:layout_height="76dp"
+        android:id="@+id/ImageOfExpense"
         android:layout_gravity="start"
         android:layout_marginStart="@dimen/_50sdp"
         android:layout_marginTop="@dimen/_50sdp"
@@ -59,6 +75,7 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:id="@+id/BottomAllContent"
         android:layout_marginTop="@dimen/_100sdp"
         android:fillViewport="true">
 
@@ -155,7 +172,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="@dimen/_10sdp"
-        android:layout_marginBottom="@dimen/_55sdp"
+        android:layout_marginBottom="@dimen/_20sdp"
         android:text="Add expense"
         android:textColor="@color/white"
         app:backgroundTint="@color/green"

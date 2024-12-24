@@ -16,7 +16,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.TransactionItemAdapter
-import com.appdev.split.FriendsAllExpensesDirections
 import com.appdev.split.Model.Data.Bill
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
@@ -70,7 +69,6 @@ class BillDetails : Fragment() {
         binding.backBtn.setOnClickListener {
             findNavController().navigateUp()
         }
-        Log.d("CHKIAMG", "I am here")
 
         bill = args.billData
         friendContact = Friend(contact = args.friendContact, name = args.friendName)
@@ -88,7 +86,7 @@ class BillDetails : Fragment() {
 
                     val expenseRecord = snapshot.getValue(ExpenseRecord::class.java)
 
-                    if (expenseRecord !=null && expenseRecord != bill) {
+                    if (expenseRecord != null && expenseRecord != bill) {
                         bill = expenseRecord
                         updateData()
                     }
@@ -122,7 +120,7 @@ class BillDetails : Fragment() {
 
 
         binding.title.text = bill.title
-        binding.date.text = Utils.formatDate(bill.date)
+        binding.date.text = "Added by you on " + Utils.formatDate(bill.date)
         binding.totalAmount.text = Utils.extractCurrencyCode(bill.currency) + bill.amount.toString()
 
 
@@ -135,31 +133,36 @@ class BillDetails : Fragment() {
     fun updateData() {
         if (bill.lentAmount > 0f) {
             val youPaid = bill.paidAmount - bill.lentAmount
-            if (bill.paidAmount == bill.lentAmount) {
-                binding.OwnerpaidStatement.text = "You paid "
+            val amountText = if (youPaid == 0f) {
+                bill.paidAmount.toString()
             } else {
-                binding.OwnerpaidStatement.text = "You owes "
+                youPaid.toString()
             }
-            binding.Ownersplit.text = youPaid.toString()
+            if (bill.paidAmount == bill.lentAmount) {
+                binding.OwnerpaidStatement.text =
+                    "You paid " + Utils.extractCurrencyCode(bill.currency) + amountText
+            } else {
+                binding.OwnerpaidStatement.text =
+                    "You owes " + Utils.extractCurrencyCode(bill.currency) + amountText
+            }
             friendContact?.let { friend ->
-                binding.friendSplitStatement.text = friend.name + " owes "
+                binding.friendSplitStatement.text =
+                    friend.name + " owes " + Utils.extractCurrencyCode(bill.currency) + bill.lentAmount.toString()
             }
-            binding.friendSplit.text =
-                Utils.extractCurrencyCode(bill.currency) + bill.lentAmount.toString()
+
+
         } else if (bill.borrowedAmount > 0f) {
             val youPaid = bill.paidAmount - bill.borrowedAmount
             friendContact?.let { friend ->
                 if (bill.paidAmount == bill.borrowedAmount) {
-                    binding.friendSplitStatement.text = friend.name + " paid "
+                    binding.friendSplitStatement.text = friend.name + " paid " + youPaid.toString()
                 } else {
-                    binding.OwnerpaidStatement.text = friend.name + " owes "
+                    binding.OwnerpaidStatement.text = friend.name + " owes " + youPaid.toString()
                 }
             }
-            binding.friendSplit.text = youPaid.toString()
+            binding.OwnerpaidStatement.text =
+                "You owes " + Utils.extractCurrencyCode(bill.currency) + bill.borrowedAmount.toString()
 
-            binding.OwnerpaidStatement.text = "You owes "
-            binding.Ownersplit.text =
-                Utils.extractCurrencyCode(bill.currency) + bill.borrowedAmount.toString()
         }
     }
 

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/_2sdp"
+        android:layout_gravity="end">
+
+        <!-- Shimmer for check icon -->
+        <View
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="@drawable/bg_round_shimmer" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:paddingHorizontal="@dimen/_13sdp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <!-- Shimmer for profile image -->
+        <View
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:background="@drawable/bg_round_shimmer" />
+
+        <!-- Shimmer for name text -->
+        <View
+            android:layout_width="130dp"
+            android:layout_height="16dp"
+            android:layout_marginTop="@dimen/_7sdp"
+            android:background="@drawable/bg_shimmer" />
+    </LinearLayout>
+
+</LinearLayout>

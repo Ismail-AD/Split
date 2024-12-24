@@ -134,7 +134,7 @@
     </fragment>
     <fragment
         android:id="@+id/personalExpenseFragment"
-        android:name="com.appdev.split.PersonalExpenseFragment"
+        android:name="com.appdev.split.UI.Fragment.SingleDostAddExpenseFragment"
         android:label="fragment_personal_expense"
         tools:layout="@layout/fragment_personal_expense" >
 
@@ -155,7 +155,7 @@
     </fragment>
     <fragment
         android:id="@+id/friendsAllExpenses"
-        android:name="com.appdev.split.FriendsAllExpenses"
+        android:name="com.appdev.split.UI.Activity.FriendsAllExpenses"
         android:label="fragment_friends_all_expenses"
         tools:layout="@layout/fragment_friends_all_expenses" >
         <action

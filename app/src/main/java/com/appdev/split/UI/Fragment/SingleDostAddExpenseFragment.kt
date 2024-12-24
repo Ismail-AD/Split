@@ -1,4 +1,4 @@
-package com.appdev.split
+package com.appdev.split.UI.Fragment
 
 import android.app.DatePickerDialog
 import android.app.Dialog
@@ -14,9 +14,7 @@ import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.cardview.widget.CardView
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -25,17 +23,16 @@ import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
+import com.appdev.split.R
 import com.appdev.split.UI.Activity.EntryActivity
-import com.appdev.split.UI.Fragment.AddGrpExpenseFragmentDirections
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentPersonalExpenseBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
 
-class PersonalExpenseFragment : Fragment() {
+class SingleDostAddExpenseFragment : Fragment() {
 
     private var _binding: FragmentPersonalExpenseBinding? = null
     private val binding get() = _binding!!
@@ -48,13 +45,13 @@ class PersonalExpenseFragment : Fragment() {
     var selectedDate = Utils.getCurrentDate()
     lateinit var dialog: Dialog
 
-    val args: PersonalExpenseFragmentArgs by navArgs()
+    val args: SingleDostAddExpenseFragmentArgs by navArgs()
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentPersonalExpenseBinding.inflate(layoutInflater, container, false)
-
+        setupShimmer()
         return binding.root
     }
 
@@ -84,6 +81,30 @@ class PersonalExpenseFragment : Fragment() {
         setupNavigationListeners()
         setupSaveData()
 
+
+    }
+
+    private fun setupShimmer() {
+        // Set the layout for the ViewStub
+        binding.shimmerViewFriendList.layoutResource = R.layout.friendslist_shimmer
+        binding.shimmerViewFriendList.inflate()
+
+        binding.shimmerViewContainer.startShimmer()
+    }
+
+    private fun showShimmer() {
+        binding.shimmerViewContainer.visibility = View.VISIBLE
+        binding.shimmerViewContainer.startShimmer()
+
+        // Hide actual content while shimmer is showing
+        binding.selectedFrisRecyclerView.visibility = View.GONE
+    }
+
+    private fun hideShimmer() {
+        binding.shimmerViewContainer.stopShimmer()
+        binding.shimmerViewContainer.visibility = View.GONE
+
+        binding.selectedFrisRecyclerView.visibility = View.VISIBLE
 
     }
 
@@ -310,13 +331,16 @@ class PersonalExpenseFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             mainViewModel.contactsState.collect { contactsState ->
                 when (contactsState) {
-                    is UiState.Loading -> showLoadingIndicator()
+                    is UiState.Loading -> showShimmer()
                     is UiState.Success -> {
-                        hideLoadingIndicator()
+                        hideShimmer()
                         updateFriendsList(contactsState.data)
                     }
 
-                    is UiState.Error -> showError(contactsState.message)
+                    is UiState.Error -> {
+                        hideShimmer()
+                        showError(contactsState.message)
+                    }
                     else -> {}
                 }
             }
@@ -472,7 +496,7 @@ class PersonalExpenseFragment : Fragment() {
             bottomSheetDialog.dismiss()
             if (validateAndSave()) {
                 val action = binding.amount.editText?.let { it1 ->
-                    PersonalExpenseFragmentDirections.actionPersonalExpenseFragmentToSplitAmountFragment(
+                    SingleDostAddExpenseFragmentDirections.actionPersonalExpenseFragmentToSplitAmountFragment(
                         null,
                         it1.text.toString()
                             .toFloat(),
