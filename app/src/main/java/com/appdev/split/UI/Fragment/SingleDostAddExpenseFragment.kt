@@ -88,8 +88,6 @@ class SingleDostAddExpenseFragment : Fragment() {
         // Set the layout for the ViewStub
         binding.shimmerViewFriendList.layoutResource = R.layout.friendslist_shimmer
         binding.shimmerViewFriendList.inflate()
-
-        binding.shimmerViewContainer.startShimmer()
     }
 
     private fun showShimmer() {
@@ -292,6 +290,7 @@ class SingleDostAddExpenseFragment : Fragment() {
         // Hide contact list as it's not required when editing
         binding.selectedFrisRecyclerView.visibility = View.GONE
         binding.noFriends.visibility = View.GONE
+        binding.shimmerViewContainer.visibility = View.GONE
         binding.titleFriends.visibility = View.GONE
         binding.titleTextView.text = "Update expense"
     }

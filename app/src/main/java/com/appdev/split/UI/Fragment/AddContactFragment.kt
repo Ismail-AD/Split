@@ -19,6 +19,7 @@ import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
+import com.appdev.split.UI.Activity.EntryActivity
 import com.appdev.split.databinding.FragmentAddContactBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -40,6 +41,7 @@ class AddContactFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         dialog = Dialog(requireContext())
         binding.doneTextView.setOnClickListener {
             if (validateFields()) {
@@ -124,6 +126,7 @@ class AddContactFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+
         _binding = null
     }
 }

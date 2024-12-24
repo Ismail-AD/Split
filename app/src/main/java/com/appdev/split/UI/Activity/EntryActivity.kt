@@ -34,6 +34,7 @@ class EntryActivity : AppCompatActivity() {
                     R.id.home_page -> {
                         navController.navigate(R.id.home_page)
                     }
+
                     R.id.group -> {
                         navController.navigate(R.id.group)
                     }
@@ -51,6 +52,26 @@ class EntryActivity : AppCompatActivity() {
                     }
                 }
             }
+
+            val destinationsWithHiddenBottomBar = setOf(
+                R.id.addContactFragment,
+                R.id.addGrpExpenseFragment,
+                R.id.addMembersFragment,
+                R.id.friendsAllExpenses,
+                R.id.addGroupFragment,
+                R.id.billDetails,
+                R.id.personalExpenseFragment
+
+                // Add other fragment IDs where you want to hide the bottom bar
+            )
+
+            navController.addOnDestinationChangedListener { _, destination, _ ->
+                if (destination.id in destinationsWithHiddenBottomBar) {
+                    hideBottomBar()
+                } else {
+                    showBottomBar()
+                }
+            }
         }
     }
 
@@ -58,6 +79,7 @@ class EntryActivity : AppCompatActivity() {
         val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
         return currentNightMode == Configuration.UI_MODE_NIGHT_YES
     }
+
     // Function to show bottom bar
     fun showBottomBar() {
         binding.bottomBar.visibility = View.VISIBLE

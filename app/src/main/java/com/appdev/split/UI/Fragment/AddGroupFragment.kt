@@ -30,7 +30,6 @@ class AddGroupFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        (activity as? EntryActivity)?.hideBottomBar()
         val chips = listOf(binding.chipTrip, binding.chipHome, binding.chipCouple)
         chips.forEach { chip ->
             chip.setOnClickListener {
@@ -63,7 +62,6 @@ class AddGroupFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        (activity as? EntryActivity)?.showBottomBar()
 
         _binding = null
     }

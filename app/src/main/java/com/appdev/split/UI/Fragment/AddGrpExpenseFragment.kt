@@ -55,7 +55,6 @@ class AddGrpExpenseFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        (activity as? EntryActivity)?.hideBottomBar()
         dialog = Dialog(requireContext())
 
         binding.currencySpinner.selectItemByIndex(0)
@@ -221,7 +220,6 @@ class AddGrpExpenseFragment : Fragment() {
 
     override fun onDestroy() {
         super.onDestroy()
-        (activity as? EntryActivity)?.showBottomBar()
-
+        _binding=null
     }
 }

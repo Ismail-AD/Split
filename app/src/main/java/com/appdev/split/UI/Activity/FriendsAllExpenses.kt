@@ -66,7 +66,6 @@ class FriendsAllExpenses : Fragment() {
         }
         Log.d("CHKIAMG", "I am at list")
         mainViewModel.updateStateToStable()
-        (activity as? EntryActivity)?.hideBottomBar()
         var billList = args.bilList.toList()
         updateRecyclerView(billList)
 

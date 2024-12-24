@@ -150,7 +150,6 @@ class AddMembersFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        (activity as? EntryActivity)?.hideBottomBar()
         val isGroupContact = args.isGroupContact
         if (isGroupContact) {
             binding.friendsTitle.visibility = View.VISIBLE
@@ -287,7 +286,6 @@ class AddMembersFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        (activity as? EntryActivity)?.showBottomBar()
 
         _binding = null
     }
