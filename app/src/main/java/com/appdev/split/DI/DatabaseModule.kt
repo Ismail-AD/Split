@@ -16,7 +16,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object DatabaseModule {
+class DatabaseModule {
 
     @Provides
     @Singleton
@@ -29,6 +29,7 @@ object DatabaseModule {
     }
 
     @Provides
+    @Singleton
     fun provideContactDao(database: AppDatabase): ContactDao {
         return database.contactDao()
     }

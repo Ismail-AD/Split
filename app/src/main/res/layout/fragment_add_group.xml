@@ -13,9 +13,10 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp">
 
-        <ImageView
+        <ImageButton
             android:id="@+id/closeIcon"
             style="@style/iconTintColor"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
@@ -35,7 +36,7 @@
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/doneTextView"
+            android:id="@+id/saveGroup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
@@ -70,7 +71,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Username"
+                android:hint="Group name"
                 android:inputType="text"
                 android:textColor="@color/black"
                 android:textColorHint="@color/green_2" />

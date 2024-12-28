@@ -5,13 +5,12 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.appdev.split.Model.Data.ExpenseRecord
-import com.appdev.split.Model.Data.ExpenseUserInput
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
+import com.appdev.split.Model.Data.GroupMetaData
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Repository.Repo
-import com.appdev.split.Utils.Utils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -46,6 +45,10 @@ class MainViewModel @Inject constructor(
     val allExpensesState: StateFlow<UiState<Map<String, List<ExpenseRecord>>>> get() = _allExpensesState
 
 
+    private val _groupsState = MutableStateFlow<UiState<List<GroupMetaData>>>(UiState.Loading)
+    val GroupsState: StateFlow<UiState<List<GroupMetaData>>> get() = _groupsState
+
+
     private val _individualFriendState = MutableStateFlow<UiState<Friend>>(UiState.Loading)
     val FriendState: StateFlow<UiState<Friend>> get() = _individualFriendState
 
@@ -66,6 +69,56 @@ class MainViewModel @Inject constructor(
     fun updateStateToStable() {
         _operationState.value = UiState.Stable
     }
+
+    //---------------------ADD GROUP-------------------------
+
+    fun getAllGroups() {
+        _groupsState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.email?.let { mail ->
+                    repo.getAllGroups(
+                        mail = mail, onSuccess = { list ->
+                            _groupsState.value = UiState.Success(list)
+                        }
+                    ) { error ->
+                        _groupsState.value = UiState.Error(error)
+                    }
+                }
+            } catch (e: Exception) {
+                _allExpensesState.value =
+                    UiState.Error(e.message ?: "Failed to retrieve all groups")
+            }
+        }
+    }
+
+    fun saveNewGroup(
+        imageUri: Uri?,
+        imagebytes: ByteArray?,
+        title: String,
+        groupType: String,
+    ) {
+        _operationState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.email?.let { mail ->
+                    repo.uploadImageAndSaveGroup(
+                        mail,
+                        imageUri,
+                        imagebytes,
+                        title, groupType, onSuccess = { message, grpId ->
+                            _operationState.value = UiState.Success(Unit)
+                        }
+                    ) { message ->
+                        _operationState.value = UiState.Error(message)
+                    }
+                }
+            } catch (e: Exception) {
+                _operationState.value = UiState.Error(e.message ?: "Failed to save group")
+            }
+        }
+    }
+
 
     //---------------------Friend Expense----------------------
     fun saveFriendExpense(

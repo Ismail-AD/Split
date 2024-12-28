@@ -2,27 +2,139 @@ package com.appdev.split.Repository
 
 import android.net.Uri
 import android.util.Log
+import androidx.core.net.toFile
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
+import com.appdev.split.Model.Data.GroupMetaData
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Room.DaoClasses.ContactDao
 import com.appdev.split.Utils.Utils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.storage.storage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import java.util.UUID
+
 import javax.inject.Inject
 
 class Repo @Inject constructor(
     private val contactDao: ContactDao,
     private val firebaseDatabase: FirebaseDatabase,
-    val firebaseAuth: FirebaseAuth
+    val firebaseAuth: FirebaseAuth,
+    val supabaseClient: SupabaseClient
 ) {
 
     val currentUser = firebaseAuth.currentUser
+    private val bucketId = "groupImages"
+    private val folderPath = "public/7pgyxj_1"
+
+    suspend fun uploadImageAndSaveGroup(
+        mail: String,
+        imageUri: Uri?, // Make imageUri nullable
+        imageBytes: ByteArray?, // Make imageUri nullable
+        title: String,
+        groupType: String,
+        onSuccess: (String, String) -> Unit, // (message, groupId)
+        onError: (String) -> Unit
+    ) {
+        try {
+            val publicUrl = if (imageUri != null && imageBytes != null) {
+                uploadImageToSupabase(imageUri, imageBytes)
+            } else {
+                "" // Use an empty string or a placeholder URL
+            }
+
+            val groupId = saveGroupToFirebase(publicUrl, title, groupType, mail)
+            onSuccess("Group created successfully", groupId)
+        } catch (e: Exception) {
+            onError("Failed to create group: ${e.message}")
+        }
+    }
+
+    private suspend fun uploadImageToSupabase(imageUri: Uri, imageBytes: ByteArray): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val extension = imageUri.lastPathSegment?.substringAfterLast('.') ?: "jpg"
+                val fileName = "${UUID.randomUUID()}.$extension"
+                val fullPath = "$folderPath/$fileName"
+
+                val bucket = supabaseClient.storage.from(bucketId)
+                bucket.upload(
+                    path = fullPath,
+                    data = imageBytes
+                ) {
+                    upsert = false
+                }
+
+                bucket.publicUrl(fullPath)
+            } catch (e: Exception) {
+                throw Exception("Failed to upload image: ${e.message}")
+            }
+        }
+    }
+
+    private suspend fun saveGroupToFirebase(
+        imageUrl: String,
+        title: String,
+        groupType: String,
+        mail: String
+    ): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val sanitizedMail = Utils.sanitizeEmailForFirebase(mail)
+                val groupRef = firebaseDatabase.reference
+                    .child("groups").child(sanitizedMail)
+                    .push()
+
+                val groupId = groupRef.key ?: throw Exception("Failed to generate group ID")
+                val groupData = GroupMetaData(
+                    groupId = groupId,
+                    image = imageUrl,
+                    title = title,
+                    groupType = groupType
+                )
+
+                groupRef.setValue(groupData).await()
+                groupId
+            } catch (e: Exception) {
+                throw Exception("Failed to save group data: ${e.message}")
+            }
+        }
+    }
+
+    suspend fun getAllGroups(mail: String, onSuccess: (List<GroupMetaData>) -> Unit, onError: (String) -> Unit) {
+        try {
+            val sanitizedMail = Utils.sanitizeEmailForFirebase(mail)
+            val groupsRef = firebaseDatabase.reference
+                .child("groups").child(sanitizedMail)
+
+            val snapshot = groupsRef.get().await()
+            val groups = mutableListOf<GroupMetaData>()
+
+            if (snapshot.exists()) {
+                for (groupSnapshot in snapshot.children) {
+                    val group = groupSnapshot.getValue(GroupMetaData::class.java)
+                    group?.let { groups.add(it) }
+                }
+            }
+
+            onSuccess(groups)
+        } catch (e: Exception) {
+            Log.d("CJKA","${e.message}")
+            onError("Failed to fetch groups: ${e.message}")
+        }
+    }
+
+
+
+
     fun signUp(
         userEntity: UserEntity,
         uri: Uri?,
@@ -295,7 +407,8 @@ class Repo @Inject constructor(
                 .child(sanitizedFriendContact).push()
 
             expenseRef.key?.let {
-                val expenseWithId = expense.copy(expenseId = it, timeStamp = System.currentTimeMillis())
+                val expenseWithId =
+                    expense.copy(expenseId = it, timeStamp = System.currentTimeMillis())
                 expenseRef.setValue(expenseWithId).await()
                 onResult(true, "Expense saved successfully!")
             }

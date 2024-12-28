@@ -10,11 +10,12 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 @Entity(tableName = "friends")
 data class Friend(
-    @PrimaryKey val contact: String,  // Treat contact as the primary key
-    val name: String,
-    val profileImageUrl: String? = null,
-    @TypeConverters(Converters::class) // Use the converter
-    val expenseRecords: MutableList<ExpenseRecord> = mutableListOf()
+    @PrimaryKey var contact: String,  // Changed to var
+    var name: String,                 // Changed to var
+    var profileImageUrl: String? = null,
+    @TypeConverters(Converters::class)
+    var expenseRecords: MutableList<ExpenseRecord> = mutableListOf()
 ) : Parcelable {
-    constructor() : this("", "")
+    // No-arg constructor
+    constructor() : this("", "", null)
 }

@@ -134,6 +134,10 @@ class FriendsAllExpenses : Fragment() {
                 }
             }
         }
+
+        binding.addExp.setOnClickListener {
+
+        }
     }
 
     private fun setupShimmer() {

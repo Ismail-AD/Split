@@ -2,19 +2,48 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    style="@style/Background"
     android:padding="16dp"
     tools:context=".UI.Fragment.GroupFragment">
 
+
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmer_view_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:shimmer_duration="1000">
+        <ViewStub
+            android:id="@+id/shimmer_view_stub"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </com.facebook.shimmer.ShimmerFrameLayout>
+
+    <LinearLayout
+        android:id="@+id/noData"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:gravity="center">
+
+        <TextView
+            style="@style/billWordColor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No Groups created yet!"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+
     <TextView
         android:id="@+id/overallStatus"
+        style="@style/billWordColor"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:visibility="gone"
         android:text="Overall, you are owed $611.50"
-        style="@style/billWordColor"
         android:textSize="18sp"
         android:textStyle="bold" />
 
@@ -23,39 +52,24 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/overallStatus"
-        android:paddingTop="10dp" />
+        android:paddingTop="10dp"
+        android:visibility="gone" />
 
-    <androidx.cardview.widget.CardView
-        android:layout_width="wrap_content"
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/add"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginEnd="@dimen/_6sdp"
+        android:layout_gravity="bottom|end"
+        android:visibility="gone"
         android:layout_marginBottom="@dimen/_50sdp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="0dp"
-        app:cardBackgroundColor="@android:color/transparent">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/card_border">
-
-            <TextView
-                android:id="@+id/cardText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:drawableLeft="@drawable/addgroup"
-                android:drawablePadding="@dimen/_6sdp"
-                android:text="Start a new group"
-                android:padding="@dimen/_8sdp"
-                android:textColor="@android:color/black"
-                android:textSize="16sp" />
-
-        </LinearLayout>
-
-    </androidx.cardview.widget.CardView>
+        android:text="Start a new group"
+        android:textColor="@color/white"
+        app:backgroundTint="@color/green"
+        app:icon="@drawable/addgroup"
+        app:iconTint="@color/white" />
 
 
 </RelativeLayout>
