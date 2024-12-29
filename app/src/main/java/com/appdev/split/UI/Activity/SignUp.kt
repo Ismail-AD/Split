@@ -10,6 +10,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.core.content.ContentProviderCompat.requireContext
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.databinding.ActivitySignUpBinding
@@ -41,13 +42,28 @@ class SignUp : AppCompatActivity() {
                 && binding.etSignUpPassword.editText?.text!!.isNotEmpty()
             ) {
 
+                val imageBytes = uri?.let { uri ->
+                    try {
+                        contentResolver.openInputStream(uri)?.use {
+                            it.readBytes()
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(
+                            this,
+                            "Failed to process image",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        null
+                    }
+                }
+
                 val userEntity = UserEntity(
                     binding.etSignUpFullName.editText?.text.toString(),
                     binding.etSignUpEmail.editText?.text!!.toString(),
                     binding.etSignUpPassword.editText?.text!!.toString(),
                 )
 
-                mainViewModel.startSignUp(userEntity = userEntity,uri=uri) { message, success ->
+                mainViewModel.startSignUp(userEntity = userEntity,uri=uri, imageBytes = imageBytes) { message, success ->
                     if (success) {
                         val intent2 = Intent(this, Login::class.java)
                         intent2.putExtra("email", userEntity.email)

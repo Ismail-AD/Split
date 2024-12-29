@@ -50,15 +50,11 @@ class HomeFragment : Fragment() {
     val mainViewModel by activityViewModels<MainViewModel>()
     var expenses: Map<String, List<ExpenseRecord>> = mapOf()
 
-    @Inject
-    lateinit var firebaseDatabase: FirebaseDatabase
     private var isTopDataReady = false
     private var isMainDataReady = false
 
     @Inject
     lateinit var firebaseAuth: FirebaseAuth
-    var eventListener: ValueEventListener? = null
-    lateinit var expenseRef: DatabaseReference
 
     lateinit var dialog: Dialog
     private var isExpanded = false
@@ -102,58 +98,6 @@ class HomeFragment : Fragment() {
         binding.mainFab.setOnClickListener {
             if (isExpanded) shrinkFab() else expandFab()
         }
-
-//        firebaseAuth.currentUser?.email?.let { mail ->
-//            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(mail)
-//            expenseRef = firebaseDatabase.reference
-//                .child("expenses")
-//                .child(sanitizedMyEmail)
-//
-//            // Create a value event listener
-//            eventListener = object : ValueEventListener {
-//                override fun onDataChange(snapshot: DataSnapshot) {
-//                    val newExpenses = mutableMapOf<String, List<ExpenseRecord>>()
-//
-//                    for (friendSnapshot in snapshot.children) {
-//                        val friendContact = friendSnapshot.key ?: continue
-//                        val friendExpenses = friendSnapshot.children.mapNotNull {
-//                            it.getValue(ExpenseRecord::class.java)
-//                        }
-//                        newExpenses[friendContact] = friendExpenses
-//                    }
-//
-//                    // Normalize both existing and new expenses for comparison
-//                    val existingNormalizedExpenses = expenses.entries.groupBy { it.key }
-//                        .mapValues { entry ->
-//                            entry.value.lastOrNull()
-//                        }
-//                        .values
-//                        .filterNotNull()
-//                        .toList()
-//
-//                    val newNormalizedExpenses = newExpenses.entries.groupBy { it.key }
-//                        .mapValues { entry ->
-//                            entry.value.lastOrNull()
-//                        }
-//                        .values
-//                        .filterNotNull()
-//                        .toList()
-//
-//                    // Compare the normalized expenses
-//                    if (existingNormalizedExpenses != newNormalizedExpenses) {
-//                        // Data has changed, trigger fetch
-//                        mainViewModel.getAllFriendExpenses()
-//                    }
-//                }
-//
-//                override fun onCancelled(error: DatabaseError) {
-//
-//                }
-//            }
-//            eventListener?.let {
-//                expenseRef.addValueEventListener(it)
-//            }
-//        }
 
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -294,22 +238,6 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun showError(message: String) {
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-    }
-
-    private fun showLoadingIndicator() {
-        dialog.setContentView(R.layout.progress_dialog)
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialog.setCancelable(false)
-        dialog.show()
-    }
-
-    private fun hideLoadingIndicator() {
-        if (dialog.isShowing) {
-            dialog.dismiss()
-        }
-    }
 
     private fun onContactClicked() {
         Log.d("CHKERR", mainViewModel.userData.value.toString() + "At home add member")
@@ -340,9 +268,7 @@ class HomeFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        eventListener?.let {
-            expenseRef.removeEventListener(it)
-        }
+
         _binding = null
     }
 

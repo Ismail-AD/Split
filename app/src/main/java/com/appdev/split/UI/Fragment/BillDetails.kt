@@ -31,6 +31,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -47,7 +48,7 @@ class BillDetails : Fragment() {
     var bill: ExpenseRecord = ExpenseRecord()
 
     @Inject
-    lateinit var firebaseDatabase: FirebaseDatabase
+    lateinit var firestore: FirebaseFirestore
 
     @Inject
     lateinit var firebaseAuth: FirebaseAuth
@@ -76,29 +77,28 @@ class BillDetails : Fragment() {
         firebaseAuth.currentUser?.email?.let { mail ->
             val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(mail)
             val friendMail = Utils.sanitizeEmailForFirebase(args.friendContact)
-            expenseRef = firebaseDatabase.reference
-                .child("expenses")
-                .child(sanitizedMyEmail).child(friendMail).child(bill.expenseId)
 
-            // Create a value event listener
-            eventListener = object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
+            // Use Firestore instead of Realtime Database
+            val expenseDocRef = firestore.collection("expenses")
+                .document(sanitizedMyEmail)
+                .collection(friendMail)
+                .document(bill.expenseId)
 
-                    val expenseRecord = snapshot.getValue(ExpenseRecord::class.java)
+            // Create a snapshot listener for the specific expense
+            expenseDocRef.addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("CHKSS", "Listen failed.", error)
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null && snapshot.exists()) {
+                    val expenseRecord = snapshot.toObject(ExpenseRecord::class.java)
 
                     if (expenseRecord != null && expenseRecord != bill) {
                         bill = expenseRecord
                         updateData()
                     }
                 }
-
-                override fun onCancelled(error: DatabaseError) {
-                    // Handle any potential error here
-                }
-            }
-
-            eventListener?.let {
-                expenseRef.addValueEventListener(it)
             }
         }
         updateData()

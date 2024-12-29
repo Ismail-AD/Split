@@ -33,12 +33,15 @@ import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.UI.Activity.EntryActivity
 import com.appdev.split.databinding.FragmentAddMembersBinding
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @AndroidEntryPoint
 class AddMembersFragment : Fragment() {
-    private var contactsList = listOf<Contact>()
+    private var usersList = listOf<Contact>()
     private var savedFriendsList = listOf<FriendContact>()
     private var _binding: FragmentAddMembersBinding? = null
     private val binding get() = _binding!!
@@ -51,48 +54,66 @@ class AddMembersFragment : Fragment() {
 
     private val selectedContacts = mutableListOf<Contact>()
     private lateinit var selectedContactsAdapter: SelectedContactsAdapter
-    private lateinit var permissionLauncher: ActivityResultLauncher<String>
-
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        permissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-                if (isGranted) {
-                    contactsList = getDeviceContacts()
-                    val updatedContacts = contactsList.map { contact ->
-                        contact.copy(isFriend = savedFriendsList.any { it.name == contact.name })
-                    }
-                    contactsAdapter.setContacts(updatedContacts)
-                } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "Permission denied. Cannot access contacts.",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentAddMembersBinding.inflate(layoutInflater, container, false)
-        Log.d("CHKERR",mainViewModel.userData.value.toString() + "At add member")
 
-        contactsAdapter = ContactsAdapter { contact, isSelected ->
-            if (isSelected) {
-                selectedContacts.add(contact)
-            } else {
-                selectedContacts.remove(contact)
-            }
-            selectedContactsAdapter.updateContacts(selectedContacts.toList())
-            updateFabVisibility()
-        }
+        setupAdapters()
         mainViewModel.fetchAllContacts()
 
+        observeContacts()
+        setupRecyclerViews()
+        setupClickListeners()
 
+        return binding.root
+    }
+
+    private fun setupAdapters() {
+        // Initialize contacts adapter with selection callback
+        contactsAdapter = ContactsAdapter { contact, isSelected ->
+            handleContactSelection(contact, isSelected)
+        }
+
+        // Initialize selected contacts adapter
+        selectedContactsAdapter = SelectedContactsAdapter(
+            contacts = emptyList(),
+            onRemoveClick = { contact ->
+                handleContactRemoval(contact)
+            }
+        )
+
+        splitwiseFriendsAdapter = FriendsAdapter()
+    }
+
+    private fun handleContactSelection(contact: Contact, isSelected: Boolean) {
+        if (isSelected) {
+            if (!selectedContacts.contains(contact)) {
+                selectedContacts.add(contact)
+            }
+        } else {
+            selectedContacts.remove(contact)
+        }
+        updateSelectedContactsView()
+        updateFabVisibility()
+    }
+
+    private fun handleContactRemoval(contact: Contact) {
+        selectedContacts.remove(contact)
+        contactsAdapter.toggleContactSelection(contact, false)
+        updateSelectedContactsView()
+        updateFabVisibility()
+    }
+
+    private fun updateSelectedContactsView() {
+        selectedContactsAdapter.updateContacts(selectedContacts.toList())
+        binding.selectedContactsRecyclerView.visibility =
+            if (selectedContacts.isEmpty()) View.GONE else View.VISIBLE
+    }
+
+    private fun observeContacts() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 mainViewModel.contactsState.collect { state ->
@@ -101,52 +122,121 @@ class AddMembersFragment : Fragment() {
                         is UiState.Success -> {
                             hideLoadingIndicator()
                             savedFriendsList = state.data
-                            checkPermissionsAndLoadContacts()
+                            fetchFirebaseUsers()
                         }
-
                         is UiState.Error -> showError(state.message)
-                        UiState.Stable -> TODO()
+                        UiState.Stable -> {}
                     }
                 }
             }
         }
+    }
 
-
-        selectedContactsAdapter = SelectedContactsAdapter(
-            contacts = emptyList(),
-            onRemoveClick = { contact ->
-                selectedContacts.remove(contact)
-                selectedContactsAdapter.updateContacts(selectedContacts.toList())
-                contactsAdapter.toggleContactSelection(contact, isSelected = false)
-            }
-        )
+    private fun setupRecyclerViews() {
+        // Setup main contacts RecyclerView
         binding.contactsRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = contactsAdapter
         }
 
+        // Setup selected contacts RecyclerView
         binding.selectedContactsRecyclerView.apply {
-            layoutManager =
-                LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = selectedContactsAdapter
+            visibility = View.GONE  // Initially hidden
         }
 
-
-        binding.backButton.setOnClickListener {
-            findNavController().navigateUp()
-        }
-        splitwiseFriendsAdapter = FriendsAdapter()
+        // Setup Splitwise friends RecyclerView
         binding.splitwiseFriendsRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = splitwiseFriendsAdapter
+        }
+    }
+
+    private fun setupClickListeners() {
+        binding.backButton.setOnClickListener {
+            findNavController().navigateUp()
         }
 
         binding.addNewContactCard.setOnClickListener {
             findNavController().navigate(R.id.action_addMembersFragment_to_addContactFragment)
         }
-        return binding.root
+
+        binding.fabAddMembers.setOnClickListener {
+            if (selectedContacts.isNotEmpty()) {
+                val friendsList = convertContactsToFriends(selectedContacts)
+                mainViewModel.addContacts(friendsList)
+                handleAddMembersResponse()
+            }
+        }
     }
 
+    private fun fetchFirebaseUsers() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                showLoadingIndicator()
+                val firestore = FirebaseFirestore.getInstance()
+                val usersSnapshot = firestore.collection("profiles").get().await()
+
+                val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
+
+                usersList = usersSnapshot.documents.mapNotNull { doc ->
+                    val email = doc.getString("email") ?: return@mapNotNull null
+                    val name = doc.getString("name") ?: return@mapNotNull null
+
+                    // Skip current user and already added friends
+                    if (email != currentUserEmail && !savedFriendsList.any { it.contact == email }) {
+                        Contact(
+                            name = name,
+                            number = email,
+                            isFriend = false
+                        )
+                    } else null
+                }
+
+                contactsAdapter.setContacts(usersList)
+                hideLoadingIndicator()
+            } catch (e: Exception) {
+                hideLoadingIndicator()
+                showError("Failed to fetch users: ${e.message}")
+            }
+        }
+    }
+
+    private fun handleAddMembersResponse() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                mainViewModel.operationState.collect { state ->
+                    when (state) {
+                        is UiState.Loading -> showLoadingIndicator()
+                        is UiState.Success -> {
+                            hideLoadingIndicator()
+                            findNavController().navigateUp()
+                        }
+                        is UiState.Error -> showError(state.message)
+                        UiState.Stable -> {}
+                    }
+                }
+            }
+        }
+    }
+
+    private fun convertContactsToFriends(contacts: List<Contact>): List<Friend> {
+        return contacts.map { contact ->
+            Friend(
+                name = contact.name,
+                profileImageUrl = null,
+                contact = contact.number  // Using email instead of phone number
+            )
+        }
+    }
+
+    private fun updateFabVisibility() {
+        binding.fabAddMembers.visibility =
+            if (selectedContacts.isNotEmpty()) View.VISIBLE else View.GONE
+    }
+
+    // Keep your existing helper methods for showing/hiding loading indicators and error handling
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -159,33 +249,7 @@ class AddMembersFragment : Fragment() {
             binding.splitwiseFriendsRecyclerView.visibility = View.GONE
         }
         dialog = Dialog(requireContext())
-        binding.fabAddMembers.setOnClickListener {
-            if (selectedContacts.isNotEmpty()) {
-                val friendsList = convertContactsToFriends(selectedContacts)
-                mainViewModel.addContacts(friendsList)
-                viewLifecycleOwner.lifecycleScope.launch {
-                    repeatOnLifecycle(Lifecycle.State.STARTED) {
-                        mainViewModel.operationState.collect { state ->
-                            when (state) {
-                                is UiState.Loading -> showLoadingIndicator()
-                                is UiState.Success -> {
-                                    hideLoadingIndicator()
-                                    findNavController().navigateUp()
-                                }
-
-                                is UiState.Error -> showError(state.message)
-                                UiState.Stable -> {
-
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
     }
-
 
     private fun showError(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
@@ -204,89 +268,8 @@ class AddMembersFragment : Fragment() {
         }
     }
 
-    private fun updateFabVisibility() {
-        binding.fabAddMembers.visibility =
-            if (selectedContacts.isNotEmpty()) View.VISIBLE else View.GONE
-    }
-
-
-    private fun checkPermissionsAndLoadContacts() {
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.READ_CONTACTS
-            ) ==
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            contactsList = getDeviceContacts()
-            val updatedContacts = contactsList.map { contact ->
-                contact.copy(isFriend = savedFriendsList.any { it.name == contact.name })
-            }
-            contactsAdapter.setContacts(updatedContacts)
-
-        } else {
-            requestPermission()
-        }
-    }
-
-
-    fun convertContactsToFriends(contacts: List<Contact>): List<Friend> {
-        return contacts.map { contact ->
-            Friend(
-                name = contact.name,
-                profileImageUrl = null, contact = contact.number
-            )
-        }
-    }
-
-    private fun getDeviceContacts(): List<Contact> {
-        val contacts = mutableListOf<Contact>()
-        val projection = arrayOf(
-            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-            ContactsContract.CommonDataKinds.Phone.NUMBER
-        )
-
-        requireContext().contentResolver.query(
-            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-            projection,
-            null,
-            null,
-            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC"
-        )?.use { cursor ->
-            val nameIndex =
-                cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
-            val numberIndex =
-                cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER)
-
-            while (cursor.moveToNext()) {
-                try {
-                    val name = cursor.getString(nameIndex) ?: continue
-                    val number = cursor.getString(numberIndex) ?: continue
-
-                    // Normalize phone number to remove any formatting
-                    val normalizedNumber = number.replace(Regex("[^0-9+]"), "")
-
-                    // Only add if we have both name and number
-                    if (name.isNotBlank() && normalizedNumber.isNotBlank()) {
-                        contacts.add(Contact(name = name, number = normalizedNumber))
-                    }
-                } catch (e: Exception) {
-                    continue
-                }
-            }
-        }
-
-        // Remove duplicates based on phone number
-        return contacts.distinctBy { it.number }
-    }
-
-    private fun requestPermission() {
-        permissionLauncher.launch(android.Manifest.permission.READ_CONTACTS)
-    }
-
-
     override fun onDestroyView() {
         super.onDestroyView()
-
         _binding = null
     }
 }

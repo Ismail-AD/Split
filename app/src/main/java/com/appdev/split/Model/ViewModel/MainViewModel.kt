@@ -388,10 +388,13 @@ class MainViewModel @Inject constructor(
     fun startSignUp(
         uri: Uri? = null,
         userEntity: UserEntity,
+        imageBytes: ByteArray?,
         result: (message: String, success: Boolean) -> Unit
     ) {
-        repo.signUp(userEntity, uri) { message, success ->
-            result(message, success)
+        viewModelScope.launch {
+            repo.signUp(userEntity, uri,imageBytes) { message, success ->
+                result(message, success)
+            }
         }
     }
 
