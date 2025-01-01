@@ -58,6 +58,7 @@
         tools:layout="@layout/fragment_group" >
         <action
             android:id="@+id/action_groupFragment_to_addGroupFragment"
+            app:launchSingleTop="true"
             app:destination="@id/addGroupFragment" />
         <action
             android:id="@+id/action_group_to_groupDetailFragment"

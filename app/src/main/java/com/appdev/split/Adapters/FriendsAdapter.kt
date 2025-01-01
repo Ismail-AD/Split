@@ -5,10 +5,12 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.appdev.split.Model.Data.Contact
 import com.appdev.split.Model.Data.Friend
+import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.databinding.FriendsLayoutBinding
 
-class FriendsAdapter : ListAdapter<Friend, FriendsAdapter.FriendViewHolder>(FriendDiffCallback()) {
+class FriendsAdapter : ListAdapter<FriendContact, FriendsAdapter.FriendViewHolder>(FriendDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FriendViewHolder {
         val binding = FriendsLayoutBinding.inflate(
@@ -25,18 +27,18 @@ class FriendsAdapter : ListAdapter<Friend, FriendsAdapter.FriendViewHolder>(Frie
         private val binding: FriendsLayoutBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(friend: Friend) {
+        fun bind(friend: FriendContact) {
             binding.friendName.text = friend.name
             // If you have profile images, load them here using Glide or Coil
         }
     }
 
-    class FriendDiffCallback : DiffUtil.ItemCallback<Friend>() {
-        override fun areItemsTheSame(oldItem: Friend, newItem: Friend): Boolean {
+    class FriendDiffCallback : DiffUtil.ItemCallback<FriendContact>() {
+        override fun areItemsTheSame(oldItem: FriendContact, newItem: FriendContact): Boolean {
             return oldItem.contact == newItem.contact
         }
 
-        override fun areContentsTheSame(oldItem: Friend, newItem: Friend): Boolean {
+        override fun areContentsTheSame(oldItem: FriendContact, newItem: FriendContact): Boolean {
             return oldItem == newItem
         }
     }

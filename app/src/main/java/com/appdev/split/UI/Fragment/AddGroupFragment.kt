@@ -50,7 +50,7 @@ class AddGroupFragment : Fragment() {
                         is UiState.Loading -> showLoadingIndicator()
                         is UiState.Success -> {
                             hideLoadingIndicator()
-                            findNavController().popBackStack()
+                            findNavController().navigateUp()
                         }
 
                         is UiState.Error -> {

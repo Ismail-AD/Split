@@ -37,7 +37,7 @@ class Repo @Inject constructor(
     private val folderPath = "public/7pgyxj_1"
 
     private val profileBucketId = "profileImages"
-    private val profileFolderPath = "public/userimages"
+    private val profileFolderPath = "public/1cp17k1_1"
 
     suspend fun uploadImageAndSaveGroup(
         mail: String,

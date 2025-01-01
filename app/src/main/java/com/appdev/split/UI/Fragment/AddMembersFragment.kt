@@ -53,6 +53,8 @@ class AddMembersFragment : Fragment() {
     val mainViewModel by activityViewModels<MainViewModel>()
 
     private val selectedContacts = mutableListOf<Contact>()
+    private var isTopDataReady = false
+    private var isMainDataReady = false
     private lateinit var selectedContactsAdapter: SelectedContactsAdapter
 
     override fun onCreateView(
@@ -60,7 +62,7 @@ class AddMembersFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentAddMembersBinding.inflate(layoutInflater, container, false)
-
+        setupShimmer()
         setupAdapters()
         mainViewModel.fetchAllContacts()
 
@@ -69,6 +71,13 @@ class AddMembersFragment : Fragment() {
         setupClickListeners()
 
         return binding.root
+    }
+
+    private fun setupShimmer() {
+        // Set the layout for the ViewStub
+        binding.shimmerViewAddMembers.layoutResource = R.layout.add_member_shimmer
+        binding.shimmerViewAddMembers.inflate()
+
     }
 
     private fun setupAdapters() {
@@ -118,17 +127,40 @@ class AddMembersFragment : Fragment() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 mainViewModel.contactsState.collect { state ->
                     when (state) {
-                        is UiState.Loading -> showLoadingIndicator()
+                        is UiState.Loading -> showShimmer()
                         is UiState.Success -> {
-                            hideLoadingIndicator()
+                            isMainDataReady = true
+                            hideShimmer()
                             savedFriendsList = state.data
+                            if(savedFriendsList.isEmpty()){
+                                binding.friendsTitle.visibility = View.GONE
+                                binding.splitwiseFriendsRecyclerView.visibility = View.GONE
+                            }
                             fetchFirebaseUsers()
                         }
-                        is UiState.Error -> showError(state.message)
+
+                        is UiState.Error -> {
+                            hideShimmer()
+                            showError(state.message)
+                        }
+
                         UiState.Stable -> {}
                     }
                 }
             }
+        }
+    }
+
+    private fun showLoadingIndicator() {
+        dialog.setContentView(R.layout.progress_dialog)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.setCancelable(false)
+        dialog.show()
+    }
+
+    private fun hideLoadingIndicator() {
+        if (dialog.isShowing) {
+            dialog.dismiss()
         }
     }
 
@@ -141,7 +173,8 @@ class AddMembersFragment : Fragment() {
 
         // Setup selected contacts RecyclerView
         binding.selectedContactsRecyclerView.apply {
-            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            layoutManager =
+                LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = selectedContactsAdapter
             visibility = View.GONE  // Initially hidden
         }
@@ -174,17 +207,16 @@ class AddMembersFragment : Fragment() {
     private fun fetchFirebaseUsers() {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                showLoadingIndicator()
+                showShimmer()
+
                 val firestore = FirebaseFirestore.getInstance()
                 val usersSnapshot = firestore.collection("profiles").get().await()
-
                 val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email
 
                 usersList = usersSnapshot.documents.mapNotNull { doc ->
                     val email = doc.getString("email") ?: return@mapNotNull null
                     val name = doc.getString("name") ?: return@mapNotNull null
 
-                    // Skip current user and already added friends
                     if (email != currentUserEmail && !savedFriendsList.any { it.contact == email }) {
                         Contact(
                             name = name,
@@ -193,15 +225,22 @@ class AddMembersFragment : Fragment() {
                         )
                     } else null
                 }
+                splitwiseFriendsAdapter.submitList(savedFriendsList)
 
-                contactsAdapter.setContacts(usersList)
-                hideLoadingIndicator()
+                isTopDataReady = true
+
+                hideShimmer()
+                handleEmptyState()
+                if (usersList.isNotEmpty()) {
+                    contactsAdapter.setContacts(usersList)
+                }
             } catch (e: Exception) {
-                hideLoadingIndicator()
+                hideShimmer()
                 showError("Failed to fetch users: ${e.message}")
             }
         }
     }
+
 
     private fun handleAddMembersResponse() {
         viewLifecycleOwner.lifecycleScope.launch {
@@ -213,6 +252,7 @@ class AddMembersFragment : Fragment() {
                             hideLoadingIndicator()
                             findNavController().navigateUp()
                         }
+
                         is UiState.Error -> showError(state.message)
                         UiState.Stable -> {}
                     }
@@ -241,13 +281,6 @@ class AddMembersFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val isGroupContact = args.isGroupContact
-        if (isGroupContact) {
-            binding.friendsTitle.visibility = View.VISIBLE
-            binding.splitwiseFriendsRecyclerView.visibility = View.VISIBLE
-        } else {
-            binding.friendsTitle.visibility = View.GONE
-            binding.splitwiseFriendsRecyclerView.visibility = View.GONE
-        }
         dialog = Dialog(requireContext())
     }
 
@@ -255,18 +288,37 @@ class AddMembersFragment : Fragment() {
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
 
-    private fun showLoadingIndicator() {
-        dialog.setContentView(R.layout.progress_dialog)
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialog.setCancelable(false)
-        dialog.show()
+    private fun showShimmer() {
+        binding.appBarLayout.visibility = View.GONE
+        binding.selectedContactsRecyclerView.visibility = View.GONE
+        binding.nestedScrollView.visibility = View.GONE
+        binding.shimmerContainer.visibility = View.VISIBLE
+        binding.shimmerViewContainer.visibility = View.VISIBLE
+        binding.shimmerViewContainer.startShimmer()
     }
 
-    private fun hideLoadingIndicator() {
-        if (dialog.isShowing) {
-            dialog.dismiss()
+    private fun hideShimmer() {
+        if (isTopDataReady && isMainDataReady) {
+            binding.shimmerContainer.visibility = View.GONE
+            binding.shimmerViewContainer.stopShimmer()
+            binding.shimmerViewContainer.visibility = View.GONE
+
+            binding.appBarLayout.visibility = View.VISIBLE
+            binding.selectedContactsRecyclerView.visibility = View.VISIBLE
+            binding.nestedScrollView.visibility = View.VISIBLE
         }
     }
+
+    private fun handleEmptyState() {
+        if (usersList.isEmpty()) {
+            binding.noBill.visibility = View.VISIBLE
+            binding.contactsRecyclerView.visibility = View.GONE
+        } else {
+            binding.noBill.visibility = View.GONE
+            binding.contactsRecyclerView.visibility = View.VISIBLE
+        }
+    }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

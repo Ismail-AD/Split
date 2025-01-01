@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -10,7 +10,7 @@
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_alignParentTop="true">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
@@ -43,16 +43,17 @@
         android:id="@+id/selectedContactsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@id/appBarLayout"
         android:layout_marginBottom="8dp"
         android:orientation="horizontal"
-        android:paddingHorizontal="@dimen/_10sdp"
-        app:layout_constraintTop_toBottomOf="@id/appBarLayout"/>
+        android:paddingHorizontal="@dimen/_10sdp" />
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/selectedContactsRecyclerView">
+        android:layout_height="match_parent"
+        android:layout_below="@id/selectedContactsRecyclerView"
+        android:layout_above="@id/fabAddMembers">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -118,9 +119,25 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="8dp"
-                android:text="From your contacts"
+                android:text="Splitwise users"
                 android:textSize="16sp"
                 android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/noBill"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@id/recentTitle"
+                android:gravity="center"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/billWordColor"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No users!"
+                    android:textSize="18sp" />
+            </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/contactsRecyclerView"
@@ -131,18 +148,39 @@
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <RelativeLayout
+        android:id="@+id/shimmerContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/selectedContactsRecyclerView">
+
+        <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/shimmer_view_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignWithParentIfMissing="true"
+            app:shimmer_duration="1000">
+
+            <ViewStub
+                android:id="@+id/shimmer_view_addMembers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </com.facebook.shimmer.ShimmerFrameLayout>
+    </RelativeLayout>
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddMembers"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
         android:layout_margin="16dp"
-        android:src="@drawable/savecontact"
         android:contentDescription="Add Members"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:src="@drawable/savecontact"
         android:visibility="gone"
         app:backgroundTint="@color/green"
         app:tint="@android:color/white" />
 
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</RelativeLayout>
