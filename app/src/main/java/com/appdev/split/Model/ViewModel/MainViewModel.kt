@@ -70,6 +70,29 @@ class MainViewModel @Inject constructor(
         _operationState.value = UiState.Stable
     }
 
+    //---------------------MANAGE MEMBERS--------------------
+    fun addNewMembersToGroup(
+        newMembers: List<FriendContact>,
+        groupId: String
+    ) {
+        _operationState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.email?.let { mail ->
+                    repo.addMembersToGroup(
+                        newMembers = newMembers, groupId = groupId, onSuccess = { message ->
+                            _operationState.value = UiState.Success(Unit)
+                        }
+                    ) { message ->
+                        _operationState.value = UiState.Error(message)
+                    }
+                }
+            } catch (e: Exception) {
+                _operationState.value = UiState.Error(e.message ?: "Failed to save group")
+            }
+        }
+    }
+
     //---------------------ADD GROUP-------------------------
 
     fun getAllGroups() {
@@ -392,7 +415,7 @@ class MainViewModel @Inject constructor(
         result: (message: String, success: Boolean) -> Unit
     ) {
         viewModelScope.launch {
-            repo.signUp(userEntity, uri,imageBytes) { message, success ->
+            repo.signUp(userEntity, uri, imageBytes) { message, success ->
                 result(message, success)
             }
         }

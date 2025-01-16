@@ -17,12 +17,21 @@
 
     <TextView
         android:id="@+id/friendName"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:text="Mubeen"
+        android:layout_weight="1"
         android:layout_marginStart="16dp"
         android:textSize="16sp"
         android:textColor="?android:attr/textColorPrimary" />
+
+    <ImageView
+        android:id="@+id/selected"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        style="@style/iconTintColor"
+        android:layout_gravity="center_vertical"
+        android:src="@drawable/check" />
 
 </LinearLayout>

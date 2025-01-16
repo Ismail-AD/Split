@@ -242,7 +242,7 @@ class HomeFragment : Fragment() {
     private fun onContactClicked() {
         Log.d("CHKERR", mainViewModel.userData.value.toString() + "At home add member")
 
-        val action = HomeFragmentDirections.actionHomePageToAddMembersFragment(false)
+        val action = HomeFragmentDirections.actionHomePageToAddMembersFragment(false,"")
         findNavController().navigate(action)
     }
 

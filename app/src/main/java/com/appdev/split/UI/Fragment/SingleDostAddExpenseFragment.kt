@@ -110,8 +110,8 @@ class SingleDostAddExpenseFragment : Fragment() {
     private fun setupNavigationListeners() {
         binding.addFriends.setOnClickListener {
             val action =
-                AddGrpExpenseFragmentDirections.actionAddGrpExpenseFragmentToAddMembersFragment(
-                    false
+                SingleDostAddExpenseFragmentDirections.actionPersonalExpenseFragmentToAddMembersFragment2(
+                    false,""
                 )
             findNavController().navigate(action)
         }
@@ -340,6 +340,7 @@ class SingleDostAddExpenseFragment : Fragment() {
                         hideShimmer()
                         showError(contactsState.message)
                     }
+
                     else -> {}
                 }
             }
@@ -369,8 +370,12 @@ class SingleDostAddExpenseFragment : Fragment() {
         if (friendsList.isNotEmpty()) {
             binding.selectedFrisRecyclerView.visibility = View.VISIBLE
             binding.noFriends.visibility = View.GONE
-            adapter = MyFriendSelectionAdapter(friendsList, selectedFriend) { friend ->
-                selectedFriend = friend
+            adapter = MyFriendSelectionAdapter(friendsList, isMultiSelect = false) { friend ->
+                selectedFriend = if (friend.isNotEmpty()) {
+                    friend.first()
+                } else {
+                    null
+                }
             }
             binding.selectedFrisRecyclerView.adapter = adapter
             binding.selectedFrisRecyclerView.layoutManager =

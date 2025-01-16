@@ -6,6 +6,7 @@ import androidx.core.net.toFile
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
+import com.appdev.split.Model.Data.GroupMembersWrapper
 import com.appdev.split.Model.Data.GroupMetaData
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Room.DaoClasses.ContactDao
@@ -38,6 +39,44 @@ class Repo @Inject constructor(
 
     private val profileBucketId = "profileImages"
     private val profileFolderPath = "public/1cp17k1_1"
+
+
+    //----------------------MANAGE GROUP MEMBERS-----------------
+
+    suspend fun addMembersToGroup(
+        groupId: String,
+        newMembers: List<FriendContact>,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        try {
+            val groupRef = firestore.collection("groupMembers")
+                .document(groupId)
+
+            // Get existing members
+            val existingMembersDoc = groupRef.get().await()
+
+            // Get current members or empty list if none exist
+            val existingMembers = if (existingMembersDoc.exists()) {
+                existingMembersDoc.toObject(GroupMembersWrapper::class.java)?.members
+                    ?: emptyList()
+            } else {
+                emptyList()
+            }
+
+            // Combine existing and new members, removing duplicates
+            val updatedMembers = (existingMembers + newMembers).distinctBy { it.contact }
+
+            // Update Firestore with combined list
+            groupRef.set(GroupMembersWrapper(updatedMembers)).await()
+
+            onSuccess("Members added successfully")
+        } catch (e: Exception) {
+            Log.d("CHKJM", "${e.message}")
+            onError("Failed to add members: ${e.message}")
+        }
+    }
+
 
     suspend fun uploadImageAndSaveGroup(
         mail: String,
@@ -132,6 +171,9 @@ class Repo @Inject constructor(
             }
         }
     }
+
+
+
 
     suspend fun getAllGroups(mail: String, onSuccess: (List<GroupMetaData>) -> Unit, onError: (String) -> Unit) {
         try {

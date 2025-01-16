@@ -109,8 +109,9 @@ class GroupFragment : Fragment() {
     }
 
 
-    fun move() {
-        findNavController().navigate(R.id.action_group_to_groupDetailFragment)
+    fun move(groupMetaData: GroupMetaData) {
+        val action = GroupFragmentDirections.actionGroupToGroupDetailFragment(groupMetaData)
+        findNavController().navigate(action)
     }
 
 

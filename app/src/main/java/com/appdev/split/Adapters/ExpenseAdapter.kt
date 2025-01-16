@@ -9,7 +9,7 @@ import com.appdev.split.R
 import com.appdev.split.databinding.ItemExpenseBinding
 
 
-class ExpenseAdapter(private val items: List<GroupMetaData>, val navigate: () -> Unit) :
+class ExpenseAdapter(private val items: List<GroupMetaData>, val navigate: (GroupMetaData) -> Unit) :
     RecyclerView.Adapter<ExpenseAdapter.ExpenseViewHolder>() {
 
     inner class ExpenseViewHolder(private val binding: ItemExpenseBinding) :
@@ -19,7 +19,7 @@ class ExpenseAdapter(private val items: List<GroupMetaData>, val navigate: () ->
             binding.Icon.setImageResource(getIconForGroupType(item.groupType))
             binding.expenseDetail.text = item.groupType
             binding.parent.setOnClickListener {
-                navigate()
+                navigate(item)
             }
         }
     }
@@ -41,6 +41,7 @@ class ExpenseAdapter(private val items: List<GroupMetaData>, val navigate: () ->
 
     override fun onBindViewHolder(holder: ExpenseViewHolder, position: Int) {
         holder.bind(items[position])
+
     }
 
     override fun getItemCount() = items.size

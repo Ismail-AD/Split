@@ -9,39 +9,93 @@ import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.databinding.MyfriendsLayoutItemBinding
 class MyFriendSelectionAdapter(
     private val friendsList: List<FriendContact>,
-    private var selectedFriend: FriendContact?, // Track the single selected friend
-    private val onFriendClick: (FriendContact?) -> Unit
+    private val isMultiSelect: Boolean = false,
+    private val onSelectionChanged: (List<FriendContact>) -> Unit
 ) : RecyclerView.Adapter<MyFriendSelectionAdapter.FriendViewHolder>() {
+
+    private var selectedFriend: FriendContact? = null
+    private val selectedFriends = mutableSetOf<FriendContact>()
 
     inner class FriendViewHolder(private val binding: MyfriendsLayoutItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(friend: FriendContact, isSelected: Boolean) {
-            binding.friendName.text = friend.name
-            binding.selected.visibility = if (isSelected) View.VISIBLE else View.INVISIBLE
-
-            binding.root.setOnClickListener {
-                if (selectedFriend == friend) {
-                    selectedFriend = null // Deselect if already selected
-                } else {
-                    selectedFriend = friend // Update the selected friend
+        fun bind(friend: FriendContact) {
+            binding.apply {
+                friendName.text = friend.name
+                selected.visibility = when {
+                    isMultiSelect -> if (selectedFriends.contains(friend)) View.VISIBLE else View.INVISIBLE
+                    else -> if (selectedFriend == friend) View.VISIBLE else View.INVISIBLE
                 }
-                notifyDataSetChanged() // Refresh the list
-                onFriendClick(selectedFriend)
+
+                root.setOnClickListener {
+                    if (isMultiSelect) {
+                        handleMultiSelection(friend)
+                    } else {
+                        handleSingleSelection(friend)
+                    }
+                    notifyDataSetChanged()
+                }
             }
         }
     }
 
+    private fun handleMultiSelection(friend: FriendContact) {
+        if (selectedFriends.contains(friend)) {
+            selectedFriends.remove(friend)
+        } else {
+            selectedFriends.add(friend)
+        }
+        onSelectionChanged(selectedFriends.toList())
+    }
+
+    private fun handleSingleSelection(friend: FriendContact) {
+        selectedFriend = if (selectedFriend == friend) {
+            null
+        } else {
+            friend
+        }
+        onSelectionChanged(listOfNotNull(selectedFriend))
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FriendViewHolder {
-        val binding = MyfriendsLayoutItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding = MyfriendsLayoutItemBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
         return FriendViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: FriendViewHolder, position: Int) {
-        val friend = friendsList[position]
-        val isSelected = friend == selectedFriend
-        holder.bind(friend, isSelected)
+        holder.bind(friendsList[position])
     }
 
     override fun getItemCount() = friendsList.size
+
+    fun getSelectedFriends(): List<FriendContact> {
+        return if (isMultiSelect) {
+            selectedFriends.toList()
+        } else {
+            listOfNotNull(selectedFriend)
+        }
+    }
+
+    fun clearSelection() {
+        if (isMultiSelect) {
+            selectedFriends.clear()
+        } else {
+            selectedFriend = null
+        }
+        notifyDataSetChanged()
+    }
+
+    fun setSelectedFriends(friends: List<FriendContact>) {
+        if (isMultiSelect) {
+            selectedFriends.clear()
+            selectedFriends.addAll(friends)
+        } else if (friends.isNotEmpty()) {
+            selectedFriend = friends.first()
+        }
+        notifyDataSetChanged()
+    }
 }

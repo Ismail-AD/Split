@@ -51,7 +51,7 @@ class AddMembersFragment : Fragment() {
 
     lateinit var dialog: Dialog
     val mainViewModel by activityViewModels<MainViewModel>()
-
+    var isGroupContact = false
     private val selectedContacts = mutableListOf<Contact>()
     private var isTopDataReady = false
     private var isMainDataReady = false
@@ -73,9 +73,26 @@ class AddMembersFragment : Fragment() {
         return binding.root
     }
 
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        isGroupContact = args.isGroupContact
+        if (isGroupContact) {
+            binding.addNewContactCard.visibility = View.GONE
+            binding.contactsRecyclerView.visibility = View.GONE
+            binding.noBill.visibility = View.GONE
+            binding.billwording.visibility = View.GONE
+            binding.splitusers.visibility = View.GONE
+        }
+        dialog = Dialog(requireContext())
+    }
+
+
     private fun setupShimmer() {
         // Set the layout for the ViewStub
-        binding.shimmerViewAddMembers.layoutResource = R.layout.add_member_shimmer
+        isGroupContact = args.isGroupContact
+        binding.shimmerViewAddMembers.layoutResource =
+            if (isGroupContact) R.layout.add_grp_member_shimmer else R.layout.add_member_shimmer
         binding.shimmerViewAddMembers.inflate()
 
     }
@@ -94,7 +111,34 @@ class AddMembersFragment : Fragment() {
             }
         )
 
-        splitwiseFriendsAdapter = FriendsAdapter()
+        splitwiseFriendsAdapter = if (args.isGroupContact) {
+            FriendsAdapter(
+                enableSelection = true,
+                onFriendSelected = { friend, isSelected ->
+                    handleFriendSelection(friend, isSelected)
+                }
+            )
+        } else {
+            FriendsAdapter()
+        }
+    }
+
+    private fun handleFriendSelection(friend: FriendContact, isSelected: Boolean) {
+        val contact = Contact(
+            name = friend.name,
+            number = friend.contact,
+            isFriend = true
+        )
+
+        if (isSelected) {
+            if (!selectedContacts.contains(contact)) {
+                selectedContacts.add(contact)
+            }
+        } else {
+            selectedContacts.remove(contact)
+        }
+        updateSelectedContactsView()
+        updateFabVisibility()
     }
 
     private fun handleContactSelection(contact: Contact, isSelected: Boolean) {
@@ -111,7 +155,16 @@ class AddMembersFragment : Fragment() {
 
     private fun handleContactRemoval(contact: Contact) {
         selectedContacts.remove(contact)
-        contactsAdapter.toggleContactSelection(contact, false)
+        if (args.isGroupContact) {
+            splitwiseFriendsAdapter.toggleFriendSelection(
+                FriendContact(
+                    contact = contact.number,
+                    name = contact.name
+                ), false
+            )
+        } else {
+            contactsAdapter.toggleContactSelection(contact, false)
+        }
         updateSelectedContactsView()
         updateFabVisibility()
     }
@@ -132,7 +185,7 @@ class AddMembersFragment : Fragment() {
                             isMainDataReady = true
                             hideShimmer()
                             savedFriendsList = state.data
-                            if(savedFriendsList.isEmpty()){
+                            if (savedFriendsList.isEmpty()) {
                                 binding.friendsTitle.visibility = View.GONE
                                 binding.splitwiseFriendsRecyclerView.visibility = View.GONE
                             }
@@ -197,9 +250,15 @@ class AddMembersFragment : Fragment() {
 
         binding.fabAddMembers.setOnClickListener {
             if (selectedContacts.isNotEmpty()) {
-                val friendsList = convertContactsToFriends(selectedContacts)
-                mainViewModel.addContacts(friendsList)
-                handleAddMembersResponse()
+                if (args.isGroupContact) {
+                    val groupMatesList = convertContactsToGroupFriends(selectedContacts)
+                    mainViewModel.addNewMembersToGroup(groupMatesList,args.selectedGroupId)
+                    handleAddMembersResponse()
+                } else {
+                    val friendsList = convertContactsToFriends(selectedContacts)
+                    mainViewModel.addContacts(friendsList)
+                    handleAddMembersResponse()
+                }
             }
         }
     }
@@ -216,11 +275,12 @@ class AddMembersFragment : Fragment() {
                 usersList = usersSnapshot.documents.mapNotNull { doc ->
                     val email = doc.getString("email") ?: return@mapNotNull null
                     val name = doc.getString("name") ?: return@mapNotNull null
+                    val profileImage = doc.getString("profileImage") ?: return@mapNotNull null
 
                     if (email != currentUserEmail && !savedFriendsList.any { it.contact == email }) {
                         Contact(
                             name = name,
-                            number = email,
+                            number = email, imageUrl = profileImage,
                             isFriend = false
                         )
                     } else null
@@ -265,7 +325,17 @@ class AddMembersFragment : Fragment() {
         return contacts.map { contact ->
             Friend(
                 name = contact.name,
-                profileImageUrl = null,
+                profileImageUrl = contact.imageUrl,
+                contact = contact.number  // Using email instead of phone number
+            )
+        }
+    }
+
+    private fun convertContactsToGroupFriends(contacts: List<Contact>): List<FriendContact> {
+        return contacts.map { contact ->
+            FriendContact(
+                name = contact.name,
+                profileImageUrl = contact.imageUrl,
                 contact = contact.number  // Using email instead of phone number
             )
         }
@@ -278,11 +348,6 @@ class AddMembersFragment : Fragment() {
 
     // Keep your existing helper methods for showing/hiding loading indicators and error handling
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        val isGroupContact = args.isGroupContact
-        dialog = Dialog(requireContext())
-    }
 
     private fun showError(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
@@ -313,6 +378,11 @@ class AddMembersFragment : Fragment() {
         if (usersList.isEmpty()) {
             binding.noBill.visibility = View.VISIBLE
             binding.contactsRecyclerView.visibility = View.GONE
+            if (savedFriendsList.isNotEmpty()) {
+                binding.billwording.text = "All users are already friends"
+            } else {
+                binding.billwording.text = "No users yet"
+            }
         } else {
             binding.noBill.visibility = View.GONE
             binding.contactsRecyclerView.visibility = View.VISIBLE

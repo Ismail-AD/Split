@@ -80,6 +80,9 @@
         <action
             android:id="@+id/action_groupDetailFragment_to_addGrpExpenseFragment"
             app:destination="@id/addGrpExpenseFragment" />
+        <argument
+            android:name="groupMetaData"
+            app:argType="com.appdev.split.Model.Data.GroupMetaData" />
     </fragment>
     <fragment
         android:id="@+id/addMembersFragment"
@@ -92,6 +95,9 @@
         <argument
             android:name="isGroupContact"
             app:argType="boolean" />
+        <argument
+            android:name="selectedGroupId"
+            app:argType="string" />
     </fragment>
     <fragment
         android:id="@+id/addContactFragment"
@@ -112,6 +118,10 @@
         <action
             android:id="@+id/action_addGrpExpenseFragment_to_addMembersFragment"
             app:destination="@id/addMembersFragment" />
+        <argument
+            android:name="expenseRecord"
+            app:argType="com.appdev.split.Model.Data.ExpenseRecord"
+            app:nullable="true" />
     </fragment>
     <fragment
         android:id="@+id/splitAmountFragment"
@@ -132,6 +142,7 @@
         <argument
             android:name="splitType"
             app:argType="integer" />
+
     </fragment>
     <fragment
         android:id="@+id/personalExpenseFragment"
@@ -153,6 +164,9 @@
         <argument android:name="friendName"
             app:argType="string"
             app:nullable="true" />
+        <action
+            android:id="@+id/action_personalExpenseFragment_to_addMembersFragment2"
+            app:destination="@id/addMembersFragment" />
     </fragment>
     <fragment
         android:id="@+id/friendsAllExpenses"

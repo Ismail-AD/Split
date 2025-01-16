@@ -1,6 +1,7 @@
 package com.appdev.split.UI.Fragment
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -38,6 +39,7 @@ class SplitAmountFragment : Fragment() {
         val list = args.friendsList?.takeIf { it.isNotEmpty() }?.toMutableList() ?: mutableListOf()
         val friend = args.myFriend
         val selectedId = args.splitType
+        Log.d("CHKKI",selectedId.toString())
         val amount = args.totalAmount
         if (list.isEmpty() && friend != null) {
             list.add(friend)

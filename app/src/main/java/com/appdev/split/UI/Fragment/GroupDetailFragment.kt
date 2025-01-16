@@ -8,12 +8,15 @@ import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.appdev.split.R
 import com.appdev.split.databinding.FragmentGroupDetailBinding
 
 class GroupDetailFragment : Fragment() {
     var _binding: FragmentGroupDetailBinding? = null
     private val binding get() = _binding!!
+    private val args: GroupDetailFragmentArgs by navArgs()
+
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -39,13 +42,16 @@ class GroupDetailFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val groupData = args.groupMetaData
+        binding.nameOfGroup.text = groupData.title
         binding.addContact.setOnClickListener {
-            checkAndRequestPermission()
+            val action = GroupDetailFragmentDirections.actionGroupDetailFragmentToAddMembersFragment(true,args.groupMetaData.groupId!!)
+            findNavController().navigate(action)
         }
 
         binding.addExp.setOnClickListener {
             val action =
-                GroupDetailFragmentDirections.actionGroupDetailFragmentToAddGrpExpenseFragment(true)
+                GroupDetailFragmentDirections.actionGroupDetailFragmentToAddGrpExpenseFragment(true,null)
             findNavController().navigate(action)
         }
     }

@@ -119,6 +119,7 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="8dp"
+                android:id="@+id/splitusers"
                 android:text="Splitwise users"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -126,6 +127,7 @@
             <LinearLayout
                 android:id="@+id/noBill"
                 android:layout_width="match_parent"
+                android:layout_gravity="center"
                 android:layout_height="match_parent"
                 android:layout_below="@id/recentTitle"
                 android:gravity="center"
@@ -133,9 +135,11 @@
 
                 <TextView
                     style="@style/billWordColor"
+                    android:id="@+id/billwording"
                     android:layout_width="wrap_content"
+                    android:paddingVertical="@dimen/_30sdp"
                     android:layout_height="wrap_content"
-                    android:text="No users!"
+                    android:text="No new users!"
                     android:textSize="18sp" />
             </LinearLayout>
 
