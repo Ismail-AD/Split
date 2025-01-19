@@ -217,7 +217,8 @@ class Repo @Inject constructor(
                         val userProfile = hashMapOf(
                             "name" to userEntity.name,
                             "email" to userEntity.email,
-                            "profileImage" to profileImageUrl  // Add profile image URL
+                            "profileImage" to profileImageUrl,  // Add profile image URL
+                            "userId" to userId
                         )
 
                         firestore.collection("profiles")
@@ -319,7 +320,7 @@ class Repo @Inject constructor(
 
     fun getAllContacts(email: String): Flow<List<FriendContact>> = flow {
         val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
-        if (Utils.isInternetAvailable()) {
+//        if (Utils.isInternetAvailable()) {
             val friendsList = mutableListOf<FriendContact>()
             currentUser?.let {
                 val snapshot = firestore.collection("users")
@@ -334,17 +335,17 @@ class Repo @Inject constructor(
             }
             Log.d("CHKJA", friendsList.toString())
             emit(friendsList)
-        } else {
-            val friendsRoom = contactDao.getAllContacts().first()
-            val newList = friendsRoom.map { friend ->
-                FriendContact(
-                    contact = friend.contact,
-                    name = friend.name,
-                    profileImageUrl = friend.profileImageUrl
-                )
-            }
-            emit(newList)
-        }
+//        } else {
+//            val friendsRoom = contactDao.getAllContacts().first()
+//            val newList = friendsRoom.map { friend ->
+//                FriendContact(
+//                    contact = friend.contact,
+//                    name = friend.name,
+//                    profileImageUrl = friend.profileImageUrl
+//                )
+//            }
+//            emit(newList)
+//        }
     }
 
     suspend fun insertContact(contact: Friend, email: String) {
@@ -353,6 +354,7 @@ class Repo @Inject constructor(
         if (Utils.isInternetAvailable()) {
             currentUser?.let {
                 val friendContact = FriendContact(
+                    friendId = it.uid,
                     contact = contact.contact,
                     name = contact.name,
                     profileImageUrl = contact.profileImageUrl
@@ -373,6 +375,7 @@ class Repo @Inject constructor(
         if (Utils.isInternetAvailable()) {
             currentUser?.let {
                 val friendContact = FriendContact(
+                    friendId = it.uid,
                     contact = contact.contact,
                     name = contact.name,
                     profileImageUrl = contact.profileImageUrl
@@ -411,6 +414,7 @@ class Repo @Inject constructor(
                 val batch = firestore.batch()
                 contacts.forEach { contact ->
                     val friendContact = FriendContact(
+                        friendId = it.uid,
                         contact = contact.contact,
                         name = contact.name,
                         profileImageUrl = contact.profileImageUrl
@@ -434,6 +438,7 @@ class Repo @Inject constructor(
                 val batch = firestore.batch()
                 contacts.forEach { contact ->
                     val friendContact = FriendContact(
+                        friendId = it.uid,
                         contact = contact.contact,
                         name = contact.name,
                         profileImageUrl = contact.profileImageUrl
@@ -488,7 +493,7 @@ class Repo @Inject constructor(
                 .document()
 
             val expenseWithId = expense.copy(
-                expenseId = expenseDoc.id,
+                id = expenseDoc.id,
                 timeStamp = System.currentTimeMillis()
             )
 

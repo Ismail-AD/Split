@@ -141,7 +141,7 @@
             app:nullable="true" />
         <argument
             android:name="splitType"
-            app:argType="integer" />
+            app:argType="string" />
 
     </fragment>
     <fragment
@@ -157,16 +157,14 @@
             android:name="expenseRecord"
             app:argType="com.appdev.split.Model.Data.ExpenseRecord"
             app:nullable="true" />
-        <argument
-            android:name="friendsContact"
-            app:argType="string"
-            app:nullable="true" />
-        <argument android:name="friendName"
-            app:argType="string"
-            app:nullable="true" />
+
         <action
             android:id="@+id/action_personalExpenseFragment_to_addMembersFragment2"
             app:destination="@id/addMembersFragment" />
+        <argument
+            android:name="FriendData"
+            app:argType="com.appdev.split.Model.Data.FriendContact"
+            app:nullable="true" />
     </fragment>
     <fragment
         android:id="@+id/friendsAllExpenses"

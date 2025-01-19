@@ -20,9 +20,11 @@ import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.PaymentDistribute
+import com.appdev.split.Model.Data.SplitType
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
+import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentAmounUntEquallyBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -34,9 +36,8 @@ import kotlin.math.abs
 @AndroidEntryPoint
 class AmountUnEquallyFragment(
     val friendsList: List<FriendContact>,
-    val totalAmount: Float,
-    val selectedId: Int,
-    val myEmail: String
+    val totalAmount: Double,
+    val myUserId: String
 ) : Fragment() {
 
     private var _binding: FragmentAmounUntEquallyBinding? = null
@@ -46,9 +47,9 @@ class AmountUnEquallyFragment(
     private val payments = friendsList.map {
         // Create an initial payment record for each friend
         PaymentDistribute(
-            id = it.contact,
+            id = it.friendId,
             name = it.name,
-            0f
+            0.0
         ) // Start with 0 payment, will be updated by user
     }
     val mainViewModel by activityViewModels<MainViewModel>()
@@ -62,7 +63,7 @@ class AmountUnEquallyFragment(
         _binding = FragmentAmounUntEquallyBinding.inflate(layoutInflater, container, false)
         dialog = Dialog(requireContext())
         setupRecyclerView()
-        updateTotalAmount(0f)
+        updateTotalAmount(0.0)
         return binding.root
     }
 
@@ -70,7 +71,7 @@ class AmountUnEquallyFragment(
         super.onViewCreated(view, savedInstanceState)
 
         binding.fabAddMembers.setOnClickListener {
-            val currentTotalAmount = payments.sumOf { it.amount.toDouble() }
+            val currentTotalAmount = payments.sumOf { it.amount }
             val selectedMembers = payments.filter { it.amount > 0 }
 
 
@@ -83,10 +84,10 @@ class AmountUnEquallyFragment(
                     ).show()
                 }
 
-                selectedMembers.find { it.id == myEmail } == null && (selectedId == R.id.friendPaidSplit || selectedId == R.id.friendOwnedFull) && selectedMembers.size == 1 -> {
+                selectedMembers.find { it.id == myUserId } == null && selectedMembers.size == 1 -> {
                     Toast.makeText(
                         requireContext(),
-                        "You cannot add expense that doesn't involve yourself !",
+                        "You cannot add expense that only involve yourself !",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -102,13 +103,13 @@ class AmountUnEquallyFragment(
                 currentTotalAmount == 0.0 -> {
                     Toast.makeText(
                         requireContext(),
-                        "Please enter some amounts",
+                        "Please split the amount",
                         Toast.LENGTH_LONG
                     ).show()
                 }
 
                 else -> {
-                    saveExpenses(friendsList = friends)
+                    saveExpenses()
                     viewLifecycleOwner.lifecycleScope.launch {
                         repeatOnLifecycle(Lifecycle.State.STARTED) {
                             mainViewModel.operationState.collect { state ->
@@ -139,7 +140,7 @@ class AmountUnEquallyFragment(
         }
     }
 
-    private fun updateTotalAmount(totalAmount: Float) {
+    private fun updateTotalAmount(totalAmount: Double) {
         binding.apply {
             tvTotalAmount.text = "$${totalAmount} of $${totalTarget}"
 
@@ -153,7 +154,7 @@ class AmountUnEquallyFragment(
                     }
                 }
 
-                difference == 0f -> {
+                difference == 0.0 -> {
                     // Exactly matches
                     tvAmountLeft.apply {
                         text = "Perfect split!"
@@ -190,60 +191,58 @@ class AmountUnEquallyFragment(
         }
     }
 
-    private fun saveExpenses(friendsList: List<FriendContact>) {
+    private fun saveExpenses() {
         val selectedPayments = payments.filter { it.amount > 0 }
-        val selectedFriends = selectedPayments.mapNotNull { payment ->
-            friendsList.find { it.contact == payment.id }
-        }
-        var expenseRecord = ExpenseRecord()
-
-        val foundPerson = selectedPayments.find { it.id == myEmail }
-        var newId = selectedId
 
         // Similar logic as in equally split version for handling single selection
 
 
-        if (selectedPayments.size == 1 && foundPerson != null &&
-            selectedId != R.id.friendOwnedFull && selectedId != R.id.friendPaidSplit
-        ) {
-            val navOptions = NavOptions.Builder()
-                .setPopUpTo(R.id.home_page, inclusive = true)
-                .build()
-
-            findNavController().navigate(R.id.home_page, null, navOptions)
-        }
+//        if (selectedPayments.size == 1 && foundPerson != null &&
+//            selectedId != R.id.friendOwnedFull && selectedId != R.id.friendPaidSplit
+//        ) {
+//            val navOptions = NavOptions.Builder()
+//                .setPopUpTo(R.id.home_page, inclusive = true)
+//                .build()
+//
+//            findNavController().navigate(R.id.home_page, null, navOptions)
+//        }
 
         // Logic for handling different payment scenarios similar to equally split version
-        if (selectedId == R.id.youPaidSplit || selectedId == R.id.youOwnedFull) {
-            if (selectedId == R.id.youPaidSplit && selectedFriends.size < 2) {
-                newId = R.id.youOwnedFull
-            } else if (selectedId == R.id.youOwnedFull && selectedFriends.size > 1) {
-                newId = R.id.youPaidSplit
-            }
+//        if (selectedId == R.id.youPaidSplit || selectedId == R.id.youOwnedFull) {
+//            if (selectedId == R.id.youPaidSplit && selectedFriends.size < 2) {
+//                newId = R.id.youOwnedFull
+//            } else if (selectedId == R.id.youOwnedFull && selectedFriends.size > 1) {
+//                newId = R.id.youPaidSplit
+//            }
+//
+//            val payment = selectedPayments.find { it.id != myEmail }
+//            expenseRecord = ExpenseRecord(
+//                paidAmount = totalAmount,
+//                lentAmount = payment?.amount ?: 0f
+//            )
+//
+//        } else {
+//            if (selectedId == R.id.friendOwnedFull && selectedFriends.size > 1) {
+//                newId = R.id.friendPaidSplit
+//            } else if (selectedId == R.id.friendPaidSplit && selectedFriends.size < 2) {
+//                newId = R.id.friendOwnedFull
+//            }
+//
+//
+//                val payment = selectedPayments.find { it.id == myEmail }
+//                expenseRecord = ExpenseRecord(
+//                    paidAmount = totalAmount,
+//                    lentAmount = 0f,
+//                    borrowedAmount = payment?.amount ?: 0f
+//                )
+//        }
+        val distributionList = Utils.createUnequalSplitsFromPayments(selectedPayments)
 
-            val payment = selectedPayments.find { it.id != myEmail }
-            expenseRecord = ExpenseRecord(
-                paidAmount = totalAmount,
-                lentAmount = payment?.amount ?: 0f
-            )
-
-        } else {
-            if (selectedId == R.id.friendOwnedFull && selectedFriends.size > 1) {
-                newId = R.id.friendPaidSplit
-            } else if (selectedId == R.id.friendPaidSplit && selectedFriends.size < 2) {
-                newId = R.id.friendOwnedFull
-            }
-
-
-                val payment = selectedPayments.find { it.id == myEmail }
-                expenseRecord = ExpenseRecord(
-                    paidAmount = totalAmount,
-                    lentAmount = 0f,
-                    borrowedAmount = payment?.amount ?: 0f
-                )
-        }
-
-        mainViewModel.updateFriendExpense(expenseRecord, newId)
+        var expenseRecord = ExpenseRecord(
+            totalAmount = totalAmount, splitType = SplitType.UNEQUAL,
+            splits = distributionList
+        )
+        mainViewModel.updateFriendExpense(expenseRecord)
     }
 //    private fun saveExpenses(friendsList: List<Friend>) {
 //        friendsList.forEach { friend ->

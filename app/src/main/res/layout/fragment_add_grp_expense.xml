@@ -252,17 +252,37 @@
         app:cardBackgroundColor="@color/green_2"
         app:cardCornerRadius="@dimen/_5sdp">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:padding="@dimen/_10sdp"
-            android:text="Paid by you or split equally"
-            android:textAlignment="center"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:gravity="center"
+            android:paddingVertical="@dimen/_10sdp"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/splitTypeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:text="EQUAL"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textAllCaps="true"
+                android:textStyle="bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:text="Split"
+                android:layout_marginStart="@dimen/_6sdp"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textAllCaps="true"
+                android:textStyle="bold" />
+        </LinearLayout>
     </androidx.cardview.widget.CardView>
 
 </LinearLayout>

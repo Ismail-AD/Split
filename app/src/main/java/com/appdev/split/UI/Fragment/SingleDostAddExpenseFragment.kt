@@ -12,7 +12,6 @@ import android.view.ViewGroup
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.Toast
-import androidx.cardview.widget.CardView
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -21,13 +20,16 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.MyFriendSelectionAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.FriendContact
+import com.appdev.split.Model.Data.NameId
+import com.appdev.split.Model.Data.Split
+import com.appdev.split.Model.Data.SplitType
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.UI.Activity.EntryActivity
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentPersonalExpenseBinding
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -41,7 +43,6 @@ class SingleDostAddExpenseFragment : Fragment() {
     private lateinit var adapter: MyFriendSelectionAdapter
     private var friendsList = mutableListOf<FriendContact>()
     private var selectedFriend: FriendContact? = null
-    var selectedId = R.id.youPaidSplit
     var selectedDate = Utils.getCurrentDate()
     lateinit var dialog: Dialog
 
@@ -64,7 +65,7 @@ class SingleDostAddExpenseFragment : Fragment() {
             setupEditExpenseMode(args.expenseRecord!!)
             setCalendarFromDate(args.expenseRecord!!.date)
             selectedFriend =
-                FriendContact(name = args.friendName!!, contact = args.friendsContact!!)
+                args.friendData
         } else {
             setupNewExpenseMode()
             setCalendarFromDate(null)
@@ -111,7 +112,7 @@ class SingleDostAddExpenseFragment : Fragment() {
         binding.addFriends.setOnClickListener {
             val action =
                 SingleDostAddExpenseFragmentDirections.actionPersonalExpenseFragmentToAddMembersFragment2(
-                    false,""
+                    false, ""
                 )
             findNavController().navigate(action)
         }
@@ -121,7 +122,20 @@ class SingleDostAddExpenseFragment : Fragment() {
                 Toast.makeText(requireContext(), "Please select a friend", Toast.LENGTH_SHORT)
                     .show()
             } else {
-                showSplitTypeBottomSheet(selectedFriend!!.name)
+                if (validateAndSave()) {
+                    val action = binding.amount.editText?.let { it1 ->
+                        SingleDostAddExpenseFragmentDirections.actionPersonalExpenseFragmentToSplitAmountFragment(
+                            null,
+                            it1.text.toString()
+                                .toFloat(),
+                            selectedFriend, binding.splitTypeText.text.toString()
+                        )
+
+                    }
+                    if (action != null) {
+                        findNavController().navigate(action)
+                    }
+                }
             }
         }
 
@@ -168,95 +182,88 @@ class SingleDostAddExpenseFragment : Fragment() {
                 val title = binding.title.editText?.text.toString()
                 val description = binding.description.editText?.text.toString()
                 val amount = binding.amount.editText?.text.toString()
-                val amountHalf = amount.toFloat() / 2
 
-                if (mainViewModel.expensePush.value.date.isEmpty() || mainViewModel.expensePush.value.paidAmount < 1f) {
-                    if (args.expenseRecord != null) {
-                        handleExpenseSplit(amount.toFloat(), amountHalf)
-                    } else {
-                        selectedFriend?.let { friend ->
-                            handleExpenseSplit(amount.toFloat(), amountHalf)
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                val listOUserInSplit: MutableList<FriendContact> = mutableListOf()
+
+                if (currentUser != null && mainViewModel.userData.value != null) {
+                    val userId = currentUser.uid // my entry in list for division of amount
+                    listOUserInSplit.add(
+                        FriendContact(
+                            friendId = userId,
+                            name = mainViewModel.userData.value!!.name,
+                            contact = mainViewModel.userData.value!!.email
+                        )
+                    )
+                    var nameIdList: List<NameId> = listOUserInSplit.map { friend ->
+                        NameId(id = friend.friendId, name = friend.name)
+                    }
+
+
+                    // if user didn't change the preset EQUAL SPLIT then calculate data
+                    if (mainViewModel.expensePush.value.date.isEmpty() || mainViewModel.expensePush.value.totalAmount < 1f) {
+                        if (args.expenseRecord != null) {
+                            if (validateAmount(args.expenseRecord!!.splits)) {
+                                mainViewModel.updateFriendExpenseDetail(
+                                    mainViewModel.expensePush.value.copy(
+                                        date = selectedDate,
+                                        title = title,
+                                        description = description,
+                                        totalAmount = amount.toDouble(),
+                                        currency = binding.currencySpinner.text.toString(),
+                                        expenseCategory = binding.categorySpinner.text.toString(),
+                                        splits = if (SplitType.EQUAL.name == binding.splitTypeText.text.toString()
+                                            && amount.toDouble() != args.expenseRecord!!.totalAmount
+                                        ) handleUpdateSplit(
+                                            amount.toDouble(),
+                                            args.expenseRecord!!.splits
+                                        ) else args.expenseRecord!!.splits,
+                                    ), args.expenseRecord!!.id,
+                                    args.friendData!!.contact
+                                )
+                            }
+                        } else {
+                            selectedFriend?.let { friend ->
+                                handleExpenseSplitEqual(amount.toDouble(), nameIdList)
+                                mainViewModel.saveFriendExpense(
+                                    mainViewModel.expensePush.value.copy(
+                                        date = selectedDate,
+                                        title = title,
+                                        description = description,
+                                        totalAmount = amount.toDouble(),
+                                        currency = binding.currencySpinner.text.toString(),
+                                        expenseCategory = binding.categorySpinner.text.toString()
+                                    ),
+                                    friend.contact
+                                )
+                            }
                         }
                     }
-                }
 
-                if (args.expenseRecord != null) {
-                    mainViewModel.updateFriendExpenseDetail(
-                        mainViewModel.expensePush.value.copy(
-                            date = selectedDate,
-                            title = title,
-                            description = description,
-                            amount = amount.toFloat(),
-                            currency = binding.currencySpinner.text.toString(),
-                            expenseFor = binding.categorySpinner.text.toString()
-                        ), args.expenseRecord!!.expenseId,
-                        args.friendsContact!!
-                    )
-                } else {
-                    selectedFriend?.let { friend ->
-                        mainViewModel.saveFriendExpense(
-                            mainViewModel.expensePush.value.copy(
-                                date = selectedDate,
-                                title = title,
-                                description = description,
-                                amount = amount.toFloat(),
-                                currency = binding.currencySpinner.text.toString(),
-                                expenseFor = binding.categorySpinner.text.toString()
-                            ),
-                            friend.contact
-                        )
-                    }
                 }
             }
         }
     }
 
-    private fun handleExpenseSplit(amount: Float, amountHalf: Float) {
-        when (selectedId) {
-            R.id.youPaidSplit -> {
-                mainViewModel.updateFriendExpense(
-                    ExpenseRecord(
-                        paidAmount = amount,
-                        lentAmount = amountHalf,
-                        borrowedAmount = 0f,
-                        date = selectedDate
-                    ), selectedId
-                )
-            }
+    private fun handleExpenseSplitEqual(amount: Double, nameIdList: List<NameId>) {
+        val amountHalf = amount / 2
 
-            R.id.youOwnedFull -> {
-                mainViewModel.updateFriendExpense(
-                    ExpenseRecord(
-                        paidAmount = amount,
-                        lentAmount = amount,
-                        borrowedAmount = 0f,
-                        date = selectedDate
-                    ), selectedId
-                )
-            }
+        val distributionList = Utils.createEqualSplits(nameIdList, amountHalf)
+        mainViewModel.updateFriendExpense(
+            ExpenseRecord(
+                totalAmount = amount,
+                splits = distributionList,
+                date = selectedDate
+            )
+        )
+    }
 
-            R.id.friendPaidSplit -> {
-                mainViewModel.updateFriendExpense(
-                    ExpenseRecord(
-                        paidAmount = amount,
-                        lentAmount = 0f,
-                        borrowedAmount = amountHalf,
-                        date = selectedDate
-                    ), selectedId
-                )
-            }
 
-            R.id.friendOwnedFull -> {
-                mainViewModel.updateFriendExpense(
-                    ExpenseRecord(
-                        paidAmount = amount,
-                        lentAmount = 0f,
-                        borrowedAmount = amount,
-                        date = selectedDate
-                    ), selectedId
-                )
-            }
-        }
+    private fun handleUpdateSplit(amount: Double, splits: List<Split>): List<Split> {
+        val amountHalf = amount / 2
+        val distributionList = Utils.updateEqualSplits(splits, amountHalf)
+        return distributionList
+
     }
 
     private fun observeOperationState() {
@@ -281,10 +288,10 @@ class SingleDostAddExpenseFragment : Fragment() {
         binding.apply {
             dateCheck.text = Utils.getCurrentDay(expenseRecord.date)
             currencySpinner.selectItemByIndex(getCurrencyIndex(expenseRecord.currency))
-            categorySpinner.selectItemByIndex(getCategoryIndex(expenseRecord.expenseFor))
+            categorySpinner.selectItemByIndex(getCategoryIndex(expenseRecord.expenseCategory))
             title.editText?.setText(expenseRecord.title)
             description.editText?.setText(expenseRecord.description)
-            amount.editText?.setText(expenseRecord.amount.toString())
+            amount.editText?.setText(expenseRecord.totalAmount.toString())
         }
 
         // Hide contact list as it's not required when editing
@@ -305,25 +312,13 @@ class SingleDostAddExpenseFragment : Fragment() {
     }
 
     private fun handleSplitTypeChanges() {
-        if (args.expenseRecord != null) {
+        if (args.expenseRecord != null && mainViewModel.expensePush.value.date.toLong() < args.expenseRecord!!.date.toLong()) {
             val expense = args.expenseRecord!!
-            selectedId = when {
-                expense.lentAmount > 0f -> {
-                    val amount = expense.paidAmount - expense.lentAmount
-                    if (amount > 0) R.id.youPaidSplit else R.id.youOwnedFull
-                }
-
-                else -> {
-                    val amount = expense.paidAmount - expense.borrowedAmount
-                    if (amount > 0) R.id.friendPaidSplit else R.id.friendOwnedFull
-                }
-            }
-        } else if (mainViewModel._newSelectedId != -1) {
-            selectedId = mainViewModel._newSelectedId
-            mainViewModel._newSelectedId = -1
+            binding.splitTypeText.text = expense.splitType.name
+        } else {
+            binding.splitTypeText.text = mainViewModel.expensePush.value.splitType.name
         }
 
-        binding.splitTypeText.text = getSelectedRadioButtonText(selectedId)
     }
 
     private fun observeContacts() {
@@ -333,7 +328,11 @@ class SingleDostAddExpenseFragment : Fragment() {
                     is UiState.Loading -> showShimmer()
                     is UiState.Success -> {
                         hideShimmer()
-                        updateFriendsList(contactsState.data)
+                        if (selectedFriend != null) {
+                            updateFriendsList(contactsState.data, selectedFriend)
+                        } else {
+                            updateFriendsList(contactsState.data)
+                        }
                     }
 
                     is UiState.Error -> {
@@ -357,15 +356,18 @@ class SingleDostAddExpenseFragment : Fragment() {
                     if (description.editText?.text.isNullOrEmpty()) {
                         description.editText?.setText(expenseInput.description)
                     }
-                    if (amount.editText?.text.isNullOrEmpty() && expenseInput.amount != 0f) {
-                        amount.editText?.setText(expenseInput.amount.toString())
+                    if (amount.editText?.text.isNullOrEmpty() && expenseInput.totalAmount != 0.0) {
+                        amount.editText?.setText(expenseInput.totalAmount.toString())
                     }
                 }
             }
         }
     }
 
-    private fun updateFriendsList(friends: List<FriendContact>) {
+    private fun updateFriendsList(
+        friends: List<FriendContact>,
+        preSelectedFriend: FriendContact? = null
+    ) {
         friendsList = friends.toMutableList()
         if (friendsList.isNotEmpty()) {
             binding.selectedFrisRecyclerView.visibility = View.VISIBLE
@@ -377,6 +379,15 @@ class SingleDostAddExpenseFragment : Fragment() {
                     null
                 }
             }
+
+            preSelectedFriend?.let { friend ->
+                val friendInList = friendsList.find { it.friendId == friend.friendId }
+                if (friendInList != null) {
+                    adapter.setSelectedFriends(listOf(friendInList))
+                    selectedFriend = friendInList
+                }
+            }
+
             binding.selectedFrisRecyclerView.adapter = adapter
             binding.selectedFrisRecyclerView.layoutManager =
                 LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
@@ -419,6 +430,25 @@ class SingleDostAddExpenseFragment : Fragment() {
         }
     }
 
+    private fun validateAmount(splitList: List<Split>): Boolean {
+        val amount = binding.amount.editText?.text.toString().toDouble()
+        val totalAmount = splitList.sumOf { it.amount }
+        when {
+
+
+            args.expenseRecord != null
+                    && (args.expenseRecord!!.splitType == SplitType.UNEQUAL || args.expenseRecord!!.splitType == SplitType.PERCENTAGE)
+                    && totalAmount != amount -> {
+                showToast("Split among group doesn't add up to the total cost!")
+                return false
+            }
+
+            else -> {
+                return true
+            }
+        }
+    }
+
     fun getCurrencyIndex(name: String): Int {
         val array = resources.getStringArray(R.array.currencies)
         val index = array.indexOf(name)
@@ -452,70 +482,70 @@ class SingleDostAddExpenseFragment : Fragment() {
     }
 
 
-    private fun showSplitTypeBottomSheet(friendName: String) {
-        val bottomSheetDialog = BottomSheetDialog(requireContext())
-        val view = layoutInflater.inflate(R.layout.bottom_sheet_split_type, null)
-        bottomSheetDialog.setContentView(view)
-
-        var new_id = selectedId
-
-        val radioGroup = view.findViewById<RadioGroup>(R.id.splitTypeRadioGroup)
-        val more = view.findViewById<CardView>(R.id.Save)
-        radioGroup.check(selectedId)
-
-        val friendPaidSplitRadioButton = view.findViewById<RadioButton>(R.id.friendPaidSplit)
-        val friendOwnedFullRadioButton = view.findViewById<RadioButton>(R.id.friendOwnedFull)
-        val iOwnedPaidRadioButton = view.findViewById<RadioButton>(R.id.youPaidSplit)
-        val iOwnedFullRadioButton = view.findViewById<RadioButton>(R.id.youOwnedFull)
-
-        val enteredAmount = binding.amount.editText?.text.toString().toFloatOrNull() ?: 0f
-
-        // Calculate owed amounts based on the entered value
-        val halfAmount = enteredAmount / 2
-
-        iOwnedPaidRadioButton.text = "You paid and split amount\n $friendName owes you $halfAmount"
-        iOwnedFullRadioButton.text = "You owned full amount\n $friendName owes you $enteredAmount"
-        friendPaidSplitRadioButton.text =
-            "$friendName paid and split amount \n You owe $friendName $halfAmount"
-        friendOwnedFullRadioButton.text =
-            "$friendName owned full amount \n You owe $friendName $enteredAmount"
-
-        radioGroup.setOnCheckedChangeListener { _, checkedId ->
-            // Don't update splitTypeText immediately
-            new_id = checkedId
-            selectedId = new_id
-            val selectedOption = when (new_id) {
-                R.id.youPaidSplit -> "You paid and split amount\n $friendName owes you $halfAmount"
-                R.id.youOwnedFull -> "You owned full amount\n $friendName owes you $enteredAmount"
-                R.id.friendPaidSplit -> "$friendName paid and split amount\nYou owe $friendName $halfAmount"
-                R.id.friendOwnedFull -> "$friendName owned full amount\nYou owe $friendName $halfAmount"
-                else -> ""
-            }
-            binding.splitTypeText.text = selectedOption // Now update the text when Save is clicked
-//            bottomSheetDialog.dismiss() // Dismiss the bottom sheet after saving
-        }
-
-
-        more.setOnClickListener {
-            bottomSheetDialog.dismiss()
-            if (validateAndSave()) {
-                val action = binding.amount.editText?.let { it1 ->
-                    SingleDostAddExpenseFragmentDirections.actionPersonalExpenseFragmentToSplitAmountFragment(
-                        null,
-                        it1.text.toString()
-                            .toFloat(),
-                        selectedFriend, selectedId
-                    )
-
-                }
-                if (action != null) {
-                    findNavController().navigate(action)
-                }
-            }
-        }
-
-        bottomSheetDialog.show()
-    }
+//    private fun showSplitTypeBottomSheet(friendName: String) {
+//        val bottomSheetDialog = BottomSheetDialog(requireContext())
+//        val view = layoutInflater.inflate(R.layout.bottom_sheet_split_type, null)
+//        bottomSheetDialog.setContentView(view)
+//
+//        var new_id = selectedId
+//
+//        val radioGroup = view.findViewById<RadioGroup>(R.id.splitTypeRadioGroup)
+//        val more = view.findViewById<CardView>(R.id.Save)
+//        radioGroup.check(selectedId)
+//
+//        val friendPaidSplitRadioButton = view.findViewById<RadioButton>(R.id.friendPaidSplit)
+//        val friendOwnedFullRadioButton = view.findViewById<RadioButton>(R.id.friendOwnedFull)
+//        val iOwnedPaidRadioButton = view.findViewById<RadioButton>(R.id.youPaidSplit)
+//        val iOwnedFullRadioButton = view.findViewById<RadioButton>(R.id.youOwnedFull)
+//
+//        val enteredAmount = binding.amount.editText?.text.toString().toFloatOrNull() ?: 0f
+//
+//        // Calculate owed amounts based on the entered value
+//        val halfAmount = enteredAmount / 2
+//
+//        iOwnedPaidRadioButton.text = "You paid and split amount\n $friendName owes you $halfAmount"
+//        iOwnedFullRadioButton.text = "You owned full amount\n $friendName owes you $enteredAmount"
+//        friendPaidSplitRadioButton.text =
+//            "$friendName paid and split amount \n You owe $friendName $halfAmount"
+//        friendOwnedFullRadioButton.text =
+//            "$friendName owned full amount \n You owe $friendName $enteredAmount"
+//
+//        radioGroup.setOnCheckedChangeListener { _, checkedId ->
+//            // Don't update splitTypeText immediately
+//            new_id = checkedId
+//            selectedId = new_id
+//            val selectedOption = when (new_id) {
+//                R.id.youPaidSplit -> "You paid and split amount\n $friendName owes you $halfAmount"
+//                R.id.youOwnedFull -> "You owned full amount\n $friendName owes you $enteredAmount"
+//                R.id.friendPaidSplit -> "$friendName paid and split amount\nYou owe $friendName $halfAmount"
+//                R.id.friendOwnedFull -> "$friendName owned full amount\nYou owe $friendName $halfAmount"
+//                else -> ""
+//            }
+//            binding.splitTypeText.text = selectedOption // Now update the text when Save is clicked
+////            bottomSheetDialog.dismiss() // Dismiss the bottom sheet after saving
+//        }
+//
+//
+//        more.setOnClickListener {
+//            bottomSheetDialog.dismiss()
+//            if (validateAndSave()) {
+//                val action = binding.amount.editText?.let { it1 ->
+//                    SingleDostAddExpenseFragmentDirections.actionPersonalExpenseFragmentToSplitAmountFragment(
+//                        null,
+//                        it1.text.toString()
+//                            .toFloat(),
+//                        selectedFriend, selectedId
+//                    )
+//
+//                }
+//                if (action != null) {
+//                    findNavController().navigate(action)
+//                }
+//            }
+//        }
+//
+//        bottomSheetDialog.show()
+//    }
 
     private fun showError(message: String) {
         Log.d("CHKERR", message)

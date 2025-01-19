@@ -50,7 +50,6 @@ class AddGrpExpenseFragment : Fragment() {
     val selectedFriends = mutableSetOf<FriendContact>()
     val args: AddGrpExpenseFragmentArgs by navArgs()
     lateinit var dialog: Dialog
-    var selectedId = R.id.youPaidSplit
 
     var selectedDate = Utils.getCurrentDate()
 
@@ -62,6 +61,7 @@ class AddGrpExpenseFragment : Fragment() {
         // Inflate the layout for this fragment
         _binding = FragmentAddGrpExpenseBinding.inflate(layoutInflater, container, false)
         setupShimmer()
+
         return binding.root
     }
 
@@ -74,6 +74,7 @@ class AddGrpExpenseFragment : Fragment() {
             mainViewModel.fetchAllContacts()
             observeContacts()
         }
+        observeExpenseInput()
 
         binding.currencySpinner.selectItemByIndex(0)
         binding.categorySpinner.selectItemByIndex(0)
@@ -89,7 +90,7 @@ class AddGrpExpenseFragment : Fragment() {
                 val action = binding.amount.editText?.let { it1 ->
                     AddGrpExpenseFragmentDirections.actionAddGrpExpenseFragmentToSplitAmountFragment(
                         selectedFriends.toList().toTypedArray(),
-                        it1.text.toString().toFloat(),null,R.id.youPaidSplit
+                        it1.text.toString().toFloat(),null,binding.splitTypeText.text.toString()
                     )
                 }
                 if (action != null) {
@@ -104,70 +105,7 @@ class AddGrpExpenseFragment : Fragment() {
 
     }
 
-//    private fun showSplitTypeBottomSheet() {
-//        val bottomSheetDialog = BottomSheetDialog(requireContext())
-//        val view = layoutInflater.inflate(R.layout.bottom_sheet_split_type, null)
-//        bottomSheetDialog.setContentView(view)
-//
-//        var new_id = selectedId
-//
-//        val radioGroup = view.findViewById<RadioGroup>(R.id.splitTypeRadioGroup)
-//        val more = view.findViewById<CardView>(R.id.Save)
-//        radioGroup.check(selectedId)
-//
-//        val friendPaidSplitRadioButton = view.findViewById<RadioButton>(R.id.friendPaidSplit)
-//        val friendOwnedFullRadioButton = view.findViewById<RadioButton>(R.id.friendOwnedFull)
-//        val iOwnedPaidRadioButton = view.findViewById<RadioButton>(R.id.youPaidSplit)
-//        val iOwnedFullRadioButton = view.findViewById<RadioButton>(R.id.youOwnedFull)
-//
-//        val enteredAmount = binding.amount.editText?.text.toString().toFloatOrNull() ?: 0f
-//
-//        // Calculate owed amounts based on the entered value
-//        val halfAmount = enteredAmount / 2
-//
-//        iOwnedPaidRadioButton.text = "You paid and split amount\n each member owes you $halfAmount"
-//        iOwnedFullRadioButton.text = "You owned full amount\n each member owes you $enteredAmount"
-//        friendPaidSplitRadioButton.text =
-//            "$friendName paid and split amount \n each member owes $halfAmount"
-//        friendOwnedFullRadioButton.text =
-//            "$friendName owned full amount \n each member owes $enteredAmount"
-//
-//        radioGroup.setOnCheckedChangeListener { _, checkedId ->
-//            // Don't update splitTypeText immediately
-//            new_id = checkedId
-//            selectedId = new_id
-//            val selectedOption = when (new_id) {
-//                R.id.youPaidSplit -> "You paid and split amount\n $friendName owes you $halfAmount"
-//                R.id.youOwnedFull -> "You owned full amount\n $friendName owes you $enteredAmount"
-//                R.id.friendPaidSplit -> "$friendName paid and split amount\nYou owe $friendName $halfAmount"
-//                R.id.friendOwnedFull -> "$friendName owned full amount\nYou owe $friendName $halfAmount"
-//                else -> ""
-//            }
-//            binding.splitTypeText.text = selectedOption // Now update the text when Save is clicked
-////            bottomSheetDialog.dismiss() // Dismiss the bottom sheet after saving
-//        }
-//
-//
-//        more.setOnClickListener {
-//            bottomSheetDialog.dismiss()
-//            if (validateAndSave()) {
-//                val action = binding.amount.editText?.let { it1 ->
-//                    SingleDostAddExpenseFragmentDirections.actionPersonalExpenseFragmentToSplitAmountFragment(
-//                        null,
-//                        it1.text.toString()
-//                            .toFloat(),
-//                        selectedFriend, selectedId
-//                    )
-//
-//                }
-//                if (action != null) {
-//                    findNavController().navigate(action)
-//                }
-//            }
-//        }
-//
-//        bottomSheetDialog.show()
-//    }
+
 
 
     private fun observeExpenseInput() {
@@ -180,8 +118,8 @@ class AddGrpExpenseFragment : Fragment() {
                     if (description.editText?.text.isNullOrEmpty()) {
                         description.editText?.setText(expenseInput.description)
                     }
-                    if (amount.editText?.text.isNullOrEmpty() && expenseInput.amount != 0f) {
-                        amount.editText?.setText(expenseInput.amount.toString())
+                    if (amount.editText?.text.isNullOrEmpty() && expenseInput.totalAmount != 0.0) {
+                        amount.editText?.setText(expenseInput.totalAmount.toString())
                     }
                 }
             }

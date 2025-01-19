@@ -6,9 +6,10 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class FriendContact(
+    val friendId:String,
     val contact: String,
     val name: String,
     val profileImageUrl: String? = null
 ) : Parcelable{
-    constructor():this("","",null)
+    constructor():this("","","",null)
 }

@@ -12,7 +12,7 @@ import android.view.ViewGroup
 
 class PaymentDistributeAdapter(
     private val payments: List<PaymentDistribute>,
-    private val onAmountChanged: (Float) -> Unit
+    private val onAmountChanged: (Double) -> Unit
 ) : RecyclerView.Adapter<PaymentDistributeAdapter.PaymentViewHolder>() {
 
     inner class PaymentViewHolder(private val binding: PaymentItemBinding) :
@@ -26,8 +26,8 @@ class PaymentDistributeAdapter(
 
                 // Using custom extension function
                 etAmount.onTextChanged { text ->
-                    payment.amount = text.toFloatOrNull() ?: 0f
-                    onAmountChanged(payments.sumOf { it.amount.toDouble() }.toFloat())
+                    payment.amount = text.toDoubleOrNull() ?: 0.0
+                    onAmountChanged(payments.sumOf { it.amount })
                 }
             }
         }

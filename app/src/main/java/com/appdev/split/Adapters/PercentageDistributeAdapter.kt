@@ -10,8 +10,8 @@ import com.appdev.split.Model.Data.Percentage
 import com.appdev.split.databinding.PercentageItemBinding
 class PercentageDistributeAdapter(
     private val payments: List<Percentage>,
-    private val totalAmount: Float,
-    private val onPercentageChanged: (Float) -> Unit
+    private val totalAmount: Double,
+    private val onPercentageChanged: (Double) -> Unit
 ) : RecyclerView.Adapter<PercentageDistributeAdapter.PaymentViewHolder>() {
 
     inner class PaymentViewHolder(private val binding: PercentageItemBinding) :
@@ -26,22 +26,22 @@ class PercentageDistributeAdapter(
                 tvAmount.text = "$${payment.amount.formatAmount()}"
 
                 etPercentage.onTextChanged { text ->
-                    val percentage = text.toFloatOrNull() ?: 0f
+                    val percentage = text.toDoubleOrNull() ?: 0.0
                     payment.percentage = percentage
                     // Calculate amount based on percentage
-                    payment.amount = (percentage / 100f) * totalAmount
+                    payment.amount = (percentage / 100.0) * totalAmount
 
                     // Update amount display
                     tvAmount.text = "$${payment.amount.formatAmount()}"
 
                     // Notify fragment of total percentage
-                    onPercentageChanged(payments.sumOf { it.percentage.toDouble() }.toFloat())
+                    onPercentageChanged(payments.sumOf { it.percentage })
                 }
             }
         }
     }
 
-    private fun Float.formatAmount(): String {
+    private fun Double.formatAmount(): String {
         return String.format("%.2f", this)
     }
 

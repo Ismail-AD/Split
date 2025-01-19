@@ -1,10 +1,15 @@
 package com.appdev.split.Utils
 
+import com.appdev.split.Model.Data.NameId
+import com.appdev.split.Model.Data.PaymentDistribute
+import com.appdev.split.Model.Data.Percentage
+import com.appdev.split.Model.Data.Split
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.roundToInt
 
 object Utils {
     suspend fun isInternetAvailable(): Boolean = withContext(Dispatchers.IO) {
@@ -46,4 +51,61 @@ object Utils {
         // Find the substring within parentheses
         return input.substringAfter("(").substringBefore(")")
     }
+
+    fun createEqualSplits(
+        nameIdList: List<NameId>,
+        amountPerPerson: Double
+    ): List<Split> {
+        return nameIdList.map { nameId ->
+            Split(
+                userId = nameId.id,
+                username = nameId.name,
+                amount = amountPerPerson,
+                percentage = 100.0 / nameIdList.size
+            )
+        }
+    }
+
+
+    fun updateEqualSplits(
+        splitList: List<Split>,
+        amountPerPerson: Double
+    ): List<Split> {
+        val percentage = (100.0 / splitList.size).round2Decimals()
+        return splitList.map { split ->
+            split.copy(
+                amount = amountPerPerson.round2Decimals(),
+                percentage = percentage
+            )
+        }
+    }
+
+    fun createUnequalSplitsFromPayments(
+        selectedPayments: List<PaymentDistribute>
+    ): List<Split> {
+        val totalAmount = selectedPayments.sumOf { it.amount }
+
+        return selectedPayments.map { payment ->
+            Split(
+                userId = payment.id,
+                username = payment.name,
+                amount = payment.amount.round2Decimals(),
+                percentage = ((payment.amount / totalAmount) * 100).round2Decimals()
+            )
+        }
+    }
+    fun createPercentageSplitsFromPayments(
+        selectedPayments: List<Percentage>,
+        totalAmount: Double
+    ): List<Split> {
+        return selectedPayments.map { payment ->
+            Split(
+                userId = payment.id,
+                username = payment.name,
+                percentage = payment.percentage.round2Decimals(),
+                amount = ((totalAmount * payment.percentage) / 100).round2Decimals()
+            )
+        }
+    }
+    private fun Double.round2Decimals() = (this * 100).roundToInt() / 100.0
 }

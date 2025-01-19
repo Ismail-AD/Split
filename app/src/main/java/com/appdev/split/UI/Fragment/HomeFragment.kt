@@ -248,7 +248,7 @@ class HomeFragment : Fragment() {
 
     private fun onExpenseClicked() {
         val action =
-            HomeFragmentDirections.actionHomePageToPersonalExpenseFragment(null, null, null)
+            HomeFragmentDirections.actionHomePageToPersonalExpenseFragment(null, null)
         findNavController().navigate(action)
     }
 

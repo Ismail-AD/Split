@@ -306,23 +306,20 @@ class MainViewModel @Inject constructor(
         _expenseToPush.value = expenseRecord.copy(
             title = expenseRecord.title,
             description = expenseRecord.description,
-            amount = expenseRecord.amount,
+            totalAmount = expenseRecord.totalAmount,
             currency = expenseRecord.currency,
-            expenseFor = expenseRecord.expenseFor
+            expenseCategory = expenseRecord.expenseCategory
         )
     }
 
-    fun updateFriendExpense(expenseRecord: ExpenseRecord, selectedId: Int) {
+    fun updateFriendExpense(expenseRecord: ExpenseRecord) {
 
         _expenseToPush.value = expenseRecord.copy(
-            paidAmount = expenseRecord.paidAmount,
-            lentAmount = expenseRecord.lentAmount,
-            borrowedAmount = expenseRecord.borrowedAmount,
+            totalAmount = expenseRecord.totalAmount,
+            splits = expenseRecord.splits,
             date = expenseRecord.date
         )
-        _newSelectedId = selectedId
-        Log.d("CHKFRIE", selectedId.toString())
-        Log.d("CHKFRIE", _expenseToPush.value.toString())
+//        _newSelectedId = selectedId
     }
 
 

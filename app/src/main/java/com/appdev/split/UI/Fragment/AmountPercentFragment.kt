@@ -20,9 +20,11 @@ import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.Percentage
+import com.appdev.split.Model.Data.SplitType
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
+import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentAmountPercentBinding
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -32,9 +34,8 @@ import kotlin.math.abs
 
 class AmountPercentFragment(
     val friendsList: List<FriendContact>,
-    val totalAmount: Float,
-    val selectedId: Int,
-    val myEmail: String
+    val totalAmount: Double,
+    val myUserId: String
 ) : Fragment() {
 
     private var _binding: FragmentAmountPercentBinding? = null
@@ -54,7 +55,7 @@ class AmountPercentFragment(
         _binding = FragmentAmountPercentBinding.inflate(layoutInflater, container, false)
         dialog = Dialog(requireContext())
         setupRecyclerView()
-        updateProgress(0f)
+        updateProgress(0.0)
         return binding.root
     }
 
@@ -74,8 +75,7 @@ class AmountPercentFragment(
                     ).show()
                 }
 
-                selectedMembers.find { it.id == myEmail } == null &&
-                        (selectedId == R.id.friendPaidSplit || selectedId == R.id.friendOwnedFull) &&
+                selectedMembers.find { it.id == myUserId } == null &&
                         selectedMembers.size == 1 -> {
                     Toast.makeText(
                         requireContext(),
@@ -101,7 +101,7 @@ class AmountPercentFragment(
                 }
 
                 else -> {
-                    saveExpenses(friendsList = friends)
+                    saveExpenses()
                     viewLifecycleOwner.lifecycleScope.launch {
                         repeatOnLifecycle(Lifecycle.State.STARTED) {
                             mainViewModel.operationState.collect { state ->
@@ -134,7 +134,7 @@ class AmountPercentFragment(
         }
     }
 
-    private fun updateProgress(totalPercentageAllocated: Float) {
+    private fun updateProgress(totalPercentageAllocated: Double) {
         binding.apply {
             tvPercentage.text = "${totalPercentageAllocated.toInt()}% of 100%"
             val remainingPercentage = totalPercentage - totalPercentageAllocated
@@ -147,7 +147,7 @@ class AmountPercentFragment(
                     }
                 }
 
-                totalPercentageAllocated == 100f -> {
+                totalPercentageAllocated == 100.0 -> {
                     tvAmountLeft.apply {
                         text = "Perfect split!"
                         setTextColor(ContextCompat.getColor(requireContext(), R.color.green))
@@ -164,61 +164,60 @@ class AmountPercentFragment(
         }
     }
 
-    private fun saveExpenses(friendsList: List<FriendContact>) {
+    private fun saveExpenses() {
         val selectedPayments = payments.filter { it.percentage > 0 }
-        val selectedFriends = selectedPayments.mapNotNull { payment ->
-            friendsList.find { it.contact == payment.id }
-        }
-
-        val foundPerson = selectedPayments.find { it.id == myEmail }
-        var newId = selectedId
-        var expenseRecord = ExpenseRecord()
-
 
         // Similar logic for handling single selection
-        if (selectedPayments.size == 1 && foundPerson != null &&
-            selectedId != R.id.friendOwnedFull && selectedId != R.id.friendPaidSplit
-        ) {
-            val navOptions = NavOptions.Builder()
-                .setPopUpTo(R.id.home_page, inclusive = true)
-                .build()
+//        if (selectedPayments.size == 1 && foundPerson != null &&
+//            selectedId != R.id.friendOwnedFull && selectedId != R.id.friendPaidSplit
+//        ) {
+//            val navOptions = NavOptions.Builder()
+//                .setPopUpTo(R.id.home_page, inclusive = true)
+//                .build()
+//
+//            findNavController().navigate(R.id.home_page, null, navOptions)
+//        }
+//
+//        // Logic for handling different payment scenarios
+//        if (selectedId == R.id.youPaidSplit || selectedId == R.id.youOwnedFull) {
+//            if (selectedId == R.id.youPaidSplit && selectedFriends.size < 2) {
+//                newId = R.id.youOwnedFull
+//            } else if (selectedId == R.id.youOwnedFull && selectedFriends.size > 1) {
+//                newId = R.id.youPaidSplit
+//            }
+//
+//            val payment = selectedPayments.find { it.id != myEmail }
+//            val calculatedAmount = payment?.let { (it.percentage / 100) * totalAmount } ?: 0f
+//            expenseRecord = ExpenseRecord(
+//                paidAmount = totalAmount,
+//                lentAmount = calculatedAmount
+//            )
+//
+//        } else {
+//            if (selectedId == R.id.friendOwnedFull && selectedFriends.size > 1) {
+//                newId = R.id.friendPaidSplit
+//            } else if (selectedId == R.id.friendPaidSplit && selectedFriends.size < 2) {
+//                newId = R.id.friendOwnedFull
+//            }
+//
+//
+//            val payment = selectedPayments.find { it.id == myEmail }
+//            val calculatedAmount = payment?.let { (it.percentage / 100) * totalAmount } ?: 0f
+//            expenseRecord = ExpenseRecord(
+//                paidAmount = totalAmount,
+//                lentAmount = 0f,
+//                borrowedAmount = calculatedAmount
+//            )
+//        }
+        val distributionList =
+            Utils.createPercentageSplitsFromPayments(selectedPayments, totalAmount)
+        var expenseRecord = ExpenseRecord(
+            totalAmount = totalAmount,
+            splitType = SplitType.PERCENTAGE,
+            splits = distributionList
+        )
 
-            findNavController().navigate(R.id.home_page, null, navOptions)
-        }
-
-        // Logic for handling different payment scenarios
-        if (selectedId == R.id.youPaidSplit || selectedId == R.id.youOwnedFull) {
-            if (selectedId == R.id.youPaidSplit && selectedFriends.size < 2) {
-                newId = R.id.youOwnedFull
-            } else if (selectedId == R.id.youOwnedFull && selectedFriends.size > 1) {
-                newId = R.id.youPaidSplit
-            }
-
-            val payment = selectedPayments.find { it.id != myEmail }
-            val calculatedAmount = payment?.let { (it.percentage / 100) * totalAmount } ?: 0f
-            expenseRecord = ExpenseRecord(
-                paidAmount = totalAmount,
-                lentAmount = calculatedAmount
-            )
-
-        } else {
-            if (selectedId == R.id.friendOwnedFull && selectedFriends.size > 1) {
-                newId = R.id.friendPaidSplit
-            } else if (selectedId == R.id.friendPaidSplit && selectedFriends.size < 2) {
-                newId = R.id.friendOwnedFull
-            }
-
-
-            val payment = selectedPayments.find { it.id == myEmail }
-            val calculatedAmount = payment?.let { (it.percentage / 100) * totalAmount } ?: 0f
-            expenseRecord = ExpenseRecord(
-                paidAmount = totalAmount,
-                lentAmount = 0f,
-                borrowedAmount = calculatedAmount
-            )
-        }
-
-        mainViewModel.updateFriendExpense(expenseRecord, newId)
+        mainViewModel.updateFriendExpense(expenseRecord)
     }
 
 //    private fun saveExpenses(friendsList: List<Friend>) {

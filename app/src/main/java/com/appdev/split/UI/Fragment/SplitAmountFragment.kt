@@ -40,14 +40,16 @@ class SplitAmountFragment : Fragment() {
         val friend = args.myFriend
         val selectedId = args.splitType
         Log.d("CHKKI",selectedId.toString())
-        val amount = args.totalAmount
+        val amount = args.totalAmount.toDouble()
         if (list.isEmpty() && friend != null) {
             list.add(friend)
         }
 
         if (currentUser != null && mainViewModel.userData.value != null) {
+            val userId = currentUser.uid // my entry in list for division of amount
             list.add(
                 FriendContact(
+                    friendId = userId,
                     name = mainViewModel.userData.value!!.name,
                     contact = mainViewModel.userData.value!!.email
                 )
@@ -59,8 +61,7 @@ class SplitAmountFragment : Fragment() {
             this,
             list.toList(),
             amount,
-            selectedId,
-            mainViewModel.userData.value?.email ?: currentUser?.email ?: ""
+            currentUser?.uid ?: ""
         )
         binding.viewPager.adapter = pagerAdapter
 
