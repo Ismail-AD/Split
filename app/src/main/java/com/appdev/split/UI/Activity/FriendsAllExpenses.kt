@@ -196,8 +196,7 @@ class FriendsAllExpenses : Fragment() {
     fun goToDetails(expenseList: ExpenseRecord) {
         Log.d("CHKIAMG", "I am going in")
         val action = FriendsAllExpensesDirections.actionFriendsAllExpensesToBillDetails(
-            expenseList, args.nameOfFriend,
-            binding.contact.text.toString()
+            expenseList
         )
         findNavController().navigate(action)
     }

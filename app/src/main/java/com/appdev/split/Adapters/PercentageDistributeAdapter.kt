@@ -1,14 +1,20 @@
 package com.appdev.split.Adapters
 
+import android.icu.util.Currency
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageView
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
 import com.appdev.split.Model.Data.PaymentDistribute
 import com.appdev.split.Model.Data.Percentage
+import com.appdev.split.R
 import com.appdev.split.databinding.PercentageItemBinding
+import com.bumptech.glide.Glide
+
 class PercentageDistributeAdapter(
+    val currency: String,
     private val payments: List<Percentage>,
     private val totalAmount: Double,
     private val onPercentageChanged: (Double) -> Unit
@@ -21,9 +27,11 @@ class PercentageDistributeAdapter(
             binding.apply {
                 tvName.text = payment.name
                 etPercentage.hint = "0"
-
+                Glide.with(binding.root.context).load(payment.imageUrl).error(R.drawable.profile_imaage)
+                    .placeholder(R.drawable.profile_imaage)
+                    .into(binding.ivProfile)
                 // Show calculated amount based on percentage
-                tvAmount.text = "$${payment.amount.formatAmount()}"
+                tvAmount.text = "${currency}${payment.amount.formatAmount()}"
 
                 etPercentage.onTextChanged { text ->
                     val percentage = text.toDoubleOrNull() ?: 0.0
@@ -32,7 +40,7 @@ class PercentageDistributeAdapter(
                     payment.amount = (percentage / 100.0) * totalAmount
 
                     // Update amount display
-                    tvAmount.text = "$${payment.amount.formatAmount()}"
+                    tvAmount.text = "${currency}${payment.amount.formatAmount()}"
 
                     // Notify fragment of total percentage
                     onPercentageChanged(payments.sumOf { it.percentage })

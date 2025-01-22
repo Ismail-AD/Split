@@ -24,8 +24,12 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.MemberAdapter
 import com.appdev.split.Adapters.MyFriendSelectionAdapter
+import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
+import com.appdev.split.Model.Data.NameId
+import com.appdev.split.Model.Data.Split
+import com.appdev.split.Model.Data.SplitType
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
@@ -34,6 +38,7 @@ import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.DialogMemberListBinding
 import com.appdev.split.databinding.FragmentAddGrpExpenseBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -81,16 +86,76 @@ class AddGrpExpenseFragment : Fragment() {
 
 
         binding.doneTextView.setOnClickListener {
-//            if (validateAndSave(isGroupExpense)) {
-//
-//            }
+            if (validateAndSave()) {
+                observeOperationState()
+                val title = binding.title.editText?.text.toString()
+                val description = binding.description.editText?.text.toString()
+                val amount = binding.amount.editText?.text.toString()
+
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                val listOUserInSplit: MutableList<FriendContact> = mutableListOf()
+
+                if (currentUser != null && mainViewModel.userData.value != null) {
+                    val userId = currentUser.uid // my entry in list for division of amount
+                    listOUserInSplit.add(
+                        FriendContact(
+                            friendId = userId,
+                            name = mainViewModel.userData.value!!.name,
+                            contact = mainViewModel.userData.value!!.email
+                        )
+                    )
+                    var nameIdList: List<NameId> = listOUserInSplit.map { friend ->
+                        NameId(id = friend.friendId, name = friend.name)
+                    }
+
+
+                    // if user didn't change the preset EQUAL SPLIT then calculate data
+                    if (mainViewModel.expensePush.value.date.isEmpty() || mainViewModel.expensePush.value.totalAmount < 1f) {
+                        if (args.expenseRecord != null) {
+                            if (validateAmount(args.expenseRecord!!.splits)) {
+                                mainViewModel.updateGroupExpenseDetail(
+                                    expenseRecord = mainViewModel.expensePush.value.copy(
+                                        date = selectedDate,
+                                        title = title,
+                                        description = description,
+                                        totalAmount = amount.toDouble(),
+                                        currency = binding.currencySpinner.text.toString(),
+                                        expenseCategory = binding.categorySpinner.text.toString(),
+                                        splits = if (SplitType.EQUAL.name == binding.splitTypeText.text.toString()
+                                            && amount.toDouble() != args.expenseRecord!!.totalAmount
+                                        ) handleUpdateSplit(
+                                            amount.toDouble(),
+                                            args.expenseRecord!!.splits
+                                        ) else args.expenseRecord!!.splits,
+                                    ), args.expenseRecord!!.id,
+                                    groupId = args.groupId!!
+                                )
+                            }
+                        } else {
+                            handleExpenseSplitEqual(amount.toDouble(), nameIdList)
+                            mainViewModel.saveGroupExpense(
+                                mainViewModel.expensePush.value.copy(
+                                    date = selectedDate,
+                                    title = title,
+                                    description = description,
+                                    totalAmount = amount.toDouble(),
+                                    currency = binding.currencySpinner.text.toString(),
+                                    expenseCategory = binding.categorySpinner.text.toString(),
+                                    paidBy = userId
+                                ), args.groupId!!
+                            )
+                        }
+                    }
+
+                }
+            }
         }
         binding.Split.setOnClickListener {
             if (validateAndSave()) {
                 val action = binding.amount.editText?.let { it1 ->
                     AddGrpExpenseFragmentDirections.actionAddGrpExpenseFragmentToSplitAmountFragment(
                         selectedFriends.toList().toTypedArray(),
-                        it1.text.toString().toFloat(),null,binding.splitTypeText.text.toString()
+                        it1.text.toString().toFloat(), null, binding.splitTypeText.text.toString(),binding.currencySpinner.text.toString()
                     )
                 }
                 if (action != null) {
@@ -105,8 +170,60 @@ class AddGrpExpenseFragment : Fragment() {
 
     }
 
+    private fun validateAmount(splitList: List<Split>): Boolean {
+        val amount = binding.amount.editText?.text.toString().toDouble()
+        val totalAmount = splitList.sumOf { it.amount }
+        when {
+            args.expenseRecord != null
+                    && (args.expenseRecord!!.splitType == SplitType.UNEQUAL || args.expenseRecord!!.splitType == SplitType.PERCENTAGE)
+                    && totalAmount != amount -> {
+                showToast("Split among group doesn't add up to the total cost!")
+                return false
+            }
+
+            else -> {
+                return true
+            }
+        }
+    }
+
+    private fun handleUpdateSplit(amount: Double, splits: List<Split>): List<Split> {
+        val amountHalf = amount / 2
+        val distributionList = Utils.updateEqualSplits(splits, amountHalf)
+        return distributionList
+
+    }
+
+    private fun handleExpenseSplitEqual(amount: Double, nameIdList: List<NameId>) {
+        val amountHalf = amount / 2
+
+        val distributionList = Utils.createEqualSplits(nameIdList, amountHalf)
+        mainViewModel.updateFriendExpense(
+            ExpenseRecord(
+                totalAmount = amount,
+                splits = distributionList,
+                date = selectedDate
+            )
+        )
+    }
 
 
+    private fun observeOperationState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            mainViewModel.operationState.collect { state ->
+                when (state) {
+                    is UiState.Error -> showError(state.message)
+                    UiState.Loading -> showLoadingIndicator()
+                    is UiState.Success -> {
+                        hideLoadingIndicator()
+                        findNavController().navigateUp()
+                    }
+
+                    UiState.Stable -> {}
+                }
+            }
+        }
+    }
 
     private fun observeExpenseInput() {
         viewLifecycleOwner.lifecycleScope.launch {
@@ -141,6 +258,7 @@ class AddGrpExpenseFragment : Fragment() {
                         hideShimmer()
                         showError(contactsState.message)
                     }
+
                     else -> {}
                 }
             }
@@ -200,6 +318,20 @@ class AddGrpExpenseFragment : Fragment() {
         }
     }
 
+    private fun showLoadingIndicator() {
+        Log.d("CHKERR", "Loading from input")
+
+        dialog.setContentView(R.layout.progress_dialog)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.setCancelable(false)
+        dialog.show()
+    }
+
+    private fun hideLoadingIndicator() {
+        Log.d("CHKERR", "hiding from input")
+        dialog.dismiss()
+    }
+
     private fun setupShimmer() {
         // Set the layout for the ViewStub
         binding.shimmerViewFriendList.layoutResource = R.layout.friendslist_shimmer
@@ -223,10 +355,9 @@ class AddGrpExpenseFragment : Fragment() {
     }
 
     private fun showError(message: String) {
-        Log.d("CHKERR",message)
+        Log.d("CHKERR", message)
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
-
 
 
     private fun validateAndSave(): Boolean {
@@ -268,6 +399,6 @@ class AddGrpExpenseFragment : Fragment() {
 
     override fun onDestroy() {
         super.onDestroy()
-        _binding=null
+        _binding = null
     }
 }

@@ -4,6 +4,7 @@ import com.appdev.split.Model.Data.NameId
 import com.appdev.split.Model.Data.PaymentDistribute
 import com.appdev.split.Model.Data.Percentage
 import com.appdev.split.Model.Data.Split
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -28,6 +29,7 @@ object Utils {
     fun getCurrentDate(): String {
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     }
+
     fun getCurrentDay(input: String?): String {
         return if (!input.isNullOrEmpty()) {
             // Parse the input date and extract the day
@@ -80,6 +82,10 @@ object Utils {
         }
     }
 
+    fun getCurrentUserId(): String {
+        return FirebaseAuth.getInstance().currentUser?.uid ?: ""
+    }
+
     fun createUnequalSplitsFromPayments(
         selectedPayments: List<PaymentDistribute>
     ): List<Split> {
@@ -94,6 +100,7 @@ object Utils {
             )
         }
     }
+
     fun createPercentageSplitsFromPayments(
         selectedPayments: List<Percentage>,
         totalAmount: Double
@@ -107,5 +114,6 @@ object Utils {
             )
         }
     }
+
     private fun Double.round2Decimals() = (this * 100).roundToInt() / 100.0
 }

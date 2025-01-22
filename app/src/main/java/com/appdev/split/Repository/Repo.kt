@@ -2,7 +2,7 @@ package com.appdev.split.Repository
 
 import android.net.Uri
 import android.util.Log
-import androidx.core.net.toFile
+import com.appdev.split.Model.Data.Contact
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
@@ -12,13 +12,11 @@ import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Room.DaoClasses.ContactDao
 import com.appdev.split.Utils.Utils
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -39,6 +37,64 @@ class Repo @Inject constructor(
 
     private val profileBucketId = "profileImages"
     private val profileFolderPath = "public/1cp17k1_1"
+
+    //----------------------MANGE GROUP EXPENSE------------------
+
+    suspend fun saveGroupExpense(
+        groupId: String,
+        expense: ExpenseRecord,
+        onResult: (success: Boolean, message: String) -> Unit
+    ) {
+        try {
+
+            val groupExpensesCollection = firestore.collection("groupExpenses")
+                .document(groupId)
+                .collection("expenses") // Create a subcollection for expenses
+
+            // Generate a new document with auto-generated ID in the expenses subcollection
+            val newExpenseDoc = groupExpensesCollection.document()
+
+            // Add ID and timestamp to the expense record
+            val expenseWithId = expense.copy(
+                id = newExpenseDoc.id,
+                timeStamp = System.currentTimeMillis()
+            )
+
+            // Save the expense in the subcollection
+            newExpenseDoc.set(expenseWithId).await()
+            onResult(true, "Expense saved successfully!")
+        } catch (e: Exception) {
+            Log.e("Repo", "Failed to save expense: ${e.message}")
+            onResult(false, "Failed to save expense: ${e.message}")
+        }
+    }
+
+    suspend fun updateGroupExpense(
+        groupId: String,
+        expenseId: String,
+        updatedExpense: ExpenseRecord,
+        onResult: (success: Boolean, message: String) -> Unit
+    ) {
+        try {
+            // Make sure to preserve the original expenseId and update timestamp
+            val expenseToUpdate = updatedExpense.copy(
+                id = expenseId,
+                timeStamp = System.currentTimeMillis()
+            )
+
+            firestore.collection("groupExpenses")
+                .document(groupId)
+                .collection("expenses")
+                .document(expenseId)
+                .set(expenseToUpdate)
+                .await()
+
+            onResult(true, "Group expense updated successfully!")
+        } catch (e: Exception) {
+            Log.e("Repo", "Failed to update group expense: ${e.message}")
+            onResult(false, "Failed to update group expense: ${e.message}")
+        }
+    }
 
 
     //----------------------MANAGE GROUP MEMBERS-----------------
@@ -292,8 +348,11 @@ class Repo @Inject constructor(
                 if (document.exists()) {
                     val name = document.getString("name")
                     val email = document.getString("email")
+                    val url = document.getString("profileImage")
+                    Log.d("CHKUSER", "here is url : $url")
+
                     if (name != null && email != null) {
-                        val user = UserEntity(name, email, "")
+                        val user = UserEntity(name, email, "", imageUrl = url)
                         result(user, "User data fetched successfully", true)
                     } else {
                         result(null, "User data not found", false)
@@ -405,24 +464,28 @@ class Repo @Inject constructor(
         }
     }
 
-    suspend fun insertContacts(contacts: List<Friend>, email: String) {
+    suspend fun insertContacts(
+        contacts: List<Friend>,
+        selectedContacts: MutableList<Contact>,
+        email: String
+    ) {
         val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
         contactDao.insertContacts(contacts)
-
+        Log.d("CJK","${Utils.isInternetAvailable()}")
         if (Utils.isInternetAvailable()) {
             currentUser?.let {
                 val batch = firestore.batch()
-                contacts.forEach { contact ->
+                selectedContacts.forEach { contact ->
                     val friendContact = FriendContact(
-                        friendId = it.uid,
-                        contact = contact.contact,
+                        friendId = contact.friendId,
+                        contact = contact.number,
                         name = contact.name,
-                        profileImageUrl = contact.profileImageUrl
+                        profileImageUrl = contact.imageUrl
                     )
                     val docRef = firestore.collection("users")
                         .document(sanitizedMail)
                         .collection("friends")
-                        .document(contact.contact)
+                        .document(contact.number)
                     batch.set(docRef, friendContact)
                 }
                 batch.commit().await()

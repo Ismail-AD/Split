@@ -45,13 +45,20 @@ class GroupDetailFragment : Fragment() {
         val groupData = args.groupMetaData
         binding.nameOfGroup.text = groupData.title
         binding.addContact.setOnClickListener {
-            val action = GroupDetailFragmentDirections.actionGroupDetailFragmentToAddMembersFragment(true,args.groupMetaData.groupId!!)
+            val action =
+                GroupDetailFragmentDirections.actionGroupDetailFragmentToAddMembersFragment(
+                    true,
+                    args.groupMetaData.groupId!!
+                )
             findNavController().navigate(action)
         }
 
         binding.addExp.setOnClickListener {
             val action =
-                GroupDetailFragmentDirections.actionGroupDetailFragmentToAddGrpExpenseFragment(true,null)
+                GroupDetailFragmentDirections.actionGroupDetailFragmentToAddGrpExpenseFragment(
+                    groupData.groupId,
+                    null
+                )
             findNavController().navigate(action)
         }
     }

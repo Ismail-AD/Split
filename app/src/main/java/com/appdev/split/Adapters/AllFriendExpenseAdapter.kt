@@ -2,11 +2,14 @@ package com.appdev.split.Adapters
 
 import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Utils.Utils
+import com.appdev.split.Utils.Utils.getCurrentUserId
 import com.appdev.split.databinding.ItemRecentBillBinding
+import com.google.firebase.auth.FirebaseAuth
 import kotlin.random.Random
 
 class AllFriendExpenseAdapter(
@@ -15,7 +18,8 @@ class AllFriendExpenseAdapter(
 ) : RecyclerView.Adapter<AllFriendExpenseAdapter.BillViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BillViewHolder {
-        val binding = ItemRecentBillBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding =
+            ItemRecentBillBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return BillViewHolder(binding)
     }
 
@@ -32,28 +36,49 @@ class AllFriendExpenseAdapter(
         fun bind(expense: ExpenseRecord) { // Changed from Bill to ExpenseRecord
             binding.billName.text = expense.title // Assuming ExpenseRecord has a 'name' field
             binding.billDate.text = expense.date // Assuming ExpenseRecord has a 'date' field
-            val amount: Float
-            val label: String
+
             binding.currency.text = Utils.extractCurrencyCode(expense.currency)
-            if (expense.borrowedAmount > 0f) {
-                amount = expense.paidAmount - expense.borrowedAmount
-                label = "You borrowed "
-                binding.amount.text = if (expense.borrowedAmount == expense.paidAmount) {
-                    expense.paidAmount.toString()
+
+
+            val currentUserId =
+                getCurrentUserId() // Implement this method to get logged in user's ID
+
+            // Find current user's split
+            val userSplit = expense.splits.find { it.userId == currentUserId }
+            val isPayer = expense.paidBy == currentUserId
+
+            if (userSplit != null) {
+                val userAmount = userSplit.amount
+                val label: String
+                val displayAmount: Double
+
+                if (isPayer) {
+                    // User paid the bill
+                    val totalOthersShouldPay = expense.splits
+                        .filter { it.userId != currentUserId }
+                        .sumOf { it.amount }
+
+                    label = "You lent "
+                    displayAmount = totalOthersShouldPay
+
                 } else {
-                    amount.toString()
+                    // User didn't pay the bill
+                    label = "You borrowed "
+                    displayAmount = userAmount
+                }
+
+                binding.apply {
+                    youBorrowOrLent.text = label
+                    amount.text = String.format("%.2f", displayAmount)
                 }
             } else {
-                amount = expense.paidAmount - expense.lentAmount
-                label = "You lent "
-                binding.amount.text = if (expense.lentAmount == expense.paidAmount) {
-                    expense.paidAmount.toString()
-                } else {
-                    amount.toString()
+                // Handle case where user is not in splits
+                binding.apply {
+                    youBorrowOrLent.text = "Not involved"
+                    amount.visibility = View.GONE
+                    currency.visibility = View.GONE
                 }
             }
-
-            binding.youBorrowOrLent.text = label
 
             val lightColor = getLightRandomColor()
             binding.cardView.setCardBackgroundColor(lightColor)

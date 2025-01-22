@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.appdev.split.Model.Data.Contact
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
@@ -72,15 +73,16 @@ class MainViewModel @Inject constructor(
 
     //---------------------MANAGE MEMBERS--------------------
     fun addNewMembersToGroup(
-        newMembers: List<FriendContact>,
+        newMembers: MutableList<Contact>,
         groupId: String
     ) {
         _operationState.value = UiState.Loading
+        val groupMatesList = convertContactsToGroupFriends(newMembers)
         viewModelScope.launch {
             try {
                 firebaseAuth.currentUser?.email?.let { mail ->
                     repo.addMembersToGroup(
-                        newMembers = newMembers, groupId = groupId, onSuccess = { message ->
+                        newMembers = groupMatesList, groupId = groupId, onSuccess = { message ->
                             _operationState.value = UiState.Success(Unit)
                         }
                     ) { message ->
@@ -138,6 +140,61 @@ class MainViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _operationState.value = UiState.Error(e.message ?: "Failed to save group")
+            }
+        }
+    }
+
+    //---------------------GROUP Expense----------------------
+    fun saveGroupExpense(
+        expenseRecord: ExpenseRecord,
+        groupId: String
+    ) {
+        _operationState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.email?.let { mail ->
+                    repo.saveGroupExpense(
+                        groupId,
+                        expenseRecord
+                    ) { success, message ->
+                        if (success) {
+                            _operationState.value = UiState.Success(Unit)
+
+                        } else {
+                            _operationState.value = UiState.Error(message)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _operationState.value = UiState.Error(e.message ?: "Failed to save expense")
+            }
+        }
+    }
+
+    fun updateGroupExpenseDetail(
+        expenseRecord: ExpenseRecord,
+        expenseId: String,
+        groupId: String
+    ) {
+        _operationState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.email?.let { mail ->
+                    repo.updateGroupExpense(
+                        groupId,
+                        expenseId,
+                        expenseRecord
+                    ) { success, message ->
+                        if (success) {
+                            _operationState.value = UiState.Success(Unit)
+
+                        } else {
+                            _operationState.value = UiState.Error(message)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _operationState.value = UiState.Error(e.message ?: "Failed to save expense")
             }
         }
     }
@@ -312,14 +369,28 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    fun updateFriendExpense(expenseRecord: ExpenseRecord) {
+    fun updateFriendExpense(title: String, description: String, amount: String) {
 
-        _expenseToPush.value = expenseRecord.copy(
+        _expenseToPush.value = _expenseToPush.value.copy(
+            title = title,
+            description = description,
+            totalAmount = amount.toDouble()
+        )
+    }
+
+    fun updateFriendExpense(expenseRecord: ExpenseRecord) {
+        _expenseToPush.value = _expenseToPush.value.copy(
             totalAmount = expenseRecord.totalAmount,
             splits = expenseRecord.splits,
-            date = expenseRecord.date
+            date = expenseRecord.date,
+            // Preserve existing title and description
+            title = _expenseToPush.value.title.ifEmpty { expenseRecord.title },
+            description = _expenseToPush.value.description.ifEmpty { expenseRecord.description }
         )
-//        _newSelectedId = selectedId
+    }
+
+    fun getExpenseObject(): ExpenseRecord {
+        return _expenseToPush.value
     }
 
 
@@ -351,18 +422,45 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun addContacts(contacts: List<Friend>) {
+    fun addContacts(selectedContacts: MutableList<Contact>) {
         _operationState.value = UiState.Loading
         Log.d("CHKUSER", userData.value.toString())
-
+        val selectedContactsForOffline = convertContactsToFriends(selectedContacts)
         viewModelScope.launch {
             try {
                 Log.d("CHKUSER", userData.value?.email ?: "no mail")
-                userData.value?.let { repo.insertContacts(contacts, it.email) }
+                userData.value?.let {
+                    repo.insertContacts(
+                        selectedContactsForOffline,
+                        selectedContacts,
+                        it.email
+                    )
+                }
                 _operationState.value = UiState.Success(Unit)
             } catch (e: Exception) {
                 _operationState.value = UiState.Error(e.message ?: "Failed to add contacts")
             }
+        }
+    }
+
+    private fun convertContactsToFriends(contacts: List<Contact>): List<Friend> {
+        return contacts.map { contact ->
+            Friend(
+                name = contact.name,
+                profileImageUrl = contact.imageUrl,
+                contact = contact.number  // Using email instead of phone number
+            )
+        }
+    }
+
+    private fun convertContactsToGroupFriends(contacts: List<Contact>): List<FriendContact> {
+        return contacts.map { contact ->
+            FriendContact(
+                name = contact.name,
+                profileImageUrl = contact.imageUrl,
+                contact = contact.number  // Using email instead of phone number,
+                , friendId = contact.friendId
+            )
         }
     }
 

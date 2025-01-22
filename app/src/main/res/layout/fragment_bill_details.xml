@@ -18,7 +18,6 @@
         android:padding="@dimen/_3sdp"
         android:src="@drawable/arrow_back" />
 
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -47,7 +46,7 @@
                 style="@style/billWordColor"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Namu"
+                android:text="Expense Title"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -66,23 +65,23 @@
         </LinearLayout>
 
         <ImageView
+            android:id="@+id/edit"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:id="@+id/edit"
             android:layout_gravity="center_vertical"
+            android:layout_marginEnd="@dimen/_10sdp"
             android:background="?attr/selectableItemBackground"
             android:src="@drawable/ic_edit"
-            android:layout_marginEnd="@dimen/_10sdp"
-            app:tint="@color/gray" />
-        <ImageView
-            android:layout_width="24dp"
-            android:id="@+id/delete"
-            android:layout_height="24dp"
-            android:background="?attr/selectableItemBackground"
-            android:layout_gravity="center_vertical"
-            android:src="@drawable/delete"
             app:tint="@color/gray" />
 
+        <ImageView
+            android:id="@+id/delete"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:src="@drawable/delete"
+            app:tint="@color/gray" />
     </LinearLayout>
 
     <TextView
@@ -93,84 +92,43 @@
         android:text="Expense details"
         android:textSize="20sp"
         android:textStyle="bold" />
+
     <com.google.android.material.divider.MaterialDivider
         android:layout_width="match_parent"
-        android:layout_marginTop="@dimen/_3sdp"
-        android:layout_height="1dp" />
+        android:layout_height="1dp"
+        android:layout_marginTop="@dimen/_3sdp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:layout_marginTop="@dimen/_10sdp"
+        android:orientation="horizontal"
         android:paddingHorizontal="@dimen/_10sdp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:orientation="horizontal"
-            android:layout_height="wrap_content">
-            <TextView
-                android:id="@+id/paidBy"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Total Amount: "
-                android:textColor="@color/black"
-                android:textSize="20sp" />
-            <TextView
-                android:id="@+id/totalAmount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="200$"
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                android:textSize="20sp" />
-        </LinearLayout>
-
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_marginTop="@dimen/_10sdp"
+        <TextView
+            android:id="@+id/TA"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:text="Total Amount: "
+            android:textColor="@color/black"
+            android:textSize="20sp" />
 
-            <com.google.android.material.divider.MaterialDivider
-                android:layout_width="20dp"
-                android:layout_height="1dp" />
-
-            <TextView
-                android:id="@+id/OwnerpaidStatement"
-                android:layout_marginStart="@dimen/_6sdp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="You paid "
-                android:textColor="@color/gray"
-                android:textSize="16sp" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/totalAmount"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/_5sdp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-            <com.google.android.material.divider.MaterialDivider
-                android:layout_width="20dp"
-                android:layout_height="1dp" />
-            <TextView
-                android:id="@+id/friendSplitStatement"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Ali paid "
-                android:layout_marginStart="@dimen/_6sdp"
-                android:textColor="@color/gray"
-                android:textSize="16sp" />
-
-
-        </LinearLayout>
-
+            android:text="200$"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            android:textStyle="bold" />
     </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/splitDetailsRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_10sdp"
+        android:paddingHorizontal="@dimen/_10sdp" />
 
     <TextView
         style="@style/billWordColor"
@@ -180,10 +138,11 @@
         android:text="Description"
         android:textSize="20sp"
         android:textStyle="bold" />
+
     <com.google.android.material.divider.MaterialDivider
         android:layout_width="match_parent"
-        android:layout_marginTop="@dimen/_3sdp"
-        android:layout_height="1dp" />
+        android:layout_height="1dp"
+        android:layout_marginTop="@dimen/_3sdp" />
 
     <TextView
         android:id="@+id/description"
@@ -191,10 +150,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/_20sdp"
         android:background="@drawable/textview_border"
-        android:text="$86,30"
+        android:text=""
         android:textColor="@color/black"
         android:textSize="16sp" />
-
 
     <Button
         android:id="@+id/btn_split_bill"

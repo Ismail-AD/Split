@@ -2,6 +2,7 @@ package com.appdev.split.UI.Fragment
 
 import android.app.Dialog
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,12 +13,10 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.PaymentDistributeAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
-import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.PaymentDistribute
 import com.appdev.split.Model.Data.SplitType
@@ -37,7 +36,8 @@ import kotlin.math.abs
 class AmountUnEquallyFragment(
     val friendsList: List<FriendContact>,
     val totalAmount: Double,
-    val myUserId: String
+    val myUserId: String,
+    val currency: String
 ) : Fragment() {
 
     private var _binding: FragmentAmounUntEquallyBinding? = null
@@ -49,7 +49,7 @@ class AmountUnEquallyFragment(
         PaymentDistribute(
             id = it.friendId,
             name = it.name,
-            0.0
+            0.0, imageUrl = it.profileImageUrl
         ) // Start with 0 payment, will be updated by user
     }
     val mainViewModel by activityViewModels<MainViewModel>()
@@ -62,9 +62,33 @@ class AmountUnEquallyFragment(
     ): View? {
         _binding = FragmentAmounUntEquallyBinding.inflate(layoutInflater, container, false)
         dialog = Dialog(requireContext())
+        checkViewModelData()
         setupRecyclerView()
-        updateTotalAmount(0.0)
         return binding.root
+    }
+
+    private fun checkViewModelData() {
+        val currentExpense = mainViewModel.getExpenseObject()
+        Log.d("CHKME", "${currentExpense}")
+
+        if (currentExpense != null && currentExpense.splits.isNotEmpty() &&
+            currentExpense.splitType == SplitType.UNEQUAL) {
+            Log.d("CHKME", "in if")
+
+            // Update payments with existing amounts
+            currentExpense.splits.forEach { split ->
+                payments.find { it.id == split.userId }?.let { payment ->
+                    payment.amount = split.amount
+                }
+            }
+
+            // Update UI with total amount
+            val totalAllocated = payments.sumOf { it.amount }
+            updateTotalAmount(totalAllocated)
+
+        } else {
+            updateTotalAmount(0.0)
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -110,22 +134,6 @@ class AmountUnEquallyFragment(
 
                 else -> {
                     saveExpenses()
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        repeatOnLifecycle(Lifecycle.State.STARTED) {
-                            mainViewModel.operationState.collect { state ->
-                                when (state) {
-                                    is UiState.Loading -> showLoadingIndicator()
-                                    is UiState.Success -> {
-                                        hideLoadingIndicator()
-                                        findNavController().navigateUp()
-                                    }
-
-                                    is UiState.Error -> showError(state.message)
-                                    else -> {}
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -134,7 +142,7 @@ class AmountUnEquallyFragment(
     private fun setupRecyclerView() {
         binding.memberRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
-            adapter = PaymentDistributeAdapter(payments) { totalAmount ->
+            adapter = PaymentDistributeAdapter(currency,payments) { totalAmount ->
                 updateTotalAmount(totalAmount)
             }
         }
@@ -243,6 +251,8 @@ class AmountUnEquallyFragment(
             splits = distributionList
         )
         mainViewModel.updateFriendExpense(expenseRecord)
+        findNavController().navigateUp()
+
     }
 //    private fun saveExpenses(friendsList: List<Friend>) {
 //        friendsList.forEach { friend ->

@@ -122,19 +122,33 @@ class SingleDostAddExpenseFragment : Fragment() {
                 Toast.makeText(requireContext(), "Please select a friend", Toast.LENGTH_SHORT)
                     .show()
             } else {
-                if (validateAndSave()) {
+                if (!TextUtils.isEmpty(binding.amount.editText?.text.toString())) {
+                    mainViewModel.updateFriendExpense(
+                        title = binding.title.editText?.text.toString(),
+                        description = binding.description.editText?.text.toString(),
+                        amount = binding.amount.editText?.text.toString()
+                    )
+
                     val action = binding.amount.editText?.let { it1 ->
                         SingleDostAddExpenseFragmentDirections.actionPersonalExpenseFragmentToSplitAmountFragment(
                             null,
                             it1.text.toString()
                                 .toFloat(),
-                            selectedFriend, binding.splitTypeText.text.toString()
+                            selectedFriend,
+                            binding.splitTypeText.text.toString(),
+                            Utils.extractCurrencyCode(binding.currencySpinner.text.toString())
                         )
 
                     }
                     if (action != null) {
+                        mainViewModel.expensePush.value.copy(
+                            title = binding.title.editText.toString(),
+                            description = binding.description.editText.toString()
+                        )
                         findNavController().navigate(action)
                     }
+                } else {
+                    showError("Amount cannot be empty!")
                 }
             }
         }
@@ -232,7 +246,8 @@ class SingleDostAddExpenseFragment : Fragment() {
                                         description = description,
                                         totalAmount = amount.toDouble(),
                                         currency = binding.currencySpinner.text.toString(),
-                                        expenseCategory = binding.categorySpinner.text.toString()
+                                        expenseCategory = binding.categorySpinner.text.toString(),
+                                        paidBy = userId
                                     ),
                                     friend.contact
                                 )
@@ -434,8 +449,6 @@ class SingleDostAddExpenseFragment : Fragment() {
         val amount = binding.amount.editText?.text.toString().toDouble()
         val totalAmount = splitList.sumOf { it.amount }
         when {
-
-
             args.expenseRecord != null
                     && (args.expenseRecord!!.splitType == SplitType.UNEQUAL || args.expenseRecord!!.splitType == SplitType.PERCENTAGE)
                     && totalAmount != amount -> {

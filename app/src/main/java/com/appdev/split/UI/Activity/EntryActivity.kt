@@ -60,7 +60,8 @@ class EntryActivity : AppCompatActivity() {
                 R.id.friendsAllExpenses,
                 R.id.addGroupFragment,
                 R.id.billDetails,
-                R.id.personalExpenseFragment
+                R.id.personalExpenseFragment,
+                R.id.splitAmountFragment
 
                 // Add other fragment IDs where you want to hide the bottom bar
             )

@@ -8,7 +8,10 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.navArgs
+import com.appdev.split.Adapters.EQUAL_SPLIT_POSITION
 import com.appdev.split.Adapters.MyPagerAdapter
+import com.appdev.split.Adapters.PERCENTAGE_SPLIT_POSITION
+import com.appdev.split.Adapters.UNEQUAL_SPLIT_POSITION
 import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.databinding.FragmentSplitAmountBinding
@@ -38,8 +41,6 @@ class SplitAmountFragment : Fragment() {
         val currentUser = FirebaseAuth.getInstance().currentUser
         val list = args.friendsList?.takeIf { it.isNotEmpty() }?.toMutableList() ?: mutableListOf()
         val friend = args.myFriend
-        val selectedId = args.splitType
-        Log.d("CHKKI",selectedId.toString())
         val amount = args.totalAmount.toDouble()
         if (list.isEmpty() && friend != null) {
             list.add(friend)
@@ -47,29 +48,44 @@ class SplitAmountFragment : Fragment() {
 
         if (currentUser != null && mainViewModel.userData.value != null) {
             val userId = currentUser.uid // my entry in list for division of amount
+            Log.d("CHKKI", "BEFORE UPDATE: $list")
+
             list.add(
                 FriendContact(
                     friendId = userId,
                     name = mainViewModel.userData.value!!.name,
-                    contact = mainViewModel.userData.value!!.email
+                    contact = mainViewModel.userData.value!!.email, profileImageUrl = mainViewModel.userData.value!!.imageUrl
                 )
             )
+            Log.d("CHKKI", "AFTER UPDATE: $list")
+
+
         }
+
 
 
         val pagerAdapter = MyPagerAdapter(
             this,
             list.toList(),
             amount,
-            currentUser?.uid ?: ""
+            currentUser?.uid ?: "", currency = args.currency,args.splitType
         )
-        binding.viewPager.adapter = pagerAdapter
 
+
+        binding.viewPager.apply {
+            adapter = pagerAdapter
+            // Disable swipe if you want to prevent manual navigation
+            // isUserInputEnabled = false
+
+            // Set initial position based on split type
+            setCurrentItem(pagerAdapter.initialPosition, false)
+        }
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
-            when (position) {
-                0 -> tab.text = "Equally"
-                1 -> tab.text = "Unequally"
-                2 -> tab.text = "By Percentage"
+            tab.text = when (position) {
+                EQUAL_SPLIT_POSITION -> "Equal"
+                UNEQUAL_SPLIT_POSITION -> "Unequal"
+                PERCENTAGE_SPLIT_POSITION -> "Percentage"
+                else -> throw IllegalArgumentException("Invalid tab position")
             }
         }.attach()
     }

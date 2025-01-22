@@ -42,14 +42,11 @@
         <argument
             android:name="BillData"
             app:argType="com.appdev.split.Model.Data.ExpenseRecord" />
-        <argument
-            android:name="friendContact"
-            app:argType="string" />
+
         <action
             android:id="@+id/action_billDetails_to_personalExpenseFragment"
             app:destination="@id/personalExpenseFragment" />
-        <argument android:name="friendName"
-            app:argType="string" />
+
     </fragment>
     <fragment
         android:id="@+id/group"
@@ -113,8 +110,9 @@
             android:id="@+id/action_addGrpExpenseFragment_to_splitAmountFragment"
             app:destination="@id/splitAmountFragment" />
         <argument
-            android:name="isGroupExpense"
-            app:argType="boolean" />
+            android:name="groupId"
+            app:argType="string"
+            app:nullable="true" />
         <action
             android:id="@+id/action_addGrpExpenseFragment_to_addMembersFragment"
             app:destination="@id/addMembersFragment" />
@@ -141,6 +139,9 @@
             app:nullable="true" />
         <argument
             android:name="splitType"
+            app:argType="string" />
+        <argument
+            android:name="currency"
             app:argType="string" />
 
     </fragment>

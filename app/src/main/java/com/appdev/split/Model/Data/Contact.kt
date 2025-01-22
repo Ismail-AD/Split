@@ -4,5 +4,6 @@ data class Contact(
     val name: String,
     val number: String,
     val imageUrl: String? = null,
-    val isFriend: Boolean = false
+    val isFriend: Boolean = false,
+    val friendId:String
 )

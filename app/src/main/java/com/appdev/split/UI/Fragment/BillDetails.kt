@@ -15,6 +15,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.appdev.split.Adapters.SplitDetailsAdapter
 import com.appdev.split.Adapters.TransactionItemAdapter
 import com.appdev.split.Model.Data.Bill
 import com.appdev.split.Model.Data.ExpenseRecord
@@ -35,29 +36,27 @@ import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
 @AndroidEntryPoint
 class BillDetails : Fragment() {
 
     private var _binding: FragmentBillDetailsBinding? = null
     private val binding get() = _binding!!
-    lateinit var dialog: Dialog
+    private lateinit var dialog: Dialog
     private val args: BillDetailsArgs by navArgs()
-    val mainViewModel by activityViewModels<MainViewModel>()
-    var friendContact: Friend? = null
-    var bill: ExpenseRecord = ExpenseRecord()
+    private val mainViewModel by activityViewModels<MainViewModel>()
+    private lateinit var splitDetailsAdapter: SplitDetailsAdapter
+    private var expenseRecord: ExpenseRecord = ExpenseRecord()
 
     @Inject
     lateinit var firestore: FirebaseFirestore
 
     @Inject
     lateinit var firebaseAuth: FirebaseAuth
-    var eventListener: ValueEventListener? = null
-    lateinit var expenseRef: DatabaseReference
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentBillDetailsBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -66,104 +65,63 @@ class BillDetails : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         mainViewModel.updateStateToStable()
 
-        dialog = Dialog(requireContext())
-        binding.backBtn.setOnClickListener {
-            findNavController().navigateUp()
-        }
-
-        bill = args.billData
-        friendContact = Friend(contact = args.friendContact, name = args.friendName)
-
-        firebaseAuth.currentUser?.email?.let { mail ->
-            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(mail)
-            val friendMail = Utils.sanitizeEmailForFirebase(args.friendContact)
-
-            // Use Firestore instead of Realtime Database
-            val expenseDocRef = firestore.collection("expenses")
-                .document(sanitizedMyEmail)
-                .collection(friendMail)
-                .document(bill.expenseId)
-
-            // Create a snapshot listener for the specific expense
-            expenseDocRef.addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    Log.e("CHKSS", "Listen failed.", error)
-                    return@addSnapshotListener
-                }
-
-                if (snapshot != null && snapshot.exists()) {
-                    val expenseRecord = snapshot.toObject(ExpenseRecord::class.java)
-
-                    if (expenseRecord != null && expenseRecord != bill) {
-                        bill = expenseRecord
-                        updateData()
-                    }
-                }
-            }
-        }
-        updateData()
-
-        binding.edit.setOnClickListener {
-            val action = BillDetailsDirections.actionBillDetailsToPersonalExpenseFragment(
-                args.billData,
-                args.friendContact,
-                args.friendName
-            )
-            findNavController().navigate(action)
-
-        }
-        binding.delete.setOnClickListener {
-            observeOperationState()
-            mainViewModel.deleteFriendExpenseDetail(bill.expenseId, args.friendContact)
-        }
-
-
-
-        binding.title.text = bill.title
-        binding.date.text = "Added by you on " + Utils.formatDate(bill.date)
-        binding.totalAmount.text = Utils.extractCurrencyCode(bill.currency) + bill.amount.toString()
-
-
-
-        binding.description.text = bill.description
-
-
+        setupDialog()
+        setupRecyclerView()
+        setupClickListeners()
+        updateUIWithExpenseRecord(args.billData)
     }
 
-    fun updateData() {
-        if (bill.lentAmount > 0f) {
-            val youPaid = bill.paidAmount - bill.lentAmount
-            val amountText = if (youPaid == 0f) {
-                bill.paidAmount.toString()
-            } else {
-                youPaid.toString()
-            }
-            if (bill.paidAmount == bill.lentAmount) {
-                binding.OwnerpaidStatement.text =
-                    "You paid " + Utils.extractCurrencyCode(bill.currency) + amountText
-            } else {
-                binding.OwnerpaidStatement.text =
-                    "You owes " + Utils.extractCurrencyCode(bill.currency) + amountText
-            }
-            friendContact?.let { friend ->
-                binding.friendSplitStatement.text =
-                    friend.name + " owes " + Utils.extractCurrencyCode(bill.currency) + bill.lentAmount.toString()
-            }
+    private fun setupDialog() {
+        dialog = Dialog(requireContext())
+    }
 
-
-        } else if (bill.borrowedAmount > 0f) {
-            val youPaid = bill.paidAmount - bill.borrowedAmount
-            friendContact?.let { friend ->
-                if (bill.paidAmount == bill.borrowedAmount) {
-                    binding.friendSplitStatement.text = friend.name + " paid " + youPaid.toString()
-                } else {
-                    binding.OwnerpaidStatement.text = friend.name + " owes " + youPaid.toString()
-                }
-            }
-            binding.OwnerpaidStatement.text =
-                "You owes " + Utils.extractCurrencyCode(bill.currency) + bill.borrowedAmount.toString()
-
+    private fun setupRecyclerView() {
+        splitDetailsAdapter = SplitDetailsAdapter()
+        binding.splitDetailsRecyclerView.apply {
+            adapter = splitDetailsAdapter
+            layoutManager = LinearLayoutManager(requireContext())
         }
+    }
+
+    private fun setupClickListeners() {
+        binding.apply {
+            backBtn.setOnClickListener {
+                findNavController().navigateUp()
+            }
+
+//            edit.setOnClickListener {
+//                val action = BillDetailsDirections.actionBillDetailsToPersonalExpenseFragment(
+//                    expenseRecord,
+//                    args.fr
+//                )
+//                findNavController().navigate(action)
+//            }
+//
+//            delete.setOnClickListener {
+//                observeOperationState()
+//                mainViewModel.deleteFriendExpenseDetail(expenseRecord.id, args.friendContact)
+//            }
+        }
+    }
+
+
+
+    private fun updateUIWithExpenseRecord(record: ExpenseRecord) {
+        expenseRecord = record
+
+        binding.apply {
+            title.text = record.title
+            date.text = "Added on ${Utils.formatDate(record.date)}"
+            totalAmount.text = "${record.currency}${record.totalAmount}"
+            description.text = record.description
+        }
+
+        splitDetailsAdapter.updateData(
+            record.splits,
+            record.splitType,
+            record.totalAmount,
+            record.currency
+        )
     }
 
     private fun showError(message: String) {
@@ -183,13 +141,6 @@ class BillDetails : Fragment() {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        eventListener?.let {
-            expenseRef.removeEventListener(it)
-        }
-    }
-
     private fun observeOperationState() {
         viewLifecycleOwner.lifecycleScope.launch {
             mainViewModel.operationState.collect { state ->
@@ -200,13 +151,14 @@ class BillDetails : Fragment() {
                         hideLoadingIndicator()
                         findNavController().navigateUp()
                     }
-
-                    UiState.Stable -> {
-
-                    }
+                    UiState.Stable -> { /* no-op */ }
                 }
             }
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
 }

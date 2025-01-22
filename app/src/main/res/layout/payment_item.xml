@@ -3,24 +3,27 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
     android:gravity="center_vertical"
+    android:orientation="horizontal"
     android:padding="8dp">
 
-    <ImageView
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/ivProfile"
-        android:layout_width="48dp"
-        android:background="@drawable/circle_background"
-        android:layout_height="48dp" />
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/profile_imaage"
+        app:shapeAppearanceOverlay="@style/CircularImageStyle" />
+
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center"
+        android:layout_marginStart="16dp"
         android:layout_marginEnd="@dimen/_5sdp"
-        android:layout_marginStart="16dp">
+        android:layout_weight="1"
+        android:gravity="center"
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/tvName"
@@ -30,11 +33,12 @@
     </LinearLayout>
 
     <TextView
+        android:id="@+id/curr"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/_2sdp"
         android:text="$"
         android:textSize="16sp"
-        android:layout_marginEnd="@dimen/_2sdp"
         android:textStyle="bold" />
 
     <EditText
@@ -42,8 +46,8 @@
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:hint="0.00"
-        android:singleLine="true"
         android:inputType="numberDecimal"
+        android:singleLine="true"
         android:textAlignment="textEnd" />
 
 </LinearLayout>

@@ -12,12 +12,10 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.PercentageDistributeAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
-import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.Percentage
 import com.appdev.split.Model.Data.SplitType
@@ -35,7 +33,8 @@ import kotlin.math.abs
 class AmountPercentFragment(
     val friendsList: List<FriendContact>,
     val totalAmount: Double,
-    val myUserId: String
+    val myUserId: String,
+    val currency: String
 ) : Fragment() {
 
     private var _binding: FragmentAmountPercentBinding? = null
@@ -43,7 +42,7 @@ class AmountPercentFragment(
     val friends = friendsList
     private val totalPercentage = 100f
     private val payments = friendsList.map { friend ->
-        Percentage(friend.contact, friend.name)
+        Percentage(friend.contact, friend.name, imageUrl = friend.profileImageUrl)
     }
     private val mainViewModel by activityViewModels<MainViewModel>()
     private lateinit var dialog: Dialog
@@ -54,11 +53,31 @@ class AmountPercentFragment(
     ): View {
         _binding = FragmentAmountPercentBinding.inflate(layoutInflater, container, false)
         dialog = Dialog(requireContext())
+        checkViewModelData()
         setupRecyclerView()
-        updateProgress(0.0)
         return binding.root
     }
+    private fun checkViewModelData() {
+        val currentExpense = mainViewModel.getExpenseObject()
 
+        if (currentExpense != null && currentExpense.splits.isNotEmpty() &&
+            currentExpense.splitType == SplitType.PERCENTAGE) {
+            // Update payments with existing percentages
+            currentExpense.splits.forEach { split ->
+                payments.find { it.id == split.userId }?.let { payment ->
+                    // Convert amount back to percentage: (amount / total) * 100
+                    payment.percentage = split.percentage
+                }
+            }
+
+            // Update UI with total percentage
+            val totalPercent = payments.sumOf { it.percentage }
+            updateProgress(totalPercent)
+
+        } else {
+            updateProgress(0.0)
+        }
+    }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -102,24 +121,6 @@ class AmountPercentFragment(
 
                 else -> {
                     saveExpenses()
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        repeatOnLifecycle(Lifecycle.State.STARTED) {
-                            mainViewModel.operationState.collect { state ->
-                                when (state) {
-                                    is UiState.Loading -> showLoadingIndicator()
-                                    is UiState.Success -> {
-                                        hideLoadingIndicator()
-                                        findNavController().navigateUp()
-                                    }
-
-                                    is UiState.Error -> showError(state.message)
-                                    UiState.Stable -> {
-
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -128,7 +129,7 @@ class AmountPercentFragment(
     private fun setupRecyclerView() {
         binding.memberRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
-            adapter = PercentageDistributeAdapter(payments, totalAmount) { percentage ->
+            adapter = PercentageDistributeAdapter(currency,payments, totalAmount) { percentage ->
                 updateProgress(percentage)
             }
         }
@@ -146,7 +147,6 @@ class AmountPercentFragment(
                         setTextColor(ContextCompat.getColor(requireContext(), R.color.error_red))
                     }
                 }
-
                 totalPercentageAllocated == 100.0 -> {
                     tvAmountLeft.apply {
                         text = "Perfect split!"
@@ -218,6 +218,7 @@ class AmountPercentFragment(
         )
 
         mainViewModel.updateFriendExpense(expenseRecord)
+        findNavController().navigateUp()
     }
 
 //    private fun saveExpenses(friendsList: List<Friend>) {

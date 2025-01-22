@@ -9,9 +9,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.SplitMembersAdapter
@@ -19,15 +16,12 @@ import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.Member
 import com.appdev.split.Model.Data.NameId
-import com.appdev.split.Model.Data.Split
 import com.appdev.split.Model.Data.SplitType
-import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentAmountEquallyBinding
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -36,13 +30,18 @@ import java.util.Locale
 class AmountEquallyFragment(
     val friends: List<FriendContact>,
     val totalAmount: Double,
-    val myUserId: String
+    val myUserId: String,
+    val currency: String
 ) : Fragment() {
     private var _binding: FragmentAmountEquallyBinding? = null
     val binding get() = _binding!!
     private lateinit var myadapter: SplitMembersAdapter
     var persons: List<Member> = friends.map { friend ->
-        Member(id = friend.friendId, name = friend.name, isSelected = true)
+        Member(
+            id = friend.friendId,
+            name = friend.name,
+            imageUrl = friend.profileImageUrl
+        )
     }
 
 
@@ -56,6 +55,7 @@ class AmountEquallyFragment(
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentAmountEquallyBinding.inflate(layoutInflater, container, false)
+        checkViewModelData()
         setupRecyclerView()
         setupSelectAll()
         return binding.root
@@ -67,7 +67,7 @@ class AmountEquallyFragment(
 
         binding.fabAddMembers.setOnClickListener {
             val selectedMembers = persons.filter { it.isSelected }
-            if (persons.find { it.id == myUserId } == null && selectedMembers.size == 1) {
+            if (selectedMembers.find { it.id == myUserId } != null && selectedMembers.size == 1) {
                 Toast.makeText(
                     requireContext(),
                     "You cannot add expense that only involve yourself !",
@@ -75,55 +75,37 @@ class AmountEquallyFragment(
                 ).show()
             } else {
                 saveExpenses()
-                viewLifecycleOwner.lifecycleScope.launch {
-                    repeatOnLifecycle(Lifecycle.State.STARTED) {
-                        mainViewModel.operationState.collect { state ->
-                            when (state) {
-                                is UiState.Loading -> showLoadingIndicator()
-                                is UiState.Success -> {
-                                    hideLoadingIndicator()
-                                    findNavController().navigateUp()
-                                }
-
-                                is UiState.Error -> showError(state.message)
-                                UiState.Stable -> {
-
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
 
     }
 
-    private fun showError(message: String) {
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-    }
 
-    private fun showLoadingIndicator() {
-        dialog.setContentView(R.layout.progress_dialog)
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialog.setCancelable(false)
-        dialog.show()
-    }
+    private fun checkViewModelData() {
+        // Get the current expense record from ViewModel
+        val currentExpense = mainViewModel.getExpenseObject()
+        Log.d("AmountEqually", "${currentExpense.splits}")
 
-    private fun hideLoadingIndicator() {
-        if (dialog.isShowing) {
-            dialog.dismiss()
+        if (currentExpense != null && currentExpense.splits.isNotEmpty() && currentExpense.splitType == SplitType.EQUAL) {
+            // Get the IDs of members who are part of the split
+            val splitMemberIds = currentExpense.splits.map { it.userId }.toSet()
+
+            // Update the persons list based on split data
+            persons = persons.map { person ->
+                person.copy(isSelected = person.id in splitMemberIds)
+            }
+
+            Log.d("AmountEqually", "Loaded existing split data: ${splitMemberIds.size} members")
+        } else{
+            persons = persons.map { it.copy(isSelected = true) }
         }
     }
 
     private fun setupRecyclerView() {
         myadapter = SplitMembersAdapter { selectedPersons ->
-            updateUI(selectedPersons.filter { it.isSelected })
+            Log.d("CHKME", "ARRIVED SELECTED PERSONS: $selectedPersons")
+            updateUI(selectedPersons)
             persons = selectedPersons
-            Log.d("CHKME", selectedPersons.toString())
-            // Update "All" checkbox - should be checked only if ALL members are selected
-            binding.selectAllCheckBox.setOnCheckedChangeListener(null)
-            binding.selectAllCheckBox.isChecked = selectedPersons.all { it.isSelected }
-            setupSelectAll() // Reattach the listener
         }
 
         binding.memberRecyclerView.apply {
@@ -132,9 +114,8 @@ class AmountEquallyFragment(
         }
 
         // Initialize with all members selected
-        val initialMembers = persons.map { it.copy(isSelected = true) }
-        myadapter.updatePersons(initialMembers)
-        updateUI(initialMembers)
+        myadapter.updatePersons(persons)
+        updateUI(persons)
     }
 
     private fun setupSelectAll() {
@@ -144,7 +125,8 @@ class AmountEquallyFragment(
     }
 
     private fun updateUI(selectedPersons: List<Member>) {
-        val selectedCount = selectedPersons.size
+        val selectedCount = selectedPersons.count { it.isSelected }
+        Log.d("CHKME", "COUNT: $selectedCount")
 
         when {
             selectedCount == 0 -> {
@@ -155,10 +137,16 @@ class AmountEquallyFragment(
             else -> {
                 val amountPerPerson = totalAmount / selectedCount
                 binding.countPerson.visibility = View.VISIBLE
-                binding.pricePerPerson.text = "$${String.format("%.2f", amountPerPerson)}/person"
+                binding.pricePerPerson.text =
+                    "${currency}${String.format("%.2f", amountPerPerson)}/person"
                 binding.countPerson.text = "($selectedCount people)"
             }
         }
+
+        // Update selectAll checkbox state based on all members being selected
+        binding.selectAllCheckBox.setOnCheckedChangeListener(null)
+        binding.selectAllCheckBox.isChecked = selectedPersons.all { it.isSelected }
+        setupSelectAll()
     }
 
 
@@ -203,7 +191,7 @@ class AmountEquallyFragment(
 //                borrowedAmount = amountPerPerson
 //            )
 //        }
-        val distributionList = Utils.createEqualSplits(nameIdList,amountPerPerson)
+        val distributionList = Utils.createEqualSplits(nameIdList, amountPerPerson)
 
         val expenseRecord = ExpenseRecord(
             totalAmount = totalAmount,
@@ -218,12 +206,12 @@ class AmountEquallyFragment(
         //store selected id based on user selection in VM
 //        mainViewModel.updateContacts(friendsList)
         mainViewModel.updateFriendExpense(expenseRecord)
+        findNavController().navigateUp()
     }
 
     private fun getCurrentDate(): String {
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     }
-
 
 
 }

@@ -29,6 +29,7 @@ import com.appdev.split.R
 import com.appdev.split.UI.Activity.EntryActivity
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentHomeBinding
+import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -157,9 +158,12 @@ class HomeFragment : Fragment() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 mainViewModel.userData.collect { user ->
                     user?.let {
-                        isTopDataReady = true
                         binding.name.text = "Hello, ${it.name} ✌\uFE0F"
                         binding.name.visibility = View.VISIBLE
+                        Glide.with(view.context).load(user.imageUrl)
+                            .placeholder(R.drawable.profile_imaage)
+                            .error(R.drawable.profile_imaage).into(binding.circularImage)
+                        isTopDataReady = true
                     }
                 }
             }
@@ -242,7 +246,7 @@ class HomeFragment : Fragment() {
     private fun onContactClicked() {
         Log.d("CHKERR", mainViewModel.userData.value.toString() + "At home add member")
 
-        val action = HomeFragmentDirections.actionHomePageToAddMembersFragment(false,"")
+        val action = HomeFragmentDirections.actionHomePageToAddMembersFragment(false, "")
         findNavController().navigate(action)
     }
 

@@ -1,21 +1,13 @@
 package com.appdev.split.UI.Fragment
 
-import android.Manifest
 import android.app.Dialog
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.provider.ContactsContract
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -26,12 +18,10 @@ import com.appdev.split.Adapters.ContactsAdapter
 import com.appdev.split.Adapters.FriendsAdapter
 import com.appdev.split.Adapters.SelectedContactsAdapter
 import com.appdev.split.Model.Data.Contact
-import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
-import com.appdev.split.UI.Activity.EntryActivity
 import com.appdev.split.databinding.FragmentAddMembersBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -127,7 +117,7 @@ class AddMembersFragment : Fragment() {
         val contact = Contact(
             name = friend.name,
             number = friend.contact,
-            isFriend = true
+            isFriend = true, friendId = friend.friendId
         )
 
         if (isSelected) {
@@ -157,10 +147,12 @@ class AddMembersFragment : Fragment() {
         selectedContacts.remove(contact)
         if (args.isGroupContact) {
             splitwiseFriendsAdapter.toggleFriendSelection(
-                FriendContact(
+                friend = FriendContact(
+                    friendId = contact.friendId,
                     contact = contact.number,
-                    name = contact.name
-                ), false
+                    name = contact.name,
+                    profileImageUrl = contact.imageUrl
+                ), isSelected = false
             )
         } else {
             contactsAdapter.toggleContactSelection(contact, false)
@@ -251,12 +243,12 @@ class AddMembersFragment : Fragment() {
         binding.fabAddMembers.setOnClickListener {
             if (selectedContacts.isNotEmpty()) {
                 if (args.isGroupContact) {
-                    val groupMatesList = convertContactsToGroupFriends(selectedContacts)
-                    mainViewModel.addNewMembersToGroup(groupMatesList,args.selectedGroupId)
+
+                    mainViewModel.addNewMembersToGroup(selectedContacts, args.selectedGroupId)
                     handleAddMembersResponse()
                 } else {
-                    val friendsList = convertContactsToFriends(selectedContacts)
-                    mainViewModel.addContacts(friendsList)
+
+                    mainViewModel.addContacts(selectedContacts)
                     handleAddMembersResponse()
                 }
             }
@@ -276,12 +268,13 @@ class AddMembersFragment : Fragment() {
                     val email = doc.getString("email") ?: return@mapNotNull null
                     val name = doc.getString("name") ?: return@mapNotNull null
                     val profileImage = doc.getString("profileImage") ?: return@mapNotNull null
+                    val userid = doc.getString("userId") ?: return@mapNotNull null
 
                     if (email != currentUserEmail && !savedFriendsList.any { it.contact == email }) {
                         Contact(
                             name = name,
                             number = email, imageUrl = profileImage,
-                            isFriend = false
+                            isFriend = false, friendId = userid
                         )
                     } else null
                 }
@@ -321,25 +314,7 @@ class AddMembersFragment : Fragment() {
         }
     }
 
-    private fun convertContactsToFriends(contacts: List<Contact>): List<Friend> {
-        return contacts.map { contact ->
-            Friend(
-                name = contact.name,
-                profileImageUrl = contact.imageUrl,
-                contact = contact.number  // Using email instead of phone number
-            )
-        }
-    }
 
-    private fun convertContactsToGroupFriends(contacts: List<Contact>): List<FriendContact> {
-        return contacts.map { contact ->
-            FriendContact(
-                name = contact.name,
-                profileImageUrl = contact.imageUrl,
-                contact = contact.number  // Using email instead of phone number
-            )
-        }
-    }
 
     private fun updateFabVisibility() {
         binding.fabAddMembers.visibility =
