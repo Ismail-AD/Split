@@ -80,7 +80,7 @@ class MainViewModel @Inject constructor(
         val groupMatesList = convertContactsToGroupFriends(newMembers)
         viewModelScope.launch {
             try {
-                firebaseAuth.currentUser?.email?.let { mail ->
+                firebaseAuth.currentUser?.uid?.let { myId ->
                     repo.addMembersToGroup(
                         newMembers = groupMatesList, groupId = groupId, onSuccess = { message ->
                             _operationState.value = UiState.Success(Unit)
@@ -203,15 +203,16 @@ class MainViewModel @Inject constructor(
     //---------------------Friend Expense----------------------
     fun saveFriendExpense(
         expenseRecord: ExpenseRecord,
-        friendsContact: String
+        friendsId: String
     ) {
+        Log.d("CHKITMOM", "${expenseRecord.splits}")
         _operationState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                firebaseAuth.currentUser?.email?.let { mail ->
+                firebaseAuth.currentUser?.uid?.let { myId ->
                     repo.saveFriendExpense(
-                        mail,
-                        friendsContact,
+                        myId,
+                        friendsId,
                         expenseRecord
                     ) { success, message ->
                         if (success) {
@@ -314,9 +315,9 @@ class MainViewModel @Inject constructor(
         _allExpensesState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                firebaseAuth.currentUser?.email?.let { mail ->
+                firebaseAuth.currentUser?.uid?.let { myId ->
                     repo.getAllFriendExpenses(
-                        myEmail = mail
+                        myUserId = myId
                     ) { success, allExpenses, message ->
                         if (success && allExpenses != null) {
                             _allExpensesState.value = UiState.Success(allExpenses)
@@ -342,8 +343,8 @@ class MainViewModel @Inject constructor(
         _individualFriendState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                firebaseAuth.currentUser?.email?.let { mail ->
-                    val friend = repo.getFriendByContactId(mail, contactId)
+                firebaseAuth.currentUser?.uid?.let { uid ->
+                    val friend = repo.getFriendByContactId(uid, contactId)
                     if (friend != null) {
                         cachedFriend = friend
                         _individualFriendState.value = UiState.Success(friend)
@@ -378,8 +379,24 @@ class MainViewModel @Inject constructor(
         )
     }
 
+    fun prepareFinalExpense(expenseRecord: ExpenseRecord) {
+        _expenseToPush.value = _expenseToPush.value.copy(
+            totalAmount = expenseRecord.totalAmount,
+            date = expenseRecord.date,
+            currency = expenseRecord.currency,
+            expenseCategory = expenseRecord.expenseCategory,
+            paidBy = expenseRecord.paidBy,
+            splitType = expenseRecord.splitType,
+            // Preserve existing title and description
+            title = expenseRecord.title,
+            description = expenseRecord.description,
+            splits = expenseRecord.splits
+        )
+    }
+
     fun updateFriendExpense(expenseRecord: ExpenseRecord) {
         _expenseToPush.value = _expenseToPush.value.copy(
+            splitType = expenseRecord.splitType,
             totalAmount = expenseRecord.totalAmount,
             splits = expenseRecord.splits,
             date = expenseRecord.date,
@@ -393,14 +410,17 @@ class MainViewModel @Inject constructor(
         return _expenseToPush.value
     }
 
+    fun setDefault() {
+        _expenseToPush.value = ExpenseRecord()
+    }
 
     //---------------------CONTACTS--------------------
     fun fetchAllContacts() {
         _contactsState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                firebaseAuth.currentUser?.email?.let { mail ->
-                    repo.getAllContacts(mail).collect { contacts ->
+                firebaseAuth.currentUser?.uid?.let { uid ->
+                    repo.getAllContacts(uid).collect { contacts ->
                         _contactsState.value = UiState.Success(contacts)
                     }
                 }
@@ -414,7 +434,7 @@ class MainViewModel @Inject constructor(
         _operationState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                userData.value?.let { repo.insertContact(contact, it.email) }
+                firebaseAuth.currentUser?.uid?.let { repo.insertContact(contact, it) }
                 _operationState.value = UiState.Success(Unit)
             } catch (e: Exception) {
                 _operationState.value = UiState.Error(e.message ?: "Failed to add contact")
@@ -429,11 +449,11 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 Log.d("CHKUSER", userData.value?.email ?: "no mail")
-                userData.value?.let {
+                firebaseAuth.currentUser?.uid?.let { myId ->
                     repo.insertContacts(
                         selectedContactsForOffline,
                         selectedContacts,
-                        it.email
+                        myId
                     )
                 }
                 _operationState.value = UiState.Success(Unit)
@@ -468,7 +488,7 @@ class MainViewModel @Inject constructor(
         _operationState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                userData.value?.let { repo.updateContact(contact, it.email) }
+                firebaseAuth.currentUser?.uid?.let { repo.updateContact(contact, it) }
                 _operationState.value = UiState.Success(Unit)
                 fetchAllContacts()
             } catch (e: Exception) {
@@ -481,7 +501,7 @@ class MainViewModel @Inject constructor(
         _operationState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                userData.value?.let { repo.updateContacts(contacts, it.email) }
+                firebaseAuth.currentUser?.uid?.let { repo.updateContacts(contacts, it) }
                 _operationState.value = UiState.Success(Unit)
             } catch (e: Exception) {
                 _operationState.value = UiState.Error(e.message ?: "Failed to update contact")
@@ -523,6 +543,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun fetchUserData(userId: String) {
+        Log.d("CHKUSER", "HERE TO FETCH ${userId}")
 
         if (_userData.value != null) return // Prevent re-fetching if data is already available
 

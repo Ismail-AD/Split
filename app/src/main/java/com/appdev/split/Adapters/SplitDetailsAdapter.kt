@@ -12,11 +12,11 @@ import com.appdev.split.databinding.BillDetailItemLayoutBinding
 
 class SplitDetailsAdapter : RecyclerView.Adapter<SplitDetailsAdapter.SplitViewHolder>() {
     private var splits: List<Split> = emptyList()
-    private var splitType: SplitType = SplitType.EQUAL
+    private var splitType: String = SplitType.EQUAL.name
     private var totalAmount: Double = 0.0
     private var Currency: String = ""
 
-    fun updateData(newSplits: List<Split>, type: SplitType, total: Double, curr: String) {
+    fun updateData(newSplits: List<Split>, type: String, total: Double, curr: String) {
         splits = newSplits
         splitType = type
         totalAmount = total

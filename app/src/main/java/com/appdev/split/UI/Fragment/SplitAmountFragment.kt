@@ -78,6 +78,7 @@ class SplitAmountFragment : Fragment() {
             // isUserInputEnabled = false
 
             // Set initial position based on split type
+            offscreenPageLimit = 1
             setCurrentItem(pagerAdapter.initialPosition, false)
         }
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->

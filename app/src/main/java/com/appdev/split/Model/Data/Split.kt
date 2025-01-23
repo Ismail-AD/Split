@@ -9,4 +9,7 @@ data class Split(
     val username:String,
     val amount: Double = 0.0,  // Used for EQUAL and UNEQUAL
     val percentage: Double = 0.0,  // Used for PERCENTAGE
-): Parcelable
+): Parcelable{
+    constructor() : this("", "",0.0, 0.0)
+
+}

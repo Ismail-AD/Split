@@ -1,6 +1,7 @@
 package com.appdev.split.Adapters
 
 import android.icu.util.Currency
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.EditText
@@ -32,7 +33,12 @@ class PercentageDistributeAdapter(
                     .into(binding.ivProfile)
                 // Show calculated amount based on percentage
                 tvAmount.text = "${currency}${payment.amount.formatAmount()}"
-
+                if (payment.percentage > 0) {
+                    etPercentage.setText(payment.percentage.toString())
+                    tvAmount.text = "${currency}${payment.amount.formatAmount()}"
+                } else {
+                    etPercentage.hint = "0"
+                }
                 etPercentage.onTextChanged { text ->
                     val percentage = text.toDoubleOrNull() ?: 0.0
                     payment.percentage = percentage

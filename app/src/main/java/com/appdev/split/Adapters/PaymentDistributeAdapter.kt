@@ -1,7 +1,11 @@
 package com.appdev.split.Adapters
 
+import android.annotation.SuppressLint
 import android.icu.util.Currency
+import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
 import android.widget.EditText
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
@@ -18,19 +22,47 @@ class PaymentDistributeAdapter(
     private val onAmountChanged: (Double) -> Unit
 ) : RecyclerView.Adapter<PaymentDistributeAdapter.PaymentViewHolder>() {
 
-    inner class PaymentViewHolder(private val binding: PaymentItemBinding) :
+    inner class PaymentViewHolder(val binding: PaymentItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
+        @SuppressLint("ClickableViewAccessibility")
         fun bind(payment: PaymentDistribute) {
+
             binding.apply {
                 tvName.text = payment.name
-                etAmount.hint = "0.00"
+
+                if (payment.amount > 0) {
+                    etAmount.setText(payment.amount.toString())
+                } else {
+                    etAmount.hint = "0.00"
+                }
                 curr.text = currency
-                Glide.with(binding.root.context).load(payment.imageUrl).error(R.drawable.profile_imaage)
+                Glide.with(binding.root.context).load(payment.imageUrl)
+                    .error(R.drawable.profile_imaage)
                     .placeholder(R.drawable.profile_imaage)
                     .into(binding.ivProfile)
+//                etAmount.requestFocus()
+                etAmount.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+                    if (hasFocus) {
+                        Log.d(
+                            "PaymentDistributeAdapter",
+                            "etAmount gained focus for: ${payment.name}"
+                        )
+                    } else {
+                        Log.d(
+                            "PaymentDistributeAdapter",
+                            "etAmount lost focus for: ${payment.name}"
+                        )
+                    }
+                }
 
-//                ivProfile.setBackgroundResource(R.drawable.circle_background)
+                // Log touch events
+                etAmount.setOnTouchListener { _, event ->
+                    if (event.action == MotionEvent.ACTION_DOWN) {
+                        Log.d("PaymentDistributeAdapter", "etAmount touched for: ${payment.name}")
+                    }
+                    false // Allow the touch event to proceed as usual
+                }
 
                 // Using custom extension function
                 etAmount.doAfterTextChanged { text ->
@@ -46,11 +78,6 @@ class PaymentDistributeAdapter(
         }
     }
 
-    fun EditText.onTextChanged(afterTextChanged: (String) -> Unit) {
-        this.doAfterTextChanged { editable ->
-            afterTextChanged.invoke(editable.toString())
-        }
-    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PaymentViewHolder {
         val binding = PaymentItemBinding.inflate(
@@ -61,6 +88,7 @@ class PaymentDistributeAdapter(
 
     override fun onBindViewHolder(holder: PaymentViewHolder, position: Int) {
         holder.bind(payments[position])
+
     }
 
     override fun getItemCount() = payments.size

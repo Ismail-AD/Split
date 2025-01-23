@@ -86,7 +86,7 @@ class AmountEquallyFragment(
         val currentExpense = mainViewModel.getExpenseObject()
         Log.d("AmountEqually", "${currentExpense.splits}")
 
-        if (currentExpense != null && currentExpense.splits.isNotEmpty() && currentExpense.splitType == SplitType.EQUAL) {
+        if (currentExpense != null && currentExpense.splits.isNotEmpty() && currentExpense.splitType == SplitType.EQUAL.name) {
             // Get the IDs of members who are part of the split
             val splitMemberIds = currentExpense.splits.map { it.userId }.toSet()
 
@@ -143,7 +143,6 @@ class AmountEquallyFragment(
             }
         }
 
-        // Update selectAll checkbox state based on all members being selected
         binding.selectAllCheckBox.setOnCheckedChangeListener(null)
         binding.selectAllCheckBox.isChecked = selectedPersons.all { it.isSelected }
         setupSelectAll()
@@ -157,60 +156,24 @@ class AmountEquallyFragment(
         }
         val amountPerPerson = totalAmount / selectedMembers.size
 
-//        if (selectedMembers.size == 1 && foundPerson != null && selectedId != R.id.friendOwnedFull && selectedId != R.id.friendPaidSplit) {
-//            val navOptions = NavOptions.Builder()
-//                .setPopUpTo(R.id.home_page, inclusive = true)
-//                .build()
-//
-//            findNavController().navigate(R.id.home_page, null, navOptions)
-//        }
-
-        // if i owe full amount i mean second id is selected friend is going to lent me full amount also uncheck my name from list
-        // then nothing to change except unchecked any column by user
-//        if (selectedId == R.id.youPaidSplit || selectedId == R.id.youOwnedFull) {
-//
-//            if (selectedId == R.id.youPaidSplit && amountPerPerson == totalAmount) {
-//                newId = R.id.youOwnedFull
-//            } else if (selectedId == R.id.youOwnedFull && amountPerPerson < totalAmount) {
-//                newId = R.id.youPaidSplit
-//            }
-//            expenseRecord = ExpenseRecord(
-//                paidAmount = totalAmount,
-//                lentAmount = amountPerPerson
-//            )
-//        } else {
-//            if (selectedId == R.id.friendOwnedFull && amountPerPerson < totalAmount) {
-//                newId = R.id.friendPaidSplit
-//            } else if(selectedId == R.id.friendPaidSplit && amountPerPerson == totalAmount) {
-//                newId = R.id.friendOwnedFull
-//            }
-//            expenseRecord = ExpenseRecord(
-//                paidAmount = totalAmount,
-
-//                lentAmount = 0f,
-//                borrowedAmount = amountPerPerson
-//            )
-//        }
         val distributionList = Utils.createEqualSplits(nameIdList, amountPerPerson)
 
         val expenseRecord = ExpenseRecord(
             totalAmount = totalAmount,
-            splitType = SplitType.EQUAL,
+            splitType = SplitType.EQUAL.name,
             splits = distributionList
         )
 
-        // if friend pay and split i borrow half amount then fill borrow and leave lent
-
-        // if friend paid all then full borrow
-
-        //store selected id based on user selection in VM
-//        mainViewModel.updateContacts(friendsList)
         mainViewModel.updateFriendExpense(expenseRecord)
         findNavController().navigateUp()
     }
 
     private fun getCurrentDate(): String {
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
 

@@ -179,7 +179,7 @@
             android:name="BilList"
             app:argType="com.appdev.split.Model.Data.ExpenseRecord[]" />
         <argument
-            android:name="NameOfFriend"
+            android:name="friendUserId"
             app:argType="string" />
     </fragment>
 </navigation>

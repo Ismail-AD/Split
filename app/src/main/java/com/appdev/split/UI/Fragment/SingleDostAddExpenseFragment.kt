@@ -47,6 +47,8 @@ class SingleDostAddExpenseFragment : Fragment() {
     lateinit var dialog: Dialog
 
     val args: SingleDostAddExpenseFragmentArgs by navArgs()
+
+    val listOUserInSplit: MutableList<FriendContact> = mutableListOf()
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -72,6 +74,7 @@ class SingleDostAddExpenseFragment : Fragment() {
         }
 
         handleSplitTypeChanges()
+        addYourSelf()
 
         if (args.expenseRecord == null) {
             mainViewModel.fetchAllContacts()
@@ -81,8 +84,25 @@ class SingleDostAddExpenseFragment : Fragment() {
         observeExpenseInput()
         setupNavigationListeners()
         setupSaveData()
+        Log.d("CHKMEA", "${mainViewModel.expensePush.value}")
 
+    }
 
+    private fun addYourSelf() {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+
+        currentUser?.uid?.let {
+            listOUserInSplit.add(
+                FriendContact(
+                    friendId = it,
+                    name = mainViewModel.userData.value!!.name,
+                    contact = mainViewModel.userData.value!!.email,
+                    profileImageUrl = mainViewModel.userData.value!!.imageUrl
+                )
+            )
+
+        }
+        Log.d("CHKITMOM","${listOUserInSplit}")
     }
 
     private fun setupShimmer() {
@@ -197,80 +217,78 @@ class SingleDostAddExpenseFragment : Fragment() {
                 val description = binding.description.editText?.text.toString()
                 val amount = binding.amount.editText?.text.toString()
 
-                val currentUser = FirebaseAuth.getInstance().currentUser
-                val listOUserInSplit: MutableList<FriendContact> = mutableListOf()
-
-                if (currentUser != null && mainViewModel.userData.value != null) {
-                    val userId = currentUser.uid // my entry in list for division of amount
-                    listOUserInSplit.add(
-                        FriendContact(
-                            friendId = userId,
-                            name = mainViewModel.userData.value!!.name,
-                            contact = mainViewModel.userData.value!!.email
-                        )
-                    )
-                    var nameIdList: List<NameId> = listOUserInSplit.map { friend ->
-                        NameId(id = friend.friendId, name = friend.name)
-                    }
-
-
-                    // if user didn't change the preset EQUAL SPLIT then calculate data
-                    if (mainViewModel.expensePush.value.date.isEmpty() || mainViewModel.expensePush.value.totalAmount < 1f) {
-                        if (args.expenseRecord != null) {
-                            if (validateAmount(args.expenseRecord!!.splits)) {
-                                mainViewModel.updateFriendExpenseDetail(
-                                    mainViewModel.expensePush.value.copy(
-                                        date = selectedDate,
-                                        title = title,
-                                        description = description,
-                                        totalAmount = amount.toDouble(),
-                                        currency = binding.currencySpinner.text.toString(),
-                                        expenseCategory = binding.categorySpinner.text.toString(),
-                                        splits = if (SplitType.EQUAL.name == binding.splitTypeText.text.toString()
-                                            && amount.toDouble() != args.expenseRecord!!.totalAmount
-                                        ) handleUpdateSplit(
-                                            amount.toDouble(),
-                                            args.expenseRecord!!.splits
-                                        ) else args.expenseRecord!!.splits,
-                                    ), args.expenseRecord!!.id,
-                                    args.friendData!!.contact
-                                )
-                            }
-                        } else {
-                            selectedFriend?.let { friend ->
-                                handleExpenseSplitEqual(amount.toDouble(), nameIdList)
-                                mainViewModel.saveFriendExpense(
-                                    mainViewModel.expensePush.value.copy(
-                                        date = selectedDate,
-                                        title = title,
-                                        description = description,
-                                        totalAmount = amount.toDouble(),
-                                        currency = binding.currencySpinner.text.toString(),
-                                        expenseCategory = binding.categorySpinner.text.toString(),
-                                        paidBy = userId
-                                    ),
-                                    friend.contact
-                                )
-                            }
-                        }
-                    }
-
+                selectedFriend?.let { it1 -> listOUserInSplit.add(it1) }
+                var nameIdList: List<NameId> = listOUserInSplit.map { friend ->
+                    NameId(id = friend.friendId, name = friend.name)
                 }
+
+                // if user didn't change the preset EQUAL SPLIT then calculate data
+//                    if (mainViewModel.expensePush.value.date.isEmpty() || mainViewModel.expensePush.value.totalAmount < 1f) {
+                if (args.expenseRecord != null) {
+                    if (validateAmount(args.expenseRecord!!.splits)) {
+                        mainViewModel.updateFriendExpenseDetail(
+                            ExpenseRecord(
+                                date = selectedDate,
+                                title = title,
+                                description = description,
+                                totalAmount = amount.toDouble(),
+                                currency = binding.currencySpinner.text.toString(),
+                                expenseCategory = binding.categorySpinner.text.toString(),
+                                splits = if (SplitType.EQUAL.name == binding.splitTypeText.text.toString()
+                                    && amount.toDouble() != args.expenseRecord!!.totalAmount
+                                ) handleUpdateSplit(
+                                    amount.toDouble(),
+                                    args.expenseRecord!!.splits
+                                ) else args.expenseRecord!!.splits,
+                                paidBy = args.expenseRecord!!.paidBy,
+                                id = args.expenseRecord!!.id,
+                                splitType = binding.splitTypeText.text.toString(),
+                                timeStamp = System.currentTimeMillis()
+                            ),
+
+                            args.expenseRecord!!.id,
+                            args.friendData!!.contact
+                        )
+                    }
+                } else {
+                    selectedFriend?.let { friend ->
+                        Log.d("CHKITMOM", "$listOUserInSplit")
+
+                        FirebaseAuth.getInstance().currentUser?.uid?.let {
+                            mainViewModel.prepareFinalExpense(
+                                ExpenseRecord(
+                                    date = selectedDate,
+                                    title = title,
+                                    description = description,
+                                    totalAmount = amount.toDouble(),
+                                    currency = binding.currencySpinner.text.toString(),
+                                    expenseCategory = binding.categorySpinner.text.toString(),
+                                    paidBy = it,
+                                    splitType = binding.splitTypeText.text.toString(),
+                                    splits = if (mainViewModel.expensePush.value.splits.isEmpty() && binding.splitTypeText.text == SplitType.EQUAL.name) {
+                                        handleExpenseSplitEqual(amount.toDouble(), nameIdList)
+                                    } else mainViewModel.expensePush.value.splits
+                                )
+                            )
+                        }
+                        mainViewModel.saveFriendExpense(
+                            mainViewModel.expensePush.value,
+                            friend.friendId
+                        )
+                    }
+                }
+//                    }
+
+
             }
         }
     }
 
-    private fun handleExpenseSplitEqual(amount: Double, nameIdList: List<NameId>) {
+    private fun handleExpenseSplitEqual(amount: Double, nameIdList: List<NameId>): List<Split> {
         val amountHalf = amount / 2
 
         val distributionList = Utils.createEqualSplits(nameIdList, amountHalf)
-        mainViewModel.updateFriendExpense(
-            ExpenseRecord(
-                totalAmount = amount,
-                splits = distributionList,
-                date = selectedDate
-            )
-        )
+        return distributionList
     }
 
 
@@ -329,9 +347,9 @@ class SingleDostAddExpenseFragment : Fragment() {
     private fun handleSplitTypeChanges() {
         if (args.expenseRecord != null && mainViewModel.expensePush.value.date.toLong() < args.expenseRecord!!.date.toLong()) {
             val expense = args.expenseRecord!!
-            binding.splitTypeText.text = expense.splitType.name
+            binding.splitTypeText.text = expense.splitType
         } else {
-            binding.splitTypeText.text = mainViewModel.expensePush.value.splitType.name
+            binding.splitTypeText.text = SplitType.EQUAL.name
         }
 
     }
@@ -450,7 +468,7 @@ class SingleDostAddExpenseFragment : Fragment() {
         val totalAmount = splitList.sumOf { it.amount }
         when {
             args.expenseRecord != null
-                    && (args.expenseRecord!!.splitType == SplitType.UNEQUAL || args.expenseRecord!!.splitType == SplitType.PERCENTAGE)
+                    && (args.expenseRecord!!.splitType == SplitType.UNEQUAL.name || args.expenseRecord!!.splitType == SplitType.PERCENTAGE.name)
                     && totalAmount != amount -> {
                 showToast("Split among group doesn't add up to the total cost!")
                 return false

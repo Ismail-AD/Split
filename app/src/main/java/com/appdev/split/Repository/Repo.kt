@@ -265,7 +265,7 @@ class Repo @Inject constructor(
                 ""
             }
 
-            val sanitizedMail = Utils.sanitizeEmailForFirebase(userEntity.email)
+//            val sanitizedMail = Utils.sanitizeEmailForFirebase(userEntity.email)
             firebaseAuth.createUserWithEmailAndPassword(userEntity.email, userEntity.password)
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
@@ -278,7 +278,7 @@ class Repo @Inject constructor(
                         )
 
                         firestore.collection("profiles")
-                            .document(sanitizedMail)
+                            .document(userId)
                             .set(userProfile)
                             .addOnSuccessListener {
                                 result("Account created successfully", true)
@@ -377,13 +377,13 @@ class Repo @Inject constructor(
             }
     }
 
-    fun getAllContacts(email: String): Flow<List<FriendContact>> = flow {
-        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+    fun getAllContacts(myUserId: String): Flow<List<FriendContact>> = flow {
+//        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
 //        if (Utils.isInternetAvailable()) {
             val friendsList = mutableListOf<FriendContact>()
             currentUser?.let {
                 val snapshot = firestore.collection("users")
-                    .document(sanitizedMail)
+                    .document(myUserId)
                     .collection("friends")
                     .get()
                     .await()
@@ -407,8 +407,8 @@ class Repo @Inject constructor(
 //        }
     }
 
-    suspend fun insertContact(contact: Friend, email: String) {
-        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+    suspend fun insertContact(contact: Friend, myUserId: String) {
+//        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
         contactDao.insertContact(contact)
         if (Utils.isInternetAvailable()) {
             currentUser?.let {
@@ -419,7 +419,7 @@ class Repo @Inject constructor(
                     profileImageUrl = contact.profileImageUrl
                 )
                 firestore.collection("users")
-                    .document(sanitizedMail)
+                    .document(myUserId)
                     .collection("friends")
                     .document(contact.contact)
                     .set(friendContact)
@@ -428,8 +428,8 @@ class Repo @Inject constructor(
         }
     }
 
-    suspend fun updateContact(contact: Friend, email: String) {
-        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+    suspend fun updateContact(contact: Friend, myId: String) {
+//        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
         contactDao.updateContact(contact)
         if (Utils.isInternetAvailable()) {
             currentUser?.let {
@@ -440,7 +440,7 @@ class Repo @Inject constructor(
                     profileImageUrl = contact.profileImageUrl
                 )
                 firestore.collection("users")
-                    .document(sanitizedMail)
+                    .document(myId)
                     .collection("friends")
                     .document(contact.contact)
                     .set(friendContact)
@@ -467,9 +467,9 @@ class Repo @Inject constructor(
     suspend fun insertContacts(
         contacts: List<Friend>,
         selectedContacts: MutableList<Contact>,
-        email: String
+        myId: String
     ) {
-        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+//        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
         contactDao.insertContacts(contacts)
         Log.d("CJK","${Utils.isInternetAvailable()}")
         if (Utils.isInternetAvailable()) {
@@ -483,9 +483,9 @@ class Repo @Inject constructor(
                         profileImageUrl = contact.imageUrl
                     )
                     val docRef = firestore.collection("users")
-                        .document(sanitizedMail)
+                        .document(myId)
                         .collection("friends")
-                        .document(contact.number)
+                        .document(contact.friendId)
                     batch.set(docRef, friendContact)
                 }
                 batch.commit().await()
@@ -493,8 +493,8 @@ class Repo @Inject constructor(
         }
     }
 
-    suspend fun updateContacts(contacts: List<Friend>, email: String) {
-        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+    suspend fun updateContacts(contacts: List<Friend>, myId: String) {
+//        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
         contactDao.updateContacts(contacts)
         if (Utils.isInternetAvailable()) {
             currentUser?.let {
@@ -507,7 +507,7 @@ class Repo @Inject constructor(
                         profileImageUrl = contact.profileImageUrl
                     )
                     val docRef = firestore.collection("users")
-                        .document(sanitizedMail)
+                        .document(myId)
                         .collection("friends")
                         .document(contact.contact)
                     batch.set(docRef, friendContact)
@@ -517,16 +517,16 @@ class Repo @Inject constructor(
         }
     }
 
-    suspend fun getFriendByContactId(email: String, contactId: String): Friend? {
-        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
-        Log.d("CHKIS", "$email $contactId")
+    suspend fun getFriendByContactId(myId: String, friendId: String): Friend? {
+//        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+
 
         return if (Utils.isInternetAvailable()) {
             try {
                 val doc = firestore.collection("users")
-                    .document(sanitizedMail)
+                    .document(myId)
                     .collection("friends")
-                    .document(contactId)
+                    .document(friendId)
                     .get()
                     .await()
 
@@ -536,23 +536,23 @@ class Repo @Inject constructor(
                 null
             }
         } else {
-            contactDao.getContactById(contactId)
+            contactDao.getContactById(friendId)
         }
     }
 
     suspend fun saveFriendExpense(
-        myEmail: String,
-        friendContact: String,
+        myUserId: String,
+        myFriendId: String,
         expense: ExpenseRecord,
         onResult: (success: Boolean, message: String) -> Unit
     ) {
         try {
-            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
-            val sanitizedFriendContact = Utils.sanitizeEmailForFirebase(friendContact)
+//            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
+//            val sanitizedFriendContact = Utils.sanitizeEmailForFirebase(friendContact)
 
             val expenseDoc = firestore.collection("expenses")
-                .document(sanitizedMyEmail)
-                .collection(sanitizedFriendContact)
+                .document(myUserId)
+                .collection(myFriendId)
                 .document()
 
             val expenseWithId = expense.copy(
@@ -648,41 +648,54 @@ class Repo @Inject constructor(
     }
 
     suspend fun getAllFriendExpenses(
-        myEmail: String,
+        myUserId: String,
         onResult: (success: Boolean, expenses: Map<String, List<ExpenseRecord>>?, message: String) -> Unit
     ) {
         try {
-            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
+//            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
 
             // First, get the friends list to know which collections to query
             val friendsSnapshot = firestore.collection("users")
-                .document(sanitizedMyEmail)
+                .document(myUserId)
                 .collection("friends")
                 .get()
                 .await()
-
+            Log.d("CHKIU","${!friendsSnapshot.isEmpty}")
             if (!friendsSnapshot.isEmpty) {
                 val allExpenses = mutableMapOf<String, List<ExpenseRecord>>()
 
                 // For each friend
                 for (friendDoc in friendsSnapshot.documents) {
                     val friendContact = friendDoc.id
+                    Log.d("CHKIU","${friendContact}")
 
                     // Get expenses for this friend
                     val friendExpensesSnapshot = firestore.collection("expenses")
-                        .document(sanitizedMyEmail)
+                        .document(myUserId)
                         .collection(friendContact)
                         .get()
                         .await()
+                    Log.d("CHKIU","FRIEND SHOT :${friendExpensesSnapshot.isEmpty}")
 
-                    val friendExpenses = friendExpensesSnapshot.documents.mapNotNull {
-                        it.toObject(ExpenseRecord::class.java)
+                    val friendExpenses = friendExpensesSnapshot.documents.mapNotNull { document ->
+                        try {
+                            val expense = document.toObject(ExpenseRecord::class.java)
+                            Log.d("CHKIU", "Mapped ExpenseRecord: $expense")
+                            expense
+                        } catch (e: Exception) {
+                            Log.e("CHKIU", "Failed to map document to ExpenseRecord: ${document.id}, error: ${e.message}")
+                            null
+                        }
                     }
+                    Log.d("CHKIU", "FRIEND OBJECT: $friendExpenses")
+
+                    Log.d("CHKIU","FRIEND OBJECT :${friendExpenses}")
 
                     if (friendExpenses.isNotEmpty()) {
                         allExpenses[friendContact] = friendExpenses
                     }
                 }
+                Log.d("CHKIU","$allExpenses")
 
                 if (allExpenses.isNotEmpty()) {
                     onResult(true, allExpenses, "All expenses retrieved successfully!")

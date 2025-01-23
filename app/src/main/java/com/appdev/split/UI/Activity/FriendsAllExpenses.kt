@@ -69,14 +69,14 @@ class FriendsAllExpenses : Fragment() {
         mainViewModel.updateStateToStable()
         var billList = args.bilList.toList()
         updateRecyclerView(billList)
-        firebaseAuth.currentUser?.email?.let { mail ->
-            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(mail)
-            val friendMail = Utils.sanitizeEmailForFirebase(args.nameOfFriend)
+        firebaseAuth.currentUser?.uid?.let { myId ->
+//            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(mail)
+//            val friendMail = Utils.sanitizeEmailForFirebase(args.nameOfFriend)
 
             // Use Firestore instead of Realtime Database
             val expensesRef = firestore.collection("expenses")
-                .document(sanitizedMyEmail)
-                .collection(friendMail)
+                .document(myId)
+                .collection(args.friendUserId)
 
             // Create a snapshot listener
             expensesRef.addSnapshotListener { snapshot, error ->
@@ -105,7 +105,7 @@ class FriendsAllExpenses : Fragment() {
                 }
             }
         }
-        mainViewModel.getFriendNameById(args.nameOfFriend)
+        mainViewModel.getFriendNameById(args.friendUserId)
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 mainViewModel.FriendState.collect { state ->

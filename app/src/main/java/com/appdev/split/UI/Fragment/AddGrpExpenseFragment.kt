@@ -110,42 +110,51 @@ class AddGrpExpenseFragment : Fragment() {
 
 
                     // if user didn't change the preset EQUAL SPLIT then calculate data
-                    if (mainViewModel.expensePush.value.date.isEmpty() || mainViewModel.expensePush.value.totalAmount < 1f) {
-                        if (args.expenseRecord != null) {
-                            if (validateAmount(args.expenseRecord!!.splits)) {
-                                mainViewModel.updateGroupExpenseDetail(
-                                    expenseRecord = mainViewModel.expensePush.value.copy(
-                                        date = selectedDate,
-                                        title = title,
-                                        description = description,
-                                        totalAmount = amount.toDouble(),
-                                        currency = binding.currencySpinner.text.toString(),
-                                        expenseCategory = binding.categorySpinner.text.toString(),
-                                        splits = if (SplitType.EQUAL.name == binding.splitTypeText.text.toString()
-                                            && amount.toDouble() != args.expenseRecord!!.totalAmount
-                                        ) handleUpdateSplit(
-                                            amount.toDouble(),
-                                            args.expenseRecord!!.splits
-                                        ) else args.expenseRecord!!.splits,
-                                    ), args.expenseRecord!!.id,
-                                    groupId = args.groupId!!
-                                )
-                            }
-                        } else {
-                            handleExpenseSplitEqual(amount.toDouble(), nameIdList)
-                            mainViewModel.saveGroupExpense(
-                                mainViewModel.expensePush.value.copy(
+//                    if (mainViewModel.expensePush.value.date.isEmpty() || mainViewModel.expensePush.value.totalAmount < 1f) {
+                    if (args.expenseRecord != null) {
+                        if (validateAmount(args.expenseRecord!!.splits)) {
+                            mainViewModel.updateGroupExpenseDetail(
+                                expenseRecord = ExpenseRecord(
                                     date = selectedDate,
                                     title = title,
                                     description = description,
                                     totalAmount = amount.toDouble(),
                                     currency = binding.currencySpinner.text.toString(),
                                     expenseCategory = binding.categorySpinner.text.toString(),
-                                    paidBy = userId
-                                ), args.groupId!!
+                                    splits = if (SplitType.EQUAL.name == binding.splitTypeText.text.toString()
+                                        && amount.toDouble() != args.expenseRecord!!.totalAmount
+                                    ) handleUpdateSplit(
+                                        amount.toDouble(),
+                                        args.expenseRecord!!.splits
+                                    ) else args.expenseRecord!!.splits,
+                                    paidBy = args.expenseRecord!!.paidBy,
+                                    id = args.expenseRecord!!.id,
+                                    splitType = binding.splitTypeText.text.toString(),
+                                    timeStamp = System.currentTimeMillis()
+                                ), args.expenseRecord!!.id,
+                                groupId = args.groupId!!
                             )
                         }
+                    } else {
+                        if (mainViewModel.expensePush.value.splits.isEmpty() && binding.splitTypeText.text == SplitType.EQUAL.name) {
+                            handleExpenseSplitEqual(amount.toDouble(), nameIdList)
+                        }
+                        mainViewModel.prepareFinalExpense(
+                            ExpenseRecord(
+                                date = selectedDate,
+                                title = title,
+                                description = description,
+                                totalAmount = amount.toDouble(),
+                                currency = binding.currencySpinner.text.toString(),
+                                expenseCategory = binding.categorySpinner.text.toString(),
+                                paidBy = userId
+                            )
+                        )
+                        mainViewModel.saveGroupExpense(
+                            mainViewModel.expensePush.value, args.groupId!!
+                        )
                     }
+//                    }
 
                 }
             }
@@ -155,7 +164,10 @@ class AddGrpExpenseFragment : Fragment() {
                 val action = binding.amount.editText?.let { it1 ->
                     AddGrpExpenseFragmentDirections.actionAddGrpExpenseFragmentToSplitAmountFragment(
                         selectedFriends.toList().toTypedArray(),
-                        it1.text.toString().toFloat(), null, binding.splitTypeText.text.toString(),binding.currencySpinner.text.toString()
+                        it1.text.toString().toFloat(),
+                        null,
+                        binding.splitTypeText.text.toString(),
+                        binding.currencySpinner.text.toString()
                     )
                 }
                 if (action != null) {
@@ -175,7 +187,7 @@ class AddGrpExpenseFragment : Fragment() {
         val totalAmount = splitList.sumOf { it.amount }
         when {
             args.expenseRecord != null
-                    && (args.expenseRecord!!.splitType == SplitType.UNEQUAL || args.expenseRecord!!.splitType == SplitType.PERCENTAGE)
+                    && (args.expenseRecord!!.splitType == SplitType.UNEQUAL.name || args.expenseRecord!!.splitType == SplitType.PERCENTAGE.name)
                     && totalAmount != amount -> {
                 showToast("Split among group doesn't add up to the total cost!")
                 return false

@@ -1,9 +1,13 @@
 package com.appdev.split.Utils
 
+import com.appdev.split.Adapters.EQUAL_SPLIT_POSITION
+import com.appdev.split.Adapters.PERCENTAGE_SPLIT_POSITION
+import com.appdev.split.Adapters.UNEQUAL_SPLIT_POSITION
 import com.appdev.split.Model.Data.NameId
 import com.appdev.split.Model.Data.PaymentDistribute
 import com.appdev.split.Model.Data.Percentage
 import com.appdev.split.Model.Data.Split
+import com.appdev.split.Model.Data.SplitType
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -52,6 +56,15 @@ object Utils {
     fun extractCurrencyCode(input: String): String {
         // Find the substring within parentheses
         return input.substringAfter("(").substringBefore(")")
+    }
+
+    fun getSplitType(selectedType: String): SplitType {
+        return when (selectedType) {
+            SplitType.EQUAL.name -> SplitType.EQUAL
+            SplitType.UNEQUAL.name -> SplitType.UNEQUAL
+            SplitType.PERCENTAGE.name -> SplitType.PERCENTAGE
+            else -> SplitType.EQUAL
+        }
     }
 
     fun createEqualSplits(

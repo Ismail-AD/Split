@@ -88,6 +88,7 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        mainViewModel.setDefault()
 
         return binding.root
     }
@@ -150,9 +151,9 @@ class HomeFragment : Fragment() {
 
         binding.contactFab.setOnClickListener { onContactClicked() }
         binding.expenseFab.setOnClickListener { onExpenseClicked() }
-        val mail = FirebaseAuth.getInstance().currentUser?.email
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
 
-        mail?.let { mainViewModel.fetchUserData(it) }
+        uid?.let { mainViewModel.fetchUserData(it) }
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -160,7 +161,7 @@ class HomeFragment : Fragment() {
                     user?.let {
                         binding.name.text = "Hello, ${it.name} ✌\uFE0F"
                         binding.name.visibility = View.VISIBLE
-                        Glide.with(view.context).load(user.imageUrl)
+                        Glide.with(requireContext()).load(user.imageUrl)
                             .placeholder(R.drawable.profile_imaage)
                             .error(R.drawable.profile_imaage).into(binding.circularImage)
                         isTopDataReady = true

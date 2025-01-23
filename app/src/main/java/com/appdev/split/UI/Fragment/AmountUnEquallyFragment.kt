@@ -63,17 +63,17 @@ class AmountUnEquallyFragment(
         _binding = FragmentAmounUntEquallyBinding.inflate(layoutInflater, container, false)
         dialog = Dialog(requireContext())
         checkViewModelData()
-        setupRecyclerView()
+
         return binding.root
     }
 
     private fun checkViewModelData() {
         val currentExpense = mainViewModel.getExpenseObject()
-        Log.d("CHKME", "${currentExpense}")
+        Log.d("CHKMEA","$currentExpense")
 
         if (currentExpense != null && currentExpense.splits.isNotEmpty() &&
-            currentExpense.splitType == SplitType.UNEQUAL) {
-            Log.d("CHKME", "in if")
+            currentExpense.splitType == SplitType.UNEQUAL.name) {
+            Log.d("CHKMEA","WITHIN")
 
             // Update payments with existing amounts
             currentExpense.splits.forEach { split ->
@@ -81,6 +81,7 @@ class AmountUnEquallyFragment(
                     payment.amount = split.amount
                 }
             }
+            Log.d("CHKMEA","$payments")
 
             // Update UI with total amount
             val totalAllocated = payments.sumOf { it.amount }
@@ -89,6 +90,7 @@ class AmountUnEquallyFragment(
         } else {
             updateTotalAmount(0.0)
         }
+        setupRecyclerView()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -201,75 +203,16 @@ class AmountUnEquallyFragment(
 
     private fun saveExpenses() {
         val selectedPayments = payments.filter { it.amount > 0 }
-
-        // Similar logic as in equally split version for handling single selection
-
-
-//        if (selectedPayments.size == 1 && foundPerson != null &&
-//            selectedId != R.id.friendOwnedFull && selectedId != R.id.friendPaidSplit
-//        ) {
-//            val navOptions = NavOptions.Builder()
-//                .setPopUpTo(R.id.home_page, inclusive = true)
-//                .build()
-//
-//            findNavController().navigate(R.id.home_page, null, navOptions)
-//        }
-
-        // Logic for handling different payment scenarios similar to equally split version
-//        if (selectedId == R.id.youPaidSplit || selectedId == R.id.youOwnedFull) {
-//            if (selectedId == R.id.youPaidSplit && selectedFriends.size < 2) {
-//                newId = R.id.youOwnedFull
-//            } else if (selectedId == R.id.youOwnedFull && selectedFriends.size > 1) {
-//                newId = R.id.youPaidSplit
-//            }
-//
-//            val payment = selectedPayments.find { it.id != myEmail }
-//            expenseRecord = ExpenseRecord(
-//                paidAmount = totalAmount,
-//                lentAmount = payment?.amount ?: 0f
-//            )
-//
-//        } else {
-//            if (selectedId == R.id.friendOwnedFull && selectedFriends.size > 1) {
-//                newId = R.id.friendPaidSplit
-//            } else if (selectedId == R.id.friendPaidSplit && selectedFriends.size < 2) {
-//                newId = R.id.friendOwnedFull
-//            }
-//
-//
-//                val payment = selectedPayments.find { it.id == myEmail }
-//                expenseRecord = ExpenseRecord(
-//                    paidAmount = totalAmount,
-//                    lentAmount = 0f,
-//                    borrowedAmount = payment?.amount ?: 0f
-//                )
-//        }
         val distributionList = Utils.createUnequalSplitsFromPayments(selectedPayments)
 
         var expenseRecord = ExpenseRecord(
-            totalAmount = totalAmount, splitType = SplitType.UNEQUAL,
+            totalAmount = totalAmount, splitType = SplitType.UNEQUAL.name,
             splits = distributionList
         )
         mainViewModel.updateFriendExpense(expenseRecord)
         findNavController().navigateUp()
 
     }
-//    private fun saveExpenses(friendsList: List<Friend>) {
-//        friendsList.forEach { friend ->
-//            val payment = payments.find { it.id == friend.contact }
-//            payment?.let {
-//                val expenseRecord = ExpenseRecord(
-//                    paidAmount = totalTarget,
-//                    lentAmount = it.amount,
-//                    date = getCurrentDate() // Record the date of this transaction
-//                )
-//                friend.expenseRecords.add(expenseRecord)
-//            }
-//        }
-//
-//        // Update friends' data with their expense records
-//        mainViewModel.updateContacts(friendsList)
-//    }
 
     private fun getCurrentDate(): String {
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
