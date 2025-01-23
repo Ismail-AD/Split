@@ -116,13 +116,10 @@ class HomeFragment : Fragment() {
                             isMainDataReady = true
                             checkAndShowContent()
                             expenses = state.data
-                            expenses.entries.groupBy { it.key }
-                                .mapValues { entry ->
-                                    entry.value.lastOrNull()
-                                }
-                                .values
-                                .filterNotNull() // Remove nulls, in case there are contacts with no expenses
-                                .toList()
+                            expenses = state.data.mapValues { (_, expenseList) ->
+                                // Select the expense with the maximum timestamp
+                                expenseList.maxByOrNull { it.timeStamp }?.let { listOf(it) } ?: emptyList()
+                            }
                             updateRecyclerView(expenses)
                         }
 
@@ -153,7 +150,10 @@ class HomeFragment : Fragment() {
         binding.expenseFab.setOnClickListener { onExpenseClicked() }
         val uid = FirebaseAuth.getInstance().currentUser?.uid
 
-        uid?.let { mainViewModel.fetchUserData(it) }
+        uid?.let {
+            mainViewModel.fetchUserData(it)
+            mainViewModel.setupRealTimeExpensesListener() // Add this line
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {

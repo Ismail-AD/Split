@@ -652,22 +652,17 @@ class Repo @Inject constructor(
         onResult: (success: Boolean, expenses: Map<String, List<ExpenseRecord>>?, message: String) -> Unit
     ) {
         try {
-//            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
-
-            // First, get the friends list to know which collections to query
             val friendsSnapshot = firestore.collection("users")
                 .document(myUserId)
                 .collection("friends")
                 .get()
                 .await()
-            Log.d("CHKIU","${!friendsSnapshot.isEmpty}")
             if (!friendsSnapshot.isEmpty) {
                 val allExpenses = mutableMapOf<String, List<ExpenseRecord>>()
 
                 // For each friend
                 for (friendDoc in friendsSnapshot.documents) {
                     val friendContact = friendDoc.id
-                    Log.d("CHKIU","${friendContact}")
 
                     // Get expenses for this friend
                     val friendExpensesSnapshot = firestore.collection("expenses")

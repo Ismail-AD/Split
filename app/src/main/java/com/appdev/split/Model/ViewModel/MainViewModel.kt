@@ -14,6 +14,8 @@ import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Repository.Repo
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +27,7 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     var repo: Repo,
     val firebaseAuth: FirebaseAuth,
-    val firebaseDatabase: FirebaseDatabase
+    private val firestore: FirebaseFirestore,
 ) :
     ViewModel() {
     private val _userData = MutableStateFlow<UserEntity?>(null)
@@ -62,6 +64,8 @@ class MainViewModel @Inject constructor(
     private val _loadingState = MutableStateFlow(false)
     val loadingState: StateFlow<Boolean> = _loadingState
 
+    private var expensesListener: ListenerRegistration? = null
+
     init {
         fetchAllContacts()
         getAllFriendExpenses()
@@ -69,6 +73,60 @@ class MainViewModel @Inject constructor(
 
     fun updateStateToStable() {
         _operationState.value = UiState.Stable
+    }
+
+    //---------------------EXPENSE LISTENER------------------
+
+    fun setupRealTimeExpensesListener() {
+        val currentUser = firebaseAuth.currentUser ?: return
+        val userId = currentUser.uid
+
+        // Cancel any existing listener
+        expensesListener?.remove()
+        expensesListener = firestore.collection("users")
+            .document(userId)
+            .collection("friends")
+            .addSnapshotListener { friendsSnapshot, friendsError ->
+                if (friendsError != null || friendsSnapshot == null) {
+                    _allExpensesState.value = UiState.Error(friendsError?.message ?: "Unknown error")
+                    return@addSnapshotListener
+                }
+
+                viewModelScope.launch {
+                    val allExpenses = mutableMapOf<String, List<ExpenseRecord>>()
+
+                    // For each friend, set up a listener for their expenses
+                    for (friendDoc in friendsSnapshot.documents) {
+                        val friendContact = friendDoc.id
+
+                        // Add a listener to this friend's expenses subcollection
+                        firestore.collection("expenses")
+                            .document(userId)
+                            .collection(friendContact)
+                            .addSnapshotListener { expensesSnapshot, expensesError ->
+                                if (expensesError != null) {
+                                    Log.e("MainViewModel", "Error fetching expenses", expensesError)
+                                    return@addSnapshotListener
+                                }
+
+                                val friendExpenses = expensesSnapshot?.documents?.mapNotNull { document ->
+                                    document.toObject(ExpenseRecord::class.java)
+                                } ?: emptyList()
+
+                                if (friendExpenses.isNotEmpty()) {
+                                    allExpenses[friendContact] = friendExpenses
+                                    _allExpensesState.value = UiState.Success(allExpenses)
+                                }
+                            }
+                    }
+                }
+            }
+    }
+
+    // Call this in onCleared to prevent memory leaks
+    override fun onCleared() {
+        super.onCleared()
+        expensesListener?.remove()
     }
 
     //---------------------MANAGE MEMBERS--------------------

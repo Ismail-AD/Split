@@ -65,17 +65,21 @@ class BillAdapter(
 
                         label = "You lent "
                         displayAmount = totalOthersShouldPay
-
+                        binding.apply {
+                            youBorrowOrLent.text = label
+                            amount.text = String.format("%.2f", displayAmount)
+                        }
                     } else {
                         // User didn't pay the bill
                         label = "You borrowed "
                         displayAmount = userAmount
+                        binding.apply {
+                            youBorrowOrLent.text = label
+                            amount.text = String.format("%.2f", displayAmount)
+                        }
                     }
 
-                    binding.apply {
-                        youBorrowOrLent.text = label
-                        amount.text = String.format("%.2f", displayAmount)
-                    }
+
                 } else {
                     // Handle case where user is not in splits
                     binding.apply {
