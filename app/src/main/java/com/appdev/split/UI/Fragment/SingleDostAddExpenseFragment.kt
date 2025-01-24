@@ -47,6 +47,7 @@ class SingleDostAddExpenseFragment : Fragment() {
     lateinit var dialog: Dialog
 
     val args: SingleDostAddExpenseFragmentArgs by navArgs()
+    var expObjectReceived: ExpenseRecord? = null
 
     val listOUserInSplit: MutableList<FriendContact> = mutableListOf()
     override fun onCreateView(
@@ -63,23 +64,27 @@ class SingleDostAddExpenseFragment : Fragment() {
         (activity as? EntryActivity)?.hideBottomBar()
         dialog = Dialog(requireContext())
 
-        if (args.expenseRecord != null) {
+        if (args.expenseRecord != null && (mainViewModel.expensePush.value.splits.isEmpty())) {
+            expObjectReceived = args.expenseRecord
+            mainViewModel.updateExpRec(args.expenseRecord!!)
             setupEditExpenseMode(args.expenseRecord!!)
             setCalendarFromDate(args.expenseRecord!!.date)
             selectedFriend =
                 args.friendData
-        } else {
+        } else if (args.expenseRecord == null && mainViewModel.expensePush.value.id.trim().isEmpty()) {
             setupNewExpenseMode()
             setCalendarFromDate(null)
-        }
-
-        handleSplitTypeChanges()
-        addYourSelf()
-
-        if (args.expenseRecord == null) {
             mainViewModel.fetchAllContacts()
             observeContacts()
         }
+        Log.d("VMV","${mainViewModel.expensePush.value.title}")
+
+        handleSplitTypeChanges()
+//
+//        if (args.expenseRecord == null && mainViewModel.expensePush.value.id.trim().isEmpty()) {
+//            mainViewModel.fetchAllContacts()
+//            observeContacts()
+//        }
 
         observeExpenseInput()
         setupNavigationListeners()
@@ -88,22 +93,6 @@ class SingleDostAddExpenseFragment : Fragment() {
 
     }
 
-    private fun addYourSelf() {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-
-        currentUser?.uid?.let {
-            listOUserInSplit.add(
-                FriendContact(
-                    friendId = it,
-                    name = mainViewModel.userData.value!!.name,
-                    contact = mainViewModel.userData.value!!.email,
-                    profileImageUrl = mainViewModel.userData.value!!.imageUrl
-                )
-            )
-
-        }
-        Log.d("CHKITMOM","${listOUserInSplit}")
-    }
 
     private fun setupShimmer() {
         // Set the layout for the ViewStub
@@ -146,8 +135,12 @@ class SingleDostAddExpenseFragment : Fragment() {
                     mainViewModel.updateFriendExpense(
                         title = binding.title.editText?.text.toString(),
                         description = binding.description.editText?.text.toString(),
-                        amount = binding.amount.editText?.text.toString()
+                        amount = binding.amount.editText?.text.toString(),
+                        currency = binding.currencySpinner.text.toString(),
+                        category = binding.categorySpinner.text.toString()
                     )
+                    Log.d("VMV", "THIS IS TITLE : ${binding.title.editText?.text.toString()}")
+                    Log.d("VMV", "AFTER BUTTON: ${mainViewModel.expensePush.value.title}")
 
                     val action = binding.amount.editText?.let { it1 ->
                         SingleDostAddExpenseFragmentDirections.actionPersonalExpenseFragmentToSplitAmountFragment(
@@ -171,6 +164,9 @@ class SingleDostAddExpenseFragment : Fragment() {
                     showError("Amount cannot be empty!")
                 }
             }
+        }
+        binding.closeIcon.setOnClickListener {
+            findNavController().navigateUp()
         }
 
     }
@@ -218,14 +214,28 @@ class SingleDostAddExpenseFragment : Fragment() {
                 val amount = binding.amount.editText?.text.toString()
 
                 selectedFriend?.let { it1 -> listOUserInSplit.add(it1) }
+                val currentUser = FirebaseAuth.getInstance().currentUser
+
+                currentUser?.uid?.let {
+                    listOUserInSplit.add(
+                        FriendContact(
+                            friendId = it,
+                            name = mainViewModel.userData.value!!.name,
+                            contact = mainViewModel.userData.value!!.email,
+                            profileImageUrl = mainViewModel.userData.value!!.imageUrl
+                        )
+                    )
+
+                }
+
                 var nameIdList: List<NameId> = listOUserInSplit.map { friend ->
                     NameId(id = friend.friendId, name = friend.name)
                 }
 
                 // if user didn't change the preset EQUAL SPLIT then calculate data
 //                    if (mainViewModel.expensePush.value.date.isEmpty() || mainViewModel.expensePush.value.totalAmount < 1f) {
-                if (args.expenseRecord != null) {
-                    if (validateAmount(args.expenseRecord!!.splits)) {
+                if (args.expenseRecord != null || mainViewModel.expensePush.value.id.isNotEmpty()) {
+                    if (validateAmount(mainViewModel.expensePush.value.splits)) {
                         mainViewModel.updateFriendExpenseDetail(
                             ExpenseRecord(
                                 date = selectedDate,
@@ -235,24 +245,25 @@ class SingleDostAddExpenseFragment : Fragment() {
                                 currency = binding.currencySpinner.text.toString(),
                                 expenseCategory = binding.categorySpinner.text.toString(),
                                 splits = if (SplitType.EQUAL.name == binding.splitTypeText.text.toString()
-                                    && amount.toDouble() != args.expenseRecord!!.totalAmount
+                                    && amount.toDouble() != mainViewModel.expensePush.value.totalAmount
                                 ) handleUpdateSplit(
                                     amount.toDouble(),
-                                    args.expenseRecord!!.splits
-                                ) else args.expenseRecord!!.splits,
-                                paidBy = args.expenseRecord!!.paidBy,
-                                id = args.expenseRecord!!.id,
+                                    mainViewModel.expensePush.value.splits
+                                ) else mainViewModel.expensePush.value.splits,
+                                paidBy = mainViewModel.expensePush.value.paidBy,
+                                id = mainViewModel.expensePush.value.id,
                                 splitType = binding.splitTypeText.text.toString(),
                                 timeStamp = System.currentTimeMillis()
                             ),
 
                             args.expenseRecord!!.id,
-                            args.friendData!!.contact
+                            args.friendData!!.friendId
                         )
                     }
                 } else {
                     selectedFriend?.let { friend ->
                         Log.d("CHKITMOM", "$listOUserInSplit")
+                        Log.d("CHKITMOM", "${mainViewModel.expensePush.value.splits}")
 
                         FirebaseAuth.getInstance().currentUser?.uid?.let {
                             mainViewModel.prepareFinalExpense(
@@ -307,6 +318,7 @@ class SingleDostAddExpenseFragment : Fragment() {
                     UiState.Loading -> showLoadingIndicator()
                     is UiState.Success -> {
                         hideLoadingIndicator()
+                        showError(state.data)
                         findNavController().navigateUp()
                     }
 
@@ -345,16 +357,19 @@ class SingleDostAddExpenseFragment : Fragment() {
     }
 
     private fun handleSplitTypeChanges() {
-        if (args.expenseRecord != null && mainViewModel.expensePush.value.date.toLong() < args.expenseRecord!!.date.toLong()) {
+        if (args.expenseRecord != null) {
             val expense = args.expenseRecord!!
             binding.splitTypeText.text = expense.splitType
-        } else {
+        }
+        else {
             binding.splitTypeText.text = SplitType.EQUAL.name
         }
 
     }
 
     private fun observeContacts() {
+        Log.d("VMVA","SHIMMER FOR CONTACT CALLED")
+
         viewLifecycleOwner.lifecycleScope.launch {
             mainViewModel.contactsState.collect { contactsState ->
                 when (contactsState) {
@@ -391,6 +406,12 @@ class SingleDostAddExpenseFragment : Fragment() {
                     }
                     if (amount.editText?.text.isNullOrEmpty() && expenseInput.totalAmount != 0.0) {
                         amount.editText?.setText(expenseInput.totalAmount.toString())
+                    }
+                    if (expenseInput.currency.trim().isNotEmpty()) {
+                        currencySpinner.selectItemByIndex(getCurrencyIndex(expenseInput.currency))
+                    }
+                    if (expenseInput.expenseCategory.trim().isNotEmpty()) {
+                        categorySpinner.selectItemByIndex(getCategoryIndex(expenseInput.expenseCategory))
                     }
                 }
             }

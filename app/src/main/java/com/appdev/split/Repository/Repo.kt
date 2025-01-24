@@ -407,137 +407,167 @@ class Repo @Inject constructor(
 //        }
     }
 
-    suspend fun insertContact(contact: Friend, myUserId: String) {
+    suspend fun insertContact(contact: Friend, myUserId: String, onResult: (success: Boolean, message: String) -> Unit) {
 //        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
-        contactDao.insertContact(contact)
-        if (Utils.isInternetAvailable()) {
-            currentUser?.let {
-                val friendContact = FriendContact(
-                    friendId = it.uid,
-                    contact = contact.contact,
-                    name = contact.name,
-                    profileImageUrl = contact.profileImageUrl
-                )
-                firestore.collection("users")
-                    .document(myUserId)
-                    .collection("friends")
-                    .document(contact.contact)
-                    .set(friendContact)
-                    .await()
-            }
-        }
-    }
-
-    suspend fun updateContact(contact: Friend, myId: String) {
-//        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
-        contactDao.updateContact(contact)
-        if (Utils.isInternetAvailable()) {
-            currentUser?.let {
-                val friendContact = FriendContact(
-                    friendId = it.uid,
-                    contact = contact.contact,
-                    name = contact.name,
-                    profileImageUrl = contact.profileImageUrl
-                )
-                firestore.collection("users")
-                    .document(myId)
-                    .collection("friends")
-                    .document(contact.contact)
-                    .set(friendContact)
-                    .await()
-            }
-        }
-    }
-
-    suspend fun deleteContact(contact: Friend, email: String) {
-        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
-        contactDao.deleteContact(contact)
-        if (Utils.isInternetAvailable()) {
-            currentUser?.let {
-                firestore.collection("users")
-                    .document(sanitizedMail)
-                    .collection("friends")
-                    .document(contact.contact)
-                    .delete()
-                    .await()
-            }
-        }
-    }
-
-    suspend fun insertContacts(
-        contacts: List<Friend>,
-        selectedContacts: MutableList<Contact>,
-        myId: String
-    ) {
-//        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
-        contactDao.insertContacts(contacts)
-        Log.d("CJK","${Utils.isInternetAvailable()}")
-        if (Utils.isInternetAvailable()) {
-            currentUser?.let {
-                val batch = firestore.batch()
-                selectedContacts.forEach { contact ->
-                    val friendContact = FriendContact(
-                        friendId = contact.friendId,
-                        contact = contact.number,
-                        name = contact.name,
-                        profileImageUrl = contact.imageUrl
-                    )
-                    val docRef = firestore.collection("users")
-                        .document(myId)
-                        .collection("friends")
-                        .document(contact.friendId)
-                    batch.set(docRef, friendContact)
-                }
-                batch.commit().await()
-            }
-        }
-    }
-
-    suspend fun updateContacts(contacts: List<Friend>, myId: String) {
-//        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
-        contactDao.updateContacts(contacts)
-        if (Utils.isInternetAvailable()) {
-            currentUser?.let {
-                val batch = firestore.batch()
-                contacts.forEach { contact ->
+        try {
+            contactDao.insertContact(contact)
+            if (Utils.isInternetAvailable()) {
+                currentUser?.let {
                     val friendContact = FriendContact(
                         friendId = it.uid,
                         contact = contact.contact,
                         name = contact.name,
                         profileImageUrl = contact.profileImageUrl
                     )
-                    val docRef = firestore.collection("users")
-                        .document(myId)
+                    firestore.collection("users")
+                        .document(myUserId)
                         .collection("friends")
                         .document(contact.contact)
-                    batch.set(docRef, friendContact)
+                        .set(friendContact)
+                        .await()
+                    onResult(true, "Contact added successfully")
                 }
-                batch.commit().await()
             }
+        }catch (e:Exception){
+            onResult(false, "Failed to save contact: ${e.message}")
         }
     }
 
-    suspend fun getFriendByContactId(myId: String, friendId: String): Friend? {
+
+    suspend fun updateContact(contact: Friend, myId: String,onResult: (success: Boolean, message: String) -> Unit) {
 //        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
-
-
-        return if (Utils.isInternetAvailable()) {
-            try {
-                val doc = firestore.collection("users")
-                    .document(myId)
-                    .collection("friends")
-                    .document(friendId)
-                    .get()
-                    .await()
-
-                doc.toObject(Friend::class.java)
-            } catch (e: Exception) {
-                Log.e("Repo", "Failed to fetch friend: ${e.message}")
-                null
+        try {
+            contactDao.updateContact(contact)
+            if (Utils.isInternetAvailable()) {
+                currentUser?.let {
+                    val friendContact = FriendContact(
+                        friendId = it.uid,
+                        contact = contact.contact,
+                        name = contact.name,
+                        profileImageUrl = contact.profileImageUrl
+                    )
+                    firestore.collection("users")
+                        .document(myId)
+                        .collection("friends")
+                        .document(contact.contact)
+                        .set(friendContact)
+                        .await()
+                    onResult(true, "Contact updated successfully")
+                }
             }
-        } else {
-            contactDao.getContactById(friendId)
+        } catch (e: Exception) {
+            onResult(false, "Failed to delete contact: ${e.message}")
         }
+    }
+
+    suspend fun deleteContact(
+        contact: Friend,
+        email: String,
+        onResult: (success: Boolean, message: String) -> Unit
+    ) {
+        try {
+            val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
+            contactDao.deleteContact(contact)
+            if (Utils.isInternetAvailable()) {
+                currentUser?.let {
+                    firestore.collection("users")
+                        .document(sanitizedMail)
+                        .collection("friends")
+                        .document(contact.contact)
+                        .delete()
+                        .await()
+                    onResult(true, "Contact deleted successfully")
+                }
+            }
+        } catch (e: Exception) {
+            onResult(false, "Failed to delete contact: ${e.message}")
+        }
+    }
+
+    suspend fun insertContacts(
+        contacts: List<Friend>,
+        selectedContacts: MutableList<Contact>,
+        myId: String,
+        onResult: (success: Boolean, message: String) -> Unit
+    ) {
+        try {
+            contactDao.insertContacts(contacts)
+            if (Utils.isInternetAvailable()) {
+                currentUser?.let {
+                    val batch = firestore.batch()
+                    selectedContacts.forEach { contact ->
+                        val friendContact = FriendContact(
+                            friendId = contact.friendId,
+                            contact = contact.number,
+                            name = contact.name,
+                            profileImageUrl = contact.imageUrl
+                        )
+                        val docRef = firestore.collection("users")
+                            .document(myId)
+                            .collection("friends")
+                            .document(contact.friendId)
+                        batch.set(docRef, friendContact)
+                    }
+                    batch.commit().await()
+                    onResult(true, "Contacts inserted successfully")
+                }
+            }
+        } catch (e: Exception) {
+            onResult(false, "Failed to insert contacts: ${e.message}")
+        }
+    }
+
+    suspend fun updateContacts(
+        contacts: List<Friend>,
+        myId: String,
+        onResult: (success: Boolean, message: String) -> Unit
+    ) {
+        try {
+            contactDao.updateContacts(contacts)
+            if (Utils.isInternetAvailable()) {
+                currentUser?.let {
+                    val batch = firestore.batch()
+                    contacts.forEach { contact ->
+                        val friendContact = FriendContact(
+                            friendId = it.uid,
+                            contact = contact.contact,
+                            name = contact.name,
+                            profileImageUrl = contact.profileImageUrl
+                        )
+                        val docRef = firestore.collection("users")
+                            .document(myId)
+                            .collection("friends")
+                            .document(contact.contact)
+                        batch.set(docRef, friendContact)
+                    }
+                    batch.commit().await()
+                    onResult(true, "Contacts updated successfully")
+                }
+            }
+        } catch (e: Exception) {
+            onResult(false, "Failed to update contacts: ${e.message}")
+        }
+    }
+
+    suspend fun getFriendByContactId(myId: String, friendId: String): FriendContact? {
+        return try {
+            val doc = firestore.collection("users")
+                .document(myId)
+                .collection("friends")
+                .document(friendId)
+                .get()
+                .await()
+
+            doc.toObject(FriendContact::class.java)
+        } catch (e: Exception) {
+            Log.e("Repo", "Failed to fetch friend: ${e.message}")
+            null
+        }
+//        if (Utils.isInternetAvailable()) {
+
+//        } else {
+//            contactDao.getContactById(friendId)
+//        }
     }
 
     suspend fun saveFriendExpense(
@@ -569,19 +599,19 @@ class Repo @Inject constructor(
     }
 
     suspend fun updateFriendExpense(
-        myEmail: String,
-        friendContact: String,
+        myUserId: String,
+        friendId: String,
         expenseId: String,
         updatedExpense: ExpenseRecord,
         onResult: (success: Boolean, message: String) -> Unit
     ) {
         try {
-            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
-            val sanitizedFriendContact = Utils.sanitizeEmailForFirebase(friendContact)
+//            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
+//            val sanitizedFriendContact = Utils.sanitizeEmailForFirebase(friendContact)
 
             firestore.collection("expenses")
-                .document(sanitizedMyEmail)
-                .collection(sanitizedFriendContact)
+                .document(myUserId)
+                .collection(friendId)
                 .document(expenseId)
                 .set(updatedExpense)
                 .await()
@@ -594,18 +624,16 @@ class Repo @Inject constructor(
     }
 
     suspend fun deleteFriendExpense(
-        myEmail: String,
-        friendContact: String,
+        myUserId: String,
+        friendId: String,
         expenseId: String,
         onResult: (success: Boolean, message: String) -> Unit
     ) {
         try {
-            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
-            val sanitizedFriendContact = Utils.sanitizeEmailForFirebase(friendContact)
 
             firestore.collection("expenses")
-                .document(sanitizedMyEmail)
-                .collection(sanitizedFriendContact)
+                .document(myUserId)
+                .collection(friendId)
                 .document(expenseId)
                 .delete()
                 .await()

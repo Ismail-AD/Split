@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.appdev.split.Model.Data.Split
 import com.appdev.split.Model.Data.SplitType
 import com.appdev.split.R
+import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.BillDetailItemLayoutBinding
 
 class SplitDetailsAdapter : RecyclerView.Adapter<SplitDetailsAdapter.SplitViewHolder>() {
@@ -31,7 +32,7 @@ class SplitDetailsAdapter : RecyclerView.Adapter<SplitDetailsAdapter.SplitViewHo
             binding.apply {
                 username.text = split.username
                 splitDetails.text = "paid"
-                currency.text = Currency
+                currency.text = Utils.extractCurrencyCode(Currency)
                 amount.text = split.amount.toString()
             }
         }

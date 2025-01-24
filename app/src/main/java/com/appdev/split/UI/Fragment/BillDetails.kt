@@ -26,6 +26,7 @@ import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentBillDetailsBinding
+import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -33,9 +34,11 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 @AndroidEntryPoint
 class BillDetails : Fragment() {
 
@@ -46,6 +49,7 @@ class BillDetails : Fragment() {
     private val mainViewModel by activityViewModels<MainViewModel>()
     private lateinit var splitDetailsAdapter: SplitDetailsAdapter
     private var expenseRecord: ExpenseRecord = ExpenseRecord()
+    private var expensesListener: ListenerRegistration? = null
 
     @Inject
     lateinit var firestore: FirebaseFirestore
@@ -68,6 +72,7 @@ class BillDetails : Fragment() {
         setupDialog()
         setupRecyclerView()
         setupClickListeners()
+        setupSingleExpenseListener(args.billData.id, args.friendData.friendId)
         updateUIWithExpenseRecord(args.billData)
     }
 
@@ -89,39 +94,69 @@ class BillDetails : Fragment() {
                 findNavController().navigateUp()
             }
 
-//            edit.setOnClickListener {
-//                val action = BillDetailsDirections.actionBillDetailsToPersonalExpenseFragment(
-//                    expenseRecord,
-//                    args.fr
-//                )
-//                findNavController().navigate(action)
-//            }
-//
-//            delete.setOnClickListener {
-//                observeOperationState()
-//                mainViewModel.deleteFriendExpenseDetail(expenseRecord.id, args.friendContact)
-//            }
+            edit.setOnClickListener {
+                val action = BillDetailsDirections.actionBillDetailsToPersonalExpenseFragment(
+                    expenseRecord,
+                    args.friendData
+                )
+                findNavController().navigate(action)
+            }
+
+            delete.setOnClickListener {
+                observeOperationState()
+                mainViewModel.deleteFriendExpenseDetail(expenseRecord.id, args.friendData.friendId)
+            }
         }
     }
 
+    private fun setupSingleExpenseListener(expenseId: String, friendId: String) {
+        val currentUser = firebaseAuth.currentUser ?: return
+        val userId = currentUser.uid
+
+        expensesListener?.remove()
+        expensesListener = firestore.collection("expenses")
+            .document(userId)
+            .collection(friendId)
+            .document(expenseId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    // Handle error
+                    return@addSnapshotListener
+                }
+
+                snapshot?.let { documentSnapshot ->
+                    val updatedRecord = documentSnapshot.toObject(ExpenseRecord::class.java)
+                    Log.d("CHKUPA", "UPDATED ONE: ${updatedRecord}")
+                    Log.d("CHKUPA", "RECEIVED ONE: ${expenseRecord}")
+                    if (expenseRecord != updatedRecord) {
+                        updatedRecord?.let { record ->
+                            updateUIWithExpenseRecord(record)
+                        }
+                    }
+                }
+            }
+    }
 
 
     private fun updateUIWithExpenseRecord(record: ExpenseRecord) {
         expenseRecord = record
 
-        binding.apply {
-            title.text = record.title
-            date.text = "Added on ${Utils.formatDate(record.date)}"
-            totalAmount.text = "${record.currency}${record.totalAmount}"
-            description.text = record.description
-        }
+        _binding?.let { binding ->
+            binding.title.text = record.title
+            binding.date.text = "Added on ${Utils.formatDate(record.date)}"
+            binding.totalAmount.text = "${Utils.extractCurrencyCode(record.currency)}${record.totalAmount}"
+            binding.description.text = record.description
+            Glide.with(binding.root.context).load(args.friendData.profileImageUrl).error(R.drawable.profile_imaage)
+                .placeholder(R.drawable.profile_imaage)
+                .into(binding.circularImage)
 
-        splitDetailsAdapter.updateData(
-            record.splits,
-            record.splitType,
-            record.totalAmount,
-            record.currency
-        )
+            splitDetailsAdapter.updateData(
+                record.splits,
+                record.splitType,
+                record.totalAmount,
+                record.currency
+            )
+        }
     }
 
     private fun showError(message: String) {
@@ -149,13 +184,17 @@ class BillDetails : Fragment() {
                     UiState.Loading -> showLoadingIndicator()
                     is UiState.Success -> {
                         hideLoadingIndicator()
+                        showError(state.data)
                         findNavController().navigateUp()
                     }
-                    UiState.Stable -> { /* no-op */ }
+
+                    UiState.Stable -> { /* no-op */
+                    }
                 }
             }
         }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

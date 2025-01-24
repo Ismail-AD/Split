@@ -36,8 +36,8 @@ class MainViewModel @Inject constructor(
     private val _contactsState = MutableStateFlow<UiState<List<FriendContact>>>(UiState.Loading)
     val contactsState: StateFlow<UiState<List<FriendContact>>> = _contactsState
 
-    private val _operationState = MutableStateFlow<UiState<Unit>>(UiState.Stable)
-    val operationState: StateFlow<UiState<Unit>> = _operationState
+    private val _operationState = MutableStateFlow<UiState<String>>(UiState.Stable)
+    val operationState: StateFlow<UiState<String>> = _operationState
 
     private val _individualExpensesState =
         MutableStateFlow<UiState<List<ExpenseRecord>>>(UiState.Loading)
@@ -52,14 +52,16 @@ class MainViewModel @Inject constructor(
     val GroupsState: StateFlow<UiState<List<GroupMetaData>>> get() = _groupsState
 
 
-    private val _individualFriendState = MutableStateFlow<UiState<Friend>>(UiState.Loading)
-    val FriendState: StateFlow<UiState<Friend>> get() = _individualFriendState
+    private val _individualFriendState = MutableStateFlow<UiState<FriendContact>>(UiState.Loading)
+    val FriendState: StateFlow<UiState<FriendContact>> get() = _individualFriendState
 
     private val _expenseToPush = MutableStateFlow(ExpenseRecord())
     val expensePush: MutableStateFlow<ExpenseRecord> get() = _expenseToPush
 
+    private val _expenseReceived = MutableStateFlow(ExpenseRecord())
+    val expenseReceived: MutableStateFlow<ExpenseRecord> get() = _expenseReceived
     var _newSelectedId = -1
-    private var cachedFriend: Friend? = null // Cache variable for storing friend data
+    private var cachedFriend: FriendContact? = null // Cache variable for storing friend data
 
     private val _loadingState = MutableStateFlow(false)
     val loadingState: StateFlow<Boolean> = _loadingState
@@ -73,6 +75,10 @@ class MainViewModel @Inject constructor(
 
     fun updateStateToStable() {
         _operationState.value = UiState.Stable
+    }
+
+    fun updateExpRec(expenseRecord: ExpenseRecord) {
+        _expenseToPush.value = expenseRecord
     }
 
     //---------------------EXPENSE LISTENER------------------
@@ -141,7 +147,7 @@ class MainViewModel @Inject constructor(
                 firebaseAuth.currentUser?.uid?.let { myId ->
                     repo.addMembersToGroup(
                         newMembers = groupMatesList, groupId = groupId, onSuccess = { message ->
-                            _operationState.value = UiState.Success(Unit)
+                            _operationState.value = UiState.Success(message)
                         }
                     ) { message ->
                         _operationState.value = UiState.Error(message)
@@ -190,7 +196,7 @@ class MainViewModel @Inject constructor(
                         imageUri,
                         imagebytes,
                         title, groupType, onSuccess = { message, grpId ->
-                            _operationState.value = UiState.Success(Unit)
+                            _operationState.value = UiState.Success(message)
                         }
                     ) { message ->
                         _operationState.value = UiState.Error(message)
@@ -216,7 +222,7 @@ class MainViewModel @Inject constructor(
                         expenseRecord
                     ) { success, message ->
                         if (success) {
-                            _operationState.value = UiState.Success(Unit)
+                            _operationState.value = UiState.Success(message)
 
                         } else {
                             _operationState.value = UiState.Error(message)
@@ -244,7 +250,7 @@ class MainViewModel @Inject constructor(
                         expenseRecord
                     ) { success, message ->
                         if (success) {
-                            _operationState.value = UiState.Success(Unit)
+                            _operationState.value = UiState.Success(message)
 
                         } else {
                             _operationState.value = UiState.Error(message)
@@ -274,7 +280,7 @@ class MainViewModel @Inject constructor(
                         expenseRecord
                     ) { success, message ->
                         if (success) {
-                            _operationState.value = UiState.Success(Unit)
+                            _operationState.value = UiState.Success(message)
 
                         } else {
                             _operationState.value = UiState.Error(message)
@@ -295,15 +301,15 @@ class MainViewModel @Inject constructor(
         _operationState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                firebaseAuth.currentUser?.email?.let { mail ->
+                firebaseAuth.currentUser?.uid?.let { uid ->
                     repo.updateFriendExpense(
-                        mail,
+                       uid,
                         friendsContact,
                         expenseId,
                         expenseRecord
                     ) { success, message ->
                         if (success) {
-                            _operationState.value = UiState.Success(Unit)
+                            _operationState.value = UiState.Success(message)
 
                         } else {
                             _operationState.value = UiState.Error(message)
@@ -319,19 +325,19 @@ class MainViewModel @Inject constructor(
 
     fun deleteFriendExpenseDetail(
         expenseId: String,
-        friendsContact: String
+        friendsId: String
     ) {
         _operationState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                firebaseAuth.currentUser?.email?.let { mail ->
+                firebaseAuth.currentUser?.uid?.let { uid ->
                     repo.deleteFriendExpense(
-                        mail,
-                        friendsContact,
+                        uid,
+                        friendsId,
                         expenseId
                     ) { success, message ->
                         if (success) {
-                            _operationState.value = UiState.Success(Unit)
+                            _operationState.value = UiState.Success(message)
 
                         } else {
                             _operationState.value = UiState.Error(message)
@@ -428,12 +434,14 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    fun updateFriendExpense(title: String, description: String, amount: String) {
+    fun updateFriendExpense(title: String, description: String, amount: String,currency:String,category:String) {
 
         _expenseToPush.value = _expenseToPush.value.copy(
             title = title,
             description = description,
-            totalAmount = amount.toDouble()
+            totalAmount = amount.toDouble(),
+            currency = currency,
+            expenseCategory = category
         )
     }
 
@@ -487,40 +495,40 @@ class MainViewModel @Inject constructor(
             }
         }
     }
-
     fun addContact(contact: Friend) {
         _operationState.value = UiState.Loading
         viewModelScope.launch {
-            try {
-                firebaseAuth.currentUser?.uid?.let { repo.insertContact(contact, it) }
-                _operationState.value = UiState.Success(Unit)
-            } catch (e: Exception) {
-                _operationState.value = UiState.Error(e.message ?: "Failed to add contact")
+            firebaseAuth.currentUser?.uid?.let { myId ->
+                repo.insertContact(contact, myId) { success, message ->
+                    _operationState.value = if (success) {
+                        UiState.Success(message)
+                    } else {
+                        UiState.Error(message)
+                    }
+                }
             }
         }
     }
 
     fun addContacts(selectedContacts: MutableList<Contact>) {
         _operationState.value = UiState.Loading
-        Log.d("CHKUSER", userData.value.toString())
         val selectedContactsForOffline = convertContactsToFriends(selectedContacts)
         viewModelScope.launch {
-            try {
-                Log.d("CHKUSER", userData.value?.email ?: "no mail")
-                firebaseAuth.currentUser?.uid?.let { myId ->
-                    repo.insertContacts(
-                        selectedContactsForOffline,
-                        selectedContacts,
-                        myId
-                    )
+            firebaseAuth.currentUser?.uid?.let { myId ->
+                repo.insertContacts(
+                    selectedContactsForOffline,
+                    selectedContacts,
+                    myId
+                ) { success, message ->
+                    _operationState.value = if (success) {
+                        UiState.Success(message)
+                    } else {
+                        UiState.Error(message)
+                    }
                 }
-                _operationState.value = UiState.Success(Unit)
-            } catch (e: Exception) {
-                _operationState.value = UiState.Error(e.message ?: "Failed to add contacts")
             }
         }
     }
-
     private fun convertContactsToFriends(contacts: List<Contact>): List<Friend> {
         return contacts.map { contact ->
             Friend(
@@ -545,12 +553,15 @@ class MainViewModel @Inject constructor(
     fun updateContact(contact: Friend) {
         _operationState.value = UiState.Loading
         viewModelScope.launch {
-            try {
-                firebaseAuth.currentUser?.uid?.let { repo.updateContact(contact, it) }
-                _operationState.value = UiState.Success(Unit)
-                fetchAllContacts()
-            } catch (e: Exception) {
-                _operationState.value = UiState.Error(e.message ?: "Failed to update contact")
+            firebaseAuth.currentUser?.uid?.let { myId ->
+                repo.updateContact(contact, myId) { success, message ->
+                    _operationState.value = if (success) {
+                        fetchAllContacts()
+                        UiState.Success(message)
+                    } else {
+                        UiState.Error(message)
+                    }
+                }
             }
         }
     }
@@ -558,11 +569,14 @@ class MainViewModel @Inject constructor(
     fun updateContacts(contacts: List<Friend>) {
         _operationState.value = UiState.Loading
         viewModelScope.launch {
-            try {
-                firebaseAuth.currentUser?.uid?.let { repo.updateContacts(contacts, it) }
-                _operationState.value = UiState.Success(Unit)
-            } catch (e: Exception) {
-                _operationState.value = UiState.Error(e.message ?: "Failed to update contact")
+            firebaseAuth.currentUser?.uid?.let { myId ->
+                repo.updateContacts(contacts, myId) { success, message ->
+                    _operationState.value = if (success) {
+                        UiState.Success(message)
+                    } else {
+                        UiState.Error(message)
+                    }
+                }
             }
         }
     }
@@ -570,12 +584,15 @@ class MainViewModel @Inject constructor(
     fun deleteContact(contact: Friend) {
         _operationState.value = UiState.Loading
         viewModelScope.launch {
-            try {
-                userData.value?.let { repo.deleteContact(contact, it.email) }
-                _operationState.value = UiState.Success(Unit)
-                fetchAllContacts()
-            } catch (e: Exception) {
-                _operationState.value = UiState.Error(e.message ?: "Failed to delete contact")
+            userData.value?.let { user ->
+                repo.deleteContact(contact, user.email) { success, message ->
+                    _operationState.value = if (success) {
+                        fetchAllContacts()
+                        UiState.Success(message)
+                    } else {
+                        UiState.Error(message)
+                    }
+                }
             }
         }
     }

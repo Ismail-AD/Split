@@ -17,6 +17,7 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.AllFriendExpenseAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
+import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
@@ -42,14 +43,13 @@ class FriendsAllExpenses : Fragment() {
     val mainViewModel by activityViewModels<MainViewModel>()
     private val args: FriendsAllExpensesArgs by navArgs()
     lateinit var dialog: Dialog
-
+    private var friendContact: FriendContact? = null
     @Inject
     lateinit var firestore: FirebaseFirestore
 
     @Inject
     lateinit var firebaseAuth: FirebaseAuth
-    var eventListener: ValueEventListener? = null
-    lateinit var expenseRef: DatabaseReference
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -65,42 +65,44 @@ class FriendsAllExpenses : Fragment() {
         binding.backButton.setOnClickListener {
             findNavController().navigateUp()
         }
-        Log.d("CHKIAMG", "I am at list")
         mainViewModel.updateStateToStable()
-        var billList = args.bilList.toList()
-        updateRecyclerView(billList)
-        firebaseAuth.currentUser?.uid?.let { myId ->
-//            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(mail)
-//            val friendMail = Utils.sanitizeEmailForFirebase(args.nameOfFriend)
 
-            // Use Firestore instead of Realtime Database
-            val expensesRef = firestore.collection("expenses")
-                .document(myId)
-                .collection(args.friendUserId)
+        if (args.bilList.isNotEmpty()) {
+            firebaseAuth.currentUser?.uid?.let { myId ->
+                val initialBillList = args.bilList.toList().toMutableList() // Make mutable
 
-            // Create a snapshot listener
-            expensesRef.addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    Log.e("CHKSS", "Listen failed.", error)
-                    return@addSnapshotListener
-                }
+                updateRecyclerView(initialBillList)
 
-                if (snapshot != null) {
-                    val newExpenses = mutableListOf<ExpenseRecord>()
+                // Use Firestore instead of Realtime Database
+                val expensesRef = firestore.collection("expenses")
+                    .document(myId)
+                    .collection(args.friendUserId)
 
-                    for (doc in snapshot.documents) {
-                        val expenseRecord = doc.toObject(ExpenseRecord::class.java)
-                        if (expenseRecord != null) {
-                            newExpenses.add(expenseRecord)
-                        } else {
-                            Log.e("CHKSS", "Failed to parse ExpenseRecord: ${doc.data}")
-                        }
+                // Create a snapshot listener
+                expensesRef.addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        Log.e("CHKSS", "Listen failed.", error)
+                        return@addSnapshotListener
                     }
 
-                    // Compare with the existing list
-                    if (billList != newExpenses) {
-                        billList = newExpenses
-                        updateRecyclerView(billList)
+                    if (snapshot != null) {
+                        val newExpenses = mutableListOf<ExpenseRecord>()
+
+                        for (doc in snapshot.documents) {
+                            val expenseRecord = doc.toObject(ExpenseRecord::class.java)
+                            if (expenseRecord != null) {
+                                newExpenses.add(expenseRecord)
+                            } else {
+                                Log.e("CHKSS", "Failed to parse ExpenseRecord: ${doc.data}")
+                            }
+                        }
+
+                        // Compare with the existing list
+                        if (initialBillList != newExpenses) {
+                            initialBillList.clear()
+                            initialBillList.addAll(newExpenses)
+                            updateRecyclerView(initialBillList)
+                        }
                     }
                 }
             }
@@ -114,6 +116,7 @@ class FriendsAllExpenses : Fragment() {
                         is UiState.Success -> {
                             hideShimmer()
                             binding.contact.text = state.data.name
+                            friendContact = state.data
                         }
 
                         is UiState.Error -> {
@@ -140,6 +143,8 @@ class FriendsAllExpenses : Fragment() {
 
         binding.shimmerViewContainer.startShimmer()
     }
+
+
 
     private fun showShimmer() {
         binding.shimmerViewContainer.visibility = View.VISIBLE
@@ -179,33 +184,36 @@ class FriendsAllExpenses : Fragment() {
     }
 
     private fun updateRecyclerView(expenses: List<ExpenseRecord>) {
+        // Check if binding is null before accessing
+        val safeBinding = _binding ?: return
+
         if (expenses.isEmpty()) {
-            binding.nobill.visibility = View.VISIBLE
-            binding.recyclerViewTransactionItems.visibility = View.GONE
+            safeBinding.nobill.visibility = View.VISIBLE
+            safeBinding.recyclerViewTransactionItems.visibility = View.GONE
         } else {
-            binding.nobill.visibility = View.GONE
-            binding.recyclerViewTransactionItems.visibility = View.VISIBLE
+            safeBinding.nobill.visibility = View.GONE
+            safeBinding.recyclerViewTransactionItems.visibility = View.VISIBLE
 
             adapter = AllFriendExpenseAdapter(expenses, ::goToDetails)
-            binding.recyclerViewTransactionItems.adapter = adapter
-            binding.recyclerViewTransactionItems.layoutManager =
+            safeBinding.recyclerViewTransactionItems.adapter = adapter
+            safeBinding.recyclerViewTransactionItems.layoutManager =
                 LinearLayoutManager(requireContext())
         }
     }
 
     fun goToDetails(expenseList: ExpenseRecord) {
         Log.d("CHKIAMG", "I am going in")
-        val action = FriendsAllExpensesDirections.actionFriendsAllExpensesToBillDetails(
-            expenseList
-        )
-        findNavController().navigate(action)
+        friendContact?.let {
+            val action = FriendsAllExpensesDirections.actionFriendsAllExpensesToBillDetails(
+                expenseList,it
+            )
+            findNavController().navigate(action)
+        }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        eventListener?.let {
-            expenseRef.removeEventListener(it)
-        }
+
         _binding = null
     }
 }

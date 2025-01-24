@@ -46,6 +46,9 @@
         <action
             android:id="@+id/action_billDetails_to_personalExpenseFragment"
             app:destination="@id/personalExpenseFragment" />
+        <argument
+            android:name="friendData"
+            app:argType="com.appdev.split.Model.Data.FriendContact" />
 
     </fragment>
     <fragment
