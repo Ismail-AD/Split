@@ -57,7 +57,7 @@ class SingleDostAddExpenseFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentPersonalExpenseBinding.inflate(layoutInflater, container, false)
-        if (args.expenseRecord == null) {
+        if (args.expenseRecord == null && args.friendData == null) {
             setupShimmer()
         }
         return binding.root
@@ -68,20 +68,23 @@ class SingleDostAddExpenseFragment : Fragment() {
         (activity as? EntryActivity)?.hideBottomBar()
         dialog = Dialog(requireContext())
 
+        if (args.friendData != null) {
+            selectedFriend =
+                args.friendData
+        } else {
+            mainViewModel.fetchAllContacts()
+            observeContacts()
+        }
         if (args.expenseRecord != null && (mainViewModel.expensePush.value.splits.isEmpty())) {
             selectedDate = args.expenseRecord!!.date
             expObjectReceived = args.expenseRecord
             mainViewModel.updateExpRec(args.expenseRecord!!)
             setupEditExpenseMode(args.expenseRecord!!)
-            selectedFriend =
-                args.friendData
         } else if (args.expenseRecord == null && mainViewModel.expensePush.value.id.trim()
                 .isEmpty()
         ) {
             setupNewExpenseMode()
             setCalendarFromDate(null)
-            mainViewModel.fetchAllContacts()
-            observeContacts()
         }
 
         if (args.expenseRecord != null) {
@@ -178,9 +181,9 @@ class SingleDostAddExpenseFragment : Fragment() {
         var year: Int
         var month: Int
         var day: Int
-
-        if (!dateString.isNullOrEmpty()) {
-            val parts = dateString.split("-")
+        val finalString = dateString ?: mainViewModel.expensePush.value.date
+        if (finalString.trim().isNotEmpty()) {
+            val parts = finalString.split("-")
             if (parts.size == 3) {
                 year = parts[0].toInt()
                 month = parts[1].toInt() - 1 // Calendar months are 0-based
@@ -277,7 +280,7 @@ class SingleDostAddExpenseFragment : Fragment() {
                             FirebaseAuth.getInstance().currentUser?.uid?.let {
                                 mainViewModel.prepareFinalExpense(
                                     ExpenseRecord(
-                                        date = selectedDate,
+                                        date = mainViewModel.expensePush.value.date,
                                         title = title,
                                         description = description,
                                         totalAmount = amount.toDouble(),
@@ -367,16 +370,19 @@ class SingleDostAddExpenseFragment : Fragment() {
             categorySpinner.selectItemByIndex(0)
         }
         binding.titleTextView.text = "Add expense"
+        if (args.friendData == null) {
+            binding.titleFriends.visibility = View.VISIBLE
+        }
     }
 
     private fun handleSplitTypeChanges() {
         if (args.expenseRecord != null && args.expenseRecord!!.splitType == mainViewModel.expensePush.value.splitType) {
             val expense = args.expenseRecord!!
             binding.splitTypeText.text = expense.splitType
-        } else if (args.expenseRecord == null) {
-            binding.splitTypeText.text = SplitType.EQUAL.name
-        } else {
+        } else if (mainViewModel.expensePush.value.splitType.trim().isNotEmpty()) {
             binding.splitTypeText.text = mainViewModel.expensePush.value.splitType
+        } else {
+            binding.splitTypeText.text = SplitType.EQUAL.name
         }
 
     }

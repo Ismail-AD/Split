@@ -172,7 +172,7 @@
     </fragment>
     <fragment
         android:id="@+id/friendsAllExpenses"
-        android:name="com.appdev.split.UI.Activity.FriendsAllExpenses"
+        android:name="com.appdev.split.UI.Fragment.FriendsAllExpenses"
         android:label="fragment_friends_all_expenses"
         tools:layout="@layout/fragment_friends_all_expenses" >
         <action
@@ -184,5 +184,8 @@
         <argument
             android:name="friendUserId"
             app:argType="string" />
+        <action
+            android:id="@+id/action_friendsAllExpenses_to_personalExpenseFragment"
+            app:destination="@id/personalExpenseFragment" />
     </fragment>
 </navigation>

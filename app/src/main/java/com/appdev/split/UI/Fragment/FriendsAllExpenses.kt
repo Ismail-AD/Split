@@ -1,4 +1,4 @@
-package com.appdev.split.UI.Activity
+package com.appdev.split.UI.Fragment
 
 import android.app.Dialog
 import android.os.Bundle
@@ -21,14 +21,8 @@ import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
-import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentFriendsAllExpensesBinding
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -56,6 +50,7 @@ class FriendsAllExpenses : Fragment() {
     ): View? {
         _binding = FragmentFriendsAllExpensesBinding.inflate(layoutInflater, container, false)
         setupShimmer()
+        mainViewModel.updateFriendExpense(ExpenseRecord())
         return binding.root
     }
 
@@ -132,7 +127,9 @@ class FriendsAllExpenses : Fragment() {
         }
 
         binding.addExp.setOnClickListener {
-
+            val action =
+                FriendsAllExpensesDirections.actionFriendsAllExpensesToPersonalExpenseFragment(null, friendContact)
+            findNavController().navigate(action)
         }
     }
 
@@ -205,7 +202,7 @@ class FriendsAllExpenses : Fragment() {
         Log.d("CHKIAMG", "I am going in")
         friendContact?.let {
             val action = FriendsAllExpensesDirections.actionFriendsAllExpensesToBillDetails(
-                expenseList,it
+                expenseList, it
             )
             findNavController().navigate(action)
         }
