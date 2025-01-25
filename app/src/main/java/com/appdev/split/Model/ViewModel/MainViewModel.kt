@@ -19,6 +19,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -58,8 +59,9 @@ class MainViewModel @Inject constructor(
     private val _expenseToPush = MutableStateFlow(ExpenseRecord())
     val expensePush: MutableStateFlow<ExpenseRecord> get() = _expenseToPush
 
-    private val _expenseReceived = MutableStateFlow(ExpenseRecord())
-    val expenseReceived: MutableStateFlow<ExpenseRecord> get() = _expenseReceived
+    private val _expenseCategory = MutableStateFlow("")
+    val expenseCategory: MutableStateFlow<String> get() = _expenseCategory
+
     var _newSelectedId = -1
     private var cachedFriend: FriendContact? = null // Cache variable for storing friend data
 
@@ -94,7 +96,8 @@ class MainViewModel @Inject constructor(
             .collection("friends")
             .addSnapshotListener { friendsSnapshot, friendsError ->
                 if (friendsError != null || friendsSnapshot == null) {
-                    _allExpensesState.value = UiState.Error(friendsError?.message ?: "Unknown error")
+                    _allExpensesState.value =
+                        UiState.Error(friendsError?.message ?: "Unknown error")
                     return@addSnapshotListener
                 }
 
@@ -115,9 +118,10 @@ class MainViewModel @Inject constructor(
                                     return@addSnapshotListener
                                 }
 
-                                val friendExpenses = expensesSnapshot?.documents?.mapNotNull { document ->
-                                    document.toObject(ExpenseRecord::class.java)
-                                } ?: emptyList()
+                                val friendExpenses =
+                                    expensesSnapshot?.documents?.mapNotNull { document ->
+                                        document.toObject(ExpenseRecord::class.java)
+                                    } ?: emptyList()
 
                                 if (friendExpenses.isNotEmpty()) {
                                     allExpenses[friendContact] = friendExpenses
@@ -303,7 +307,7 @@ class MainViewModel @Inject constructor(
             try {
                 firebaseAuth.currentUser?.uid?.let { uid ->
                     repo.updateFriendExpense(
-                       uid,
+                        uid,
                         friendsContact,
                         expenseId,
                         expenseRecord
@@ -434,21 +438,49 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    fun updateFriendExpense(title: String, description: String, amount: String,currency:String,category:String) {
-
+    fun updateExpenseBeforeNav(
+        title: String,
+        description: String,
+        amount: String,
+        currency: String
+    ) {
         _expenseToPush.value = _expenseToPush.value.copy(
             title = title,
             description = description,
             totalAmount = amount.toDouble(),
-            currency = currency,
-            expenseCategory = category
+            currency = currency
         )
     }
+
+//    fun updateExpenseCategory(
+//        category: String
+//    ) {
+//        _expenseToPush.value = _expenseToPush.value.copy(
+//            expenseCategory = category
+//        )
+//    }
+
+    fun updateExpenseCategory(
+        category: String
+    ) {
+        _expenseCategory.value = category
+        Log.d(
+            "CKLA",
+            "---AFTER BUTTON CLICKED: ${_expenseCategory.value}"
+        )
+    }
+
+    fun updateExpenseDate(
+        date: String
+    ) {
+        _expenseToPush.value = _expenseToPush.value.copy(date = date)
+        Log.d("CJL",date)
+    }
+
 
     fun prepareFinalExpense(expenseRecord: ExpenseRecord) {
         _expenseToPush.value = _expenseToPush.value.copy(
             totalAmount = expenseRecord.totalAmount,
-            date = expenseRecord.date,
             currency = expenseRecord.currency,
             expenseCategory = expenseRecord.expenseCategory,
             paidBy = expenseRecord.paidBy,
@@ -465,7 +497,6 @@ class MainViewModel @Inject constructor(
             splitType = expenseRecord.splitType,
             totalAmount = expenseRecord.totalAmount,
             splits = expenseRecord.splits,
-            date = expenseRecord.date,
             // Preserve existing title and description
             title = _expenseToPush.value.title.ifEmpty { expenseRecord.title },
             description = _expenseToPush.value.description.ifEmpty { expenseRecord.description }
@@ -495,6 +526,7 @@ class MainViewModel @Inject constructor(
             }
         }
     }
+
     fun addContact(contact: Friend) {
         _operationState.value = UiState.Loading
         viewModelScope.launch {
@@ -529,6 +561,7 @@ class MainViewModel @Inject constructor(
             }
         }
     }
+
     private fun convertContactsToFriends(contacts: List<Contact>): List<Friend> {
         return contacts.map { contact ->
             Friend(

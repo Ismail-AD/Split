@@ -62,6 +62,7 @@ class BillDetails : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentBillDetailsBinding.inflate(inflater, container, false)
+        mainViewModel.updateFriendExpense(ExpenseRecord())
         return binding.root
     }
 
