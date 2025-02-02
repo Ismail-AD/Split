@@ -90,6 +90,8 @@ class SingleDostAddExpenseFragment : Fragment() {
         if (args.expenseRecord != null) {
             hideForUpdate()
             setCalendarFromDate(mainViewModel.expensePush.value.date)
+        } else{
+            mainViewModel.updateExpenseCategory(binding.categorySpinner.text.toString())
         }
 
         handleSplitTypeChanges()
@@ -246,8 +248,17 @@ class SingleDostAddExpenseFragment : Fragment() {
 
                 // if user didn't change the preset EQUAL SPLIT then calculate data
 //                    if (mainViewModel.expensePush.value.date.isEmpty() || mainViewModel.expensePush.value.totalAmount < 1f) {
-                Log.d("LKA", binding.categorySpinner.text.toString())
-                if (validateAmount(mainViewModel.expensePush.value.splits)) {
+                val computedSplits = when {
+                    args.expenseRecord == null && mainViewModel.expensePush.value.splits.isEmpty() && binding.splitTypeText.text.toString() == SplitType.EQUAL.name -> {
+                        handleExpenseSplitEqual(amount.toDouble(), nameIdList)
+                    }
+                    args.expenseRecord != null && SplitType.EQUAL.name == binding.splitTypeText.text.toString() &&
+                            amount.toDouble() != mainViewModel.expensePush.value.totalAmount -> {
+                        handleUpdateSplit(amount.toDouble(), mainViewModel.expensePush.value.splits)
+                    }
+                    else -> mainViewModel.expensePush.value.splits
+                }
+                if (validateAmount(computedSplits)) {
                     if (args.expenseRecord != null) {
                         mainViewModel.updateFriendExpenseDetail(
                             ExpenseRecord(
@@ -257,12 +268,7 @@ class SingleDostAddExpenseFragment : Fragment() {
                                 totalAmount = amount.toDouble(),
                                 currency = binding.currencySpinner.text.toString(),
                                 expenseCategory = binding.categorySpinner.text.toString(),
-                                splits = if (SplitType.EQUAL.name == binding.splitTypeText.text.toString()
-                                    && amount.toDouble() != mainViewModel.expensePush.value.totalAmount
-                                ) handleUpdateSplit(
-                                    amount.toDouble(),
-                                    mainViewModel.expensePush.value.splits
-                                ) else mainViewModel.expensePush.value.splits,
+                                splits = computedSplits,
                                 paidBy = mainViewModel.expensePush.value.paidBy,
                                 id = mainViewModel.expensePush.value.id,
                                 splitType = binding.splitTypeText.text.toString(),
@@ -273,6 +279,8 @@ class SingleDostAddExpenseFragment : Fragment() {
                             args.friendData!!.friendId
                         )
                     } else {
+                        Log.d("CHKITMOM", "IN ELSE BLOCK")
+
                         selectedFriend?.let { friend ->
                             Log.d("CHKITMOM", "$listOUserInSplit")
                             Log.d("CHKITMOM", "${mainViewModel.expensePush.value.splits}")
@@ -288,9 +296,7 @@ class SingleDostAddExpenseFragment : Fragment() {
                                         expenseCategory = binding.categorySpinner.text.toString(),
                                         paidBy = it,
                                         splitType = binding.splitTypeText.text.toString(),
-                                        splits = if (mainViewModel.expensePush.value.splits.isEmpty() && binding.splitTypeText.text == SplitType.EQUAL.name) {
-                                            handleExpenseSplitEqual(amount.toDouble(), nameIdList)
-                                        } else mainViewModel.expensePush.value.splits
+                                        splits = computedSplits
                                     )
                                 )
                             }
@@ -430,10 +436,6 @@ class SingleDostAddExpenseFragment : Fragment() {
                     if (expenseInput.currency.trim().isNotEmpty()) {
                         currencySpinner.selectItemByIndex(getCurrencyIndex(expenseInput.currency))
                     }
-                    if (expenseInput.expenseCategory.trim().isNotEmpty()) {
-                        Log.d("CKLA", "IN COLLECT " + expenseInput.expenseCategory)
-                        categorySpinner.selectItemByIndex(getCategoryIndex(expenseInput.expenseCategory))
-                    }
                 }
             }
         }
@@ -559,72 +561,6 @@ class SingleDostAddExpenseFragment : Fragment() {
         val selectedRadioButton = radioGroup.findViewById<RadioButton>(selectedId)
         return selectedRadioButton?.text?.toString() ?: " Select split type"
     }
-
-
-//    private fun showSplitTypeBottomSheet(friendName: String) {
-//        val bottomSheetDialog = BottomSheetDialog(requireContext())
-//        val view = layoutInflater.inflate(R.layout.bottom_sheet_split_type, null)
-//        bottomSheetDialog.setContentView(view)
-//
-//        var new_id = selectedId
-//
-//        val radioGroup = view.findViewById<RadioGroup>(R.id.splitTypeRadioGroup)
-//        val more = view.findViewById<CardView>(R.id.Save)
-//        radioGroup.check(selectedId)
-//
-//        val friendPaidSplitRadioButton = view.findViewById<RadioButton>(R.id.friendPaidSplit)
-//        val friendOwnedFullRadioButton = view.findViewById<RadioButton>(R.id.friendOwnedFull)
-//        val iOwnedPaidRadioButton = view.findViewById<RadioButton>(R.id.youPaidSplit)
-//        val iOwnedFullRadioButton = view.findViewById<RadioButton>(R.id.youOwnedFull)
-//
-//        val enteredAmount = binding.amount.editText?.text.toString().toFloatOrNull() ?: 0f
-//
-//        // Calculate owed amounts based on the entered value
-//        val halfAmount = enteredAmount / 2
-//
-//        iOwnedPaidRadioButton.text = "You paid and split amount\n $friendName owes you $halfAmount"
-//        iOwnedFullRadioButton.text = "You owned full amount\n $friendName owes you $enteredAmount"
-//        friendPaidSplitRadioButton.text =
-//            "$friendName paid and split amount \n You owe $friendName $halfAmount"
-//        friendOwnedFullRadioButton.text =
-//            "$friendName owned full amount \n You owe $friendName $enteredAmount"
-//
-//        radioGroup.setOnCheckedChangeListener { _, checkedId ->
-//            // Don't update splitTypeText immediately
-//            new_id = checkedId
-//            selectedId = new_id
-//            val selectedOption = when (new_id) {
-//                R.id.youPaidSplit -> "You paid and split amount\n $friendName owes you $halfAmount"
-//                R.id.youOwnedFull -> "You owned full amount\n $friendName owes you $enteredAmount"
-//                R.id.friendPaidSplit -> "$friendName paid and split amount\nYou owe $friendName $halfAmount"
-//                R.id.friendOwnedFull -> "$friendName owned full amount\nYou owe $friendName $halfAmount"
-//                else -> ""
-//            }
-//            binding.splitTypeText.text = selectedOption // Now update the text when Save is clicked
-////            bottomSheetDialog.dismiss() // Dismiss the bottom sheet after saving
-//        }
-//
-//
-//        more.setOnClickListener {
-//            bottomSheetDialog.dismiss()
-//            if (validateAndSave()) {
-//                val action = binding.amount.editText?.let { it1 ->
-//                    SingleDostAddExpenseFragmentDirections.actionPersonalExpenseFragmentToSplitAmountFragment(
-//                        null,
-//                        it1.text.toString()
-//                            .toFloat(),
-//                        selectedFriend, selectedId
-//                    )
-//
-//                }
-//                if (action != null) {
-//                    findNavController().navigate(action)
-//                }
-//            }
-//        }
-//
-//        bottomSheetDialog.show()
-//    }
 
     private fun showError(message: String) {
         Log.d("CHKERR", message)

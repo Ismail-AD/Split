@@ -38,6 +38,8 @@ class AddMembersFragment : Fragment() {
     private lateinit var contactsAdapter: ContactsAdapter
     private lateinit var splitwiseFriendsAdapter: FriendsAdapter
     private val args: AddMembersFragmentArgs by navArgs()
+    private var originalViewStates: Map<View, Int> = mapOf()
+    private var isSearchActive = false
 
     lateinit var dialog: Dialog
     val mainViewModel by activityViewModels<MainViewModel>()
@@ -46,36 +48,157 @@ class AddMembersFragment : Fragment() {
     private var isTopDataReady = false
     private var isMainDataReady = false
     private lateinit var selectedContactsAdapter: SelectedContactsAdapter
-
+    private var groupMembers = listOf<FriendContact>() // Add this property
+    private var isGroupMembersReady = false // Add this property
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentAddMembersBinding.inflate(layoutInflater, container, false)
+        dialog = Dialog(requireContext())
+        isGroupContact = args.isGroupContact
+        initializeViewsBasedOnType()
         setupShimmer()
         setupAdapters()
         mainViewModel.fetchAllContacts()
-
+        mainViewModel.fetchAllGroupMembers(args.selectedGroupId)
         observeContacts()
+        observeGroupMembers()
         setupRecyclerViews()
         setupClickListeners()
-
+        setupSearchListener()
         return binding.root
     }
 
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        isGroupContact = args.isGroupContact
+    private fun initializeViewsBasedOnType() {
         if (isGroupContact) {
-            binding.addNewContactCard.visibility = View.GONE
-            binding.contactsRecyclerView.visibility = View.GONE
-            binding.noBill.visibility = View.GONE
-            binding.billwording.visibility = View.GONE
-            binding.splitusers.visibility = View.GONE
+            // Hide contact-related views for group contacts
+            binding.apply {
+                contactsRecyclerView.visibility = View.GONE
+                noBill.visibility = View.GONE
+                splitusers.visibility = View.GONE
+            }
         }
-        dialog = Dialog(requireContext())
     }
+
+    private fun observeGroupMembers() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                mainViewModel.membersState.collect { state ->
+                    when (state) {
+                        is UiState.Loading -> showShimmer()
+                        is UiState.Success -> {
+                            isGroupMembersReady = true
+                            groupMembers = state.data
+                            if (isGroupContact) {
+                                splitwiseFriendsAdapter.setExistingMembers(groupMembers)
+                            }
+                            hideShimmer()
+                            handleEmptyState()
+                        }
+
+                        is UiState.Error -> {
+                            hideShimmer()
+                            showError(state.message)
+                        }
+
+                        UiState.Stable -> {}
+                    }
+                }
+            }
+        }
+    }
+
+
+    private fun setupSearchListener() {
+        binding.searchEditText.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val searchText = s?.toString() ?: ""
+                handleSearchState(searchText)
+            }
+        })
+    }
+
+
+    private fun handleSearchState(searchText: String) {
+        if (isGroupContact) {
+            // Handle search for group contacts (friends only)
+            if (searchText.isNotEmpty() && !isSearchActive) {
+                saveOriginalViewStates()
+                isSearchActive = true
+            } else if (searchText.isEmpty() && isSearchActive) {
+                restoreOriginalViewStates()
+                isSearchActive = false
+            }
+
+            val filteredFriends = savedFriendsList.filter { friend ->
+                friend.name.contains(searchText, ignoreCase = true) ||
+                        friend.contact.contains(searchText, ignoreCase = true)
+            }
+            splitwiseFriendsAdapter.submitList(filteredFriends)
+            binding.noBill.visibility = if (filteredFriends.isEmpty()) View.VISIBLE else View.GONE
+            binding.billwording.text = if (filteredFriends.isEmpty()) "No matching friends found" else ""
+            binding.splitwiseFriendsRecyclerView.visibility = if (filteredFriends.isEmpty()) View.GONE else View.VISIBLE
+        } else {
+            // Handle search for non-group contacts
+            if (searchText.isNotEmpty() && !isSearchActive) {
+                saveOriginalViewStates()
+                hideViewsForSearch()
+                isSearchActive = true
+            } else if (searchText.isEmpty() && isSearchActive) {
+                restoreOriginalViewStates()
+                isSearchActive = false
+            }
+
+            // Filter contacts
+            if (searchText.isNotEmpty()) {
+                val filteredUsers = usersList.filter { contact ->
+                    contact.name.contains(searchText, ignoreCase = true) ||
+                            contact.number.contains(searchText, ignoreCase = true)
+                }
+                contactsAdapter.setContacts(filteredUsers)
+                updateEmptyStateForSearch(filteredUsers.isEmpty())
+            } else {
+                contactsAdapter.setContacts(usersList)
+                handleEmptyState()
+            }
+        }
+    }
+
+    private fun saveOriginalViewStates() {
+        originalViewStates = mapOf(
+            binding.friendsTitle to binding.friendsTitle.visibility,
+            binding.splitwiseFriendsRecyclerView to binding.splitwiseFriendsRecyclerView.visibility,
+            binding.splitusers to binding.splitusers.visibility
+        )
+    }
+
+    private fun hideViewsForSearch() {
+        binding.friendsTitle.visibility = View.GONE
+        binding.splitwiseFriendsRecyclerView.visibility = View.GONE
+        binding.splitusers.visibility = View.GONE
+    }
+
+    private fun restoreOriginalViewStates() {
+        originalViewStates.forEach { (view, state) ->
+            view.visibility = state
+        }
+    }
+
+    private fun updateEmptyStateForSearch(isEmpty: Boolean) {
+        binding.noBill.visibility = if (isEmpty) View.VISIBLE else View.GONE
+        binding.contactsRecyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
+        if (isEmpty) {
+            binding.billwording.text = "No matching users found"
+        }
+    }
+
+    // Modify your existing handleEmptyState() function
 
 
     private fun setupShimmer() {
@@ -90,6 +213,17 @@ class AddMembersFragment : Fragment() {
     private fun setupAdapters() {
         // Initialize contacts adapter with selection callback
         contactsAdapter = ContactsAdapter { contact, isSelected ->
+            if (isSearchActive) {
+                // Clear search and restore normal view when selecting during search
+                binding.searchEditText.apply {
+                    setText("")  // Clear search text
+                    clearFocus() // Remove focus
+                }
+                // Hide keyboard
+                val imm =
+                    requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                imm.hideSoftInputFromWindow(binding.searchEditText.windowToken, 0)
+            }
             handleContactSelection(contact, isSelected)
         }
 
@@ -146,17 +280,19 @@ class AddMembersFragment : Fragment() {
     private fun handleContactRemoval(contact: Contact) {
         selectedContacts.remove(contact)
         if (args.isGroupContact) {
-            splitwiseFriendsAdapter.toggleFriendSelection(
-                friend = FriendContact(
-                    friendId = contact.friendId,
-                    contact = contact.number,
-                    name = contact.name,
-                    profileImageUrl = contact.imageUrl
-                ), isSelected = false
+            // Create a FriendContact from the Contact
+            val friendContact = FriendContact(
+                friendId = contact.friendId,
+                contact = contact.number,
+                name = contact.name,
+                profileImageUrl = contact.imageUrl
             )
+            // Update the friends adapter selection state
+            splitwiseFriendsAdapter.toggleFriendSelection(friendContact, false)
         } else {
             contactsAdapter.toggleContactSelection(contact, false)
         }
+        // Update the selected contacts view
         updateSelectedContactsView()
         updateFabVisibility()
     }
@@ -181,7 +317,14 @@ class AddMembersFragment : Fragment() {
                                 binding.friendsTitle.visibility = View.GONE
                                 binding.splitwiseFriendsRecyclerView.visibility = View.GONE
                             }
-                            fetchFirebaseUsers()
+                            if (isGroupContact) {
+                                splitwiseFriendsAdapter.submitList(savedFriendsList)
+                                isTopDataReady = true
+                                hideShimmer()
+                                handleEmptyState()
+                            } else {
+                                myFriends()
+                            }
                         }
 
                         is UiState.Error -> {
@@ -236,9 +379,9 @@ class AddMembersFragment : Fragment() {
             findNavController().navigateUp()
         }
 
-        binding.addNewContactCard.setOnClickListener {
-            findNavController().navigate(R.id.action_addMembersFragment_to_addContactFragment)
-        }
+//        binding.addNewContactCard.setOnClickListener {
+//            findNavController().navigate(R.id.action_addMembersFragment_to_addContactFragment)
+//        }
 
         binding.fabAddMembers.setOnClickListener {
             if (selectedContacts.isNotEmpty()) {
@@ -255,7 +398,7 @@ class AddMembersFragment : Fragment() {
         }
     }
 
-    private fun fetchFirebaseUsers() {
+    private fun myFriends() {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 showShimmer()
@@ -315,7 +458,6 @@ class AddMembersFragment : Fragment() {
     }
 
 
-
     private fun updateFabVisibility() {
         binding.fabAddMembers.visibility =
             if (selectedContacts.isNotEmpty()) View.VISIBLE else View.GONE
@@ -338,7 +480,7 @@ class AddMembersFragment : Fragment() {
     }
 
     private fun hideShimmer() {
-        if (isTopDataReady && isMainDataReady) {
+        if (isTopDataReady && isMainDataReady && isGroupMembersReady) {
             binding.shimmerContainer.visibility = View.GONE
             binding.shimmerViewContainer.stopShimmer()
             binding.shimmerViewContainer.visibility = View.GONE
@@ -350,17 +492,22 @@ class AddMembersFragment : Fragment() {
     }
 
     private fun handleEmptyState() {
-        if (usersList.isEmpty()) {
-            binding.noBill.visibility = View.VISIBLE
-            binding.contactsRecyclerView.visibility = View.GONE
-            if (savedFriendsList.isNotEmpty()) {
-                binding.billwording.text = "All users are already friends"
-            } else {
-                binding.billwording.text = "No users yet"
-            }
+        if (isGroupContact) {
+            binding.noBill.visibility = if (savedFriendsList.isEmpty()) View.VISIBLE else View.GONE
+            binding.billwording.text = if (savedFriendsList.isEmpty()) "No friends to add" else ""
         } else {
-            binding.noBill.visibility = View.GONE
-            binding.contactsRecyclerView.visibility = View.VISIBLE
+            if (usersList.isEmpty()) {
+                binding.noBill.visibility = View.VISIBLE
+                binding.contactsRecyclerView.visibility = View.GONE
+                binding.billwording.text = if (savedFriendsList.isNotEmpty()) {
+                    "All users are already friends"
+                } else {
+                    "No users yet"
+                }
+            } else {
+                binding.noBill.visibility = View.GONE
+                binding.contactsRecyclerView.visibility = View.VISIBLE
+            }
         }
     }
 

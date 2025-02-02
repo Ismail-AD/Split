@@ -96,6 +96,42 @@ class Repo @Inject constructor(
         }
     }
 
+    suspend fun getAllGroupExpenses(
+        groupId: String,
+        onResult: (success: Boolean, expenses: List<ExpenseRecord>?, message: String) -> Unit
+    ) {
+        try {
+            val expensesSnapshot = firestore.collection("groupExpenses")
+                .document(groupId)
+                .collection("expenses")
+                .get()
+                .await()
+
+            if (!expensesSnapshot.isEmpty) {
+                val expenses = expensesSnapshot.documents.mapNotNull { document ->
+                    try {
+                        document.toObject(ExpenseRecord::class.java)
+                    } catch (e: Exception) {
+                        Log.e("Repo", "Failed to map document to ExpenseRecord: ${document.id}, error: ${e.message}")
+                        null
+                    }
+                }
+
+                if (expenses.isNotEmpty()) {
+                    onResult(true, expenses, "Group expenses retrieved successfully!")
+                } else {
+                    onResult(false, null, "No expenses found for this group.")
+                }
+            } else {
+                onResult(false, null, "No expenses found for this group.")
+            }
+        } catch (e: Exception) {
+            Log.e("Repo", "Failed to retrieve group expenses: ${e.message}")
+            onResult(false, null, "Failed to retrieve group expenses: ${e.message}")
+        }
+    }
+
+
 
     //----------------------MANAGE GROUP MEMBERS-----------------
 
@@ -133,9 +169,37 @@ class Repo @Inject constructor(
         }
     }
 
+    suspend fun getGroupMembers(
+        groupId: String,
+        onSuccess: (List<FriendContact>) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        try {
+            val groupRef = firestore.collection("groupMembers")
+                .document(groupId)
+
+            // Fetch the group members document
+            val groupMembersDoc = groupRef.get().await()
+
+            if (groupMembersDoc.exists()) {
+                // Convert document to GroupMembersWrapper and extract members list
+                val membersWrapper = groupMembersDoc.toObject(GroupMembersWrapper::class.java)
+                val members = membersWrapper?.members ?: emptyList()
+
+                onSuccess(members)
+            } else {
+                // If document doesn't exist, return empty list
+                onSuccess(emptyList())
+            }
+        } catch (e: Exception) {
+            Log.d("CHKJM", "Error fetching group members: ${e.message}")
+            onError("Failed to fetch group members: ${e.message}")
+        }
+    }
+
 
     suspend fun uploadImageAndSaveGroup(
-        mail: String,
+        userid: String,
         imageUri: Uri?,
         imageBytes: ByteArray?,
         title: String,
@@ -150,7 +214,7 @@ class Repo @Inject constructor(
                 ""
             }
 
-            val groupId = saveGroupToFirestore(publicUrl, title, groupType, mail)
+            val groupId = saveGroupToFirestore(publicUrl, title, groupType, userid)
             onSuccess("Group created successfully", groupId)
         } catch (e: Exception) {
             Log.d("CHKJM","${e.message}")
@@ -201,13 +265,13 @@ class Repo @Inject constructor(
         imageUrl: String,
         title: String,
         groupType: String,
-        mail: String
+        userid: String
     ): String {
         return withContext(Dispatchers.IO) {
             try {
-                val sanitizedMail = Utils.sanitizeEmailForFirebase(mail)
+//                val sanitizedMail = Utils.sanitizeEmailForFirebase(mail)
                 val groupsCollection = firestore.collection("groups")
-                    .document(sanitizedMail)
+                    .document(userid)
                     .collection("userGroups")
 
                 val groupRef = groupsCollection.document()
@@ -231,11 +295,11 @@ class Repo @Inject constructor(
 
 
 
-    suspend fun getAllGroups(mail: String, onSuccess: (List<GroupMetaData>) -> Unit, onError: (String) -> Unit) {
+    suspend fun getAllGroups(userid: String, onSuccess: (List<GroupMetaData>) -> Unit, onError: (String) -> Unit) {
         try {
-            val sanitizedMail = Utils.sanitizeEmailForFirebase(mail)
+//            val sanitizedMail = Utils.sanitizeEmailForFirebase(mail)
             val groupsSnapshot = firestore.collection("groups")
-                .document(sanitizedMail)
+                .document(userid)
                 .collection("userGroups")
                 .get()
                 .await()

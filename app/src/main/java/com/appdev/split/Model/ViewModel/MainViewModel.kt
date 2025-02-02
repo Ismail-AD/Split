@@ -37,6 +37,9 @@ class MainViewModel @Inject constructor(
     private val _contactsState = MutableStateFlow<UiState<List<FriendContact>>>(UiState.Loading)
     val contactsState: StateFlow<UiState<List<FriendContact>>> = _contactsState
 
+    private val _membersState = MutableStateFlow<UiState<List<FriendContact>>>(UiState.Loading)
+    val membersState: StateFlow<UiState<List<FriendContact>>> = _membersState
+
     private val _operationState = MutableStateFlow<UiState<String>>(UiState.Stable)
     val operationState: StateFlow<UiState<String>> = _operationState
 
@@ -48,6 +51,9 @@ class MainViewModel @Inject constructor(
         MutableStateFlow<UiState<Map<String, List<ExpenseRecord>>>>(UiState.Success(emptyMap()))
     val allExpensesState: StateFlow<UiState<Map<String, List<ExpenseRecord>>>> get() = _allExpensesState
 
+    private val _GroupExpensesState =
+        MutableStateFlow<UiState<List<ExpenseRecord>>>(UiState.Loading)
+    val groupExpensesState: StateFlow<UiState<List<ExpenseRecord>>> get() = _GroupExpensesState
 
     private val _groupsState = MutableStateFlow<UiState<List<GroupMetaData>>>(UiState.Loading)
     val GroupsState: StateFlow<UiState<List<GroupMetaData>>> get() = _groupsState
@@ -140,6 +146,23 @@ class MainViewModel @Inject constructor(
     }
 
     //---------------------MANAGE MEMBERS--------------------
+    fun fetchAllGroupMembers(groupId: String) {
+        _membersState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.uid?.let { uid ->
+                    repo.getGroupMembers(groupId = groupId, onSuccess = { list ->
+                        _membersState.value = UiState.Success(list)
+                    }) { msg ->
+                        _membersState.value = UiState.Error(msg)
+                    }
+                }
+            } catch (e: Exception) {
+                _membersState.value = UiState.Error(e.message ?: "Failed to fetch contacts")
+            }
+        }
+    }
+
     fun addNewMembersToGroup(
         newMembers: MutableList<Contact>,
         groupId: String
@@ -156,6 +179,7 @@ class MainViewModel @Inject constructor(
                     ) { message ->
                         _operationState.value = UiState.Error(message)
                     }
+
                 }
             } catch (e: Exception) {
                 _operationState.value = UiState.Error(e.message ?: "Failed to save group")
@@ -169,9 +193,9 @@ class MainViewModel @Inject constructor(
         _groupsState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                firebaseAuth.currentUser?.email?.let { mail ->
+                firebaseAuth.currentUser?.uid?.let { uid ->
                     repo.getAllGroups(
-                        mail = mail, onSuccess = { list ->
+                        userid = uid, onSuccess = { list ->
                             _groupsState.value = UiState.Success(list)
                         }
                     ) { error ->
@@ -194,9 +218,9 @@ class MainViewModel @Inject constructor(
         _operationState.value = UiState.Loading
         viewModelScope.launch {
             try {
-                firebaseAuth.currentUser?.email?.let { mail ->
+                firebaseAuth.currentUser?.uid?.let { uid ->
                     repo.uploadImageAndSaveGroup(
-                        mail,
+                        uid,
                         imageUri,
                         imagebytes,
                         title, groupType, onSuccess = { message, grpId ->
@@ -263,6 +287,30 @@ class MainViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _operationState.value = UiState.Error(e.message ?: "Failed to save expense")
+            }
+        }
+    }
+
+
+    // For getting all friends' expenses
+    fun getAllGroupExpenses(groupId: String) {
+        _GroupExpensesState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.uid?.let { myId ->
+                    repo.getAllGroupExpenses(
+                        groupId = groupId
+                    ) { success, allExpenses, message ->
+                        if (success && allExpenses != null) {
+                            _GroupExpensesState.value = UiState.Success(allExpenses)
+                        } else {
+                            _GroupExpensesState.value = UiState.Error(message)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _GroupExpensesState.value =
+                    UiState.Error(e.message ?: "Failed to retrieve all expenses")
             }
         }
     }
@@ -474,7 +522,7 @@ class MainViewModel @Inject constructor(
         date: String
     ) {
         _expenseToPush.value = _expenseToPush.value.copy(date = date)
-        Log.d("CJL",date)
+        Log.d("CJL", date)
     }
 
 

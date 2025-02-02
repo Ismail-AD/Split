@@ -39,6 +39,7 @@ import com.appdev.split.databinding.DialogMemberListBinding
 import com.appdev.split.databinding.FragmentAddGrpExpenseBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
+import com.skydoves.powerspinner.OnSpinnerItemSelectedListener
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -47,7 +48,6 @@ import java.util.Calendar
 class AddGrpExpenseFragment : Fragment() {
     private var _binding: FragmentAddGrpExpenseBinding? = null
     private val binding get() = _binding!!
-    private val selectedMembers = mutableSetOf<String>()
     val mainViewModel by activityViewModels<MainViewModel>()
 
     private lateinit var adapter: MyFriendSelectionAdapter
@@ -55,7 +55,7 @@ class AddGrpExpenseFragment : Fragment() {
     val selectedFriends = mutableSetOf<FriendContact>()
     val args: AddGrpExpenseFragmentArgs by navArgs()
     lateinit var dialog: Dialog
-
+    var expObjectReceived: ExpenseRecord? = null
     var selectedDate = Utils.getCurrentDate()
 
 
@@ -65,26 +65,46 @@ class AddGrpExpenseFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         _binding = FragmentAddGrpExpenseBinding.inflate(layoutInflater, container, false)
-        setupShimmer()
-
+        if (args.expenseRecord == null) {
+            setupShimmer()
+        }
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         dialog = Dialog(requireContext())
-
-
-        if (args.expenseRecord == null) {
-            mainViewModel.fetchAllContacts()
+        if (args.expenseRecord != null && (mainViewModel.expensePush.value.splits.isEmpty())) {
+            selectedDate = args.expenseRecord!!.date
+            expObjectReceived = args.expenseRecord
+            mainViewModel.updateExpRec(args.expenseRecord!!)
+            setupEditExpenseMode(args.expenseRecord!!)
+        } else if (args.expenseRecord == null && mainViewModel.expensePush.value.id.trim()
+                .isEmpty()
+        ) {
+            setupNewExpenseMode()
+            args.groupId?.let { mainViewModel.fetchAllGroupMembers(it) }
             observeContacts()
         }
+
+        if (args.expenseRecord != null) {
+            hideForUpdate()
+            setCalendarFromDate(mainViewModel.expensePush.value.date)
+        } else {
+            mainViewModel.updateExpenseCategory(binding.categorySpinner.text.toString())
+            setCalendarFromDate(null)
+        }
+        handleSplitTypeChanges()
         observeExpenseInput()
+        setupNavigationListeners()
+        setupSaveData()
 
         binding.currencySpinner.selectItemByIndex(0)
         binding.categorySpinner.selectItemByIndex(0)
+    }
 
 
+    private fun setupSaveData() {
         binding.doneTextView.setOnClickListener {
             if (validateAndSave()) {
                 observeOperationState()
@@ -95,89 +115,144 @@ class AddGrpExpenseFragment : Fragment() {
                 val currentUser = FirebaseAuth.getInstance().currentUser
                 val listOUserInSplit: MutableList<FriendContact> = mutableListOf()
 
-                if (currentUser != null && mainViewModel.userData.value != null) {
-                    val userId = currentUser.uid // my entry in list for division of amount
+                selectedFriends.forEach { friend ->
+                    listOUserInSplit.add(friend)
+                }
+
+                currentUser?.uid?.let {
                     listOUserInSplit.add(
                         FriendContact(
-                            friendId = userId,
+                            friendId = it,
                             name = mainViewModel.userData.value!!.name,
-                            contact = mainViewModel.userData.value!!.email
+                            contact = mainViewModel.userData.value!!.email,
+                            profileImageUrl = mainViewModel.userData.value!!.imageUrl
                         )
                     )
-                    var nameIdList: List<NameId> = listOUserInSplit.map { friend ->
-                        NameId(id = friend.friendId, name = friend.name)
+                }
+
+                var nameIdList: List<NameId> =
+                    if (args.groupId != null && args.expenseRecord != null) args.expenseRecord!!.splits.map { splitData ->
+                        NameId(id = splitData.userId, name = splitData.username)
+                    } else {
+                        listOUserInSplit.map { friend ->
+                            NameId(id = friend.friendId, name = friend.name)
+                        }
                     }
 
+                val computedSplits = when {
+                    args.expenseRecord == null && mainViewModel.expensePush.value.splits.isEmpty() &&
+                            binding.splitTypeText.text.toString() == SplitType.EQUAL.name -> {
+                        handleExpenseSplitEqual(amount.toDouble(), nameIdList)
+                    }
 
-                    // if user didn't change the preset EQUAL SPLIT then calculate data
-//                    if (mainViewModel.expensePush.value.date.isEmpty() || mainViewModel.expensePush.value.totalAmount < 1f) {
+                    args.expenseRecord != null && SplitType.EQUAL.name == binding.splitTypeText.text.toString() &&
+                            amount.toDouble() != mainViewModel.expensePush.value.totalAmount -> {
+                        handleUpdateSplit(amount.toDouble(), mainViewModel.expensePush.value.splits)
+                    }
+
+                    else -> mainViewModel.expensePush.value.splits
+                }
+
+                if (validateAmount(computedSplits)) {
                     if (args.expenseRecord != null) {
-                        if (validateAmount(args.expenseRecord!!.splits)) {
-                            mainViewModel.updateGroupExpenseDetail(
-                                expenseRecord = ExpenseRecord(
-                                    date = selectedDate,
-                                    title = title,
-                                    description = description,
-                                    totalAmount = amount.toDouble(),
-                                    currency = binding.currencySpinner.text.toString(),
-                                    expenseCategory = binding.categorySpinner.text.toString(),
-                                    splits = if (SplitType.EQUAL.name == binding.splitTypeText.text.toString()
-                                        && amount.toDouble() != args.expenseRecord!!.totalAmount
-                                    ) handleUpdateSplit(
-                                        amount.toDouble(),
-                                        args.expenseRecord!!.splits
-                                    ) else args.expenseRecord!!.splits,
-                                    paidBy = args.expenseRecord!!.paidBy,
-                                    id = args.expenseRecord!!.id,
-                                    splitType = binding.splitTypeText.text.toString(),
-                                    timeStamp = System.currentTimeMillis()
-                                ), args.expenseRecord!!.id,
-                                groupId = args.groupId!!
-                            )
-                        }
-                    } else {
-                        if (mainViewModel.expensePush.value.splits.isEmpty() && binding.splitTypeText.text == SplitType.EQUAL.name) {
-                            handleExpenseSplitEqual(amount.toDouble(), nameIdList)
-                        }
-                        mainViewModel.prepareFinalExpense(
+                        mainViewModel.updateGroupExpenseDetail(
                             ExpenseRecord(
-                                date = selectedDate,
+                                date = mainViewModel.expensePush.value.date,
                                 title = title,
                                 description = description,
                                 totalAmount = amount.toDouble(),
                                 currency = binding.currencySpinner.text.toString(),
                                 expenseCategory = binding.categorySpinner.text.toString(),
-                                paidBy = userId
-                            )
+                                splits = computedSplits,
+                                paidBy = mainViewModel.expensePush.value.paidBy,
+                                id = mainViewModel.expensePush.value.id,
+                                splitType = binding.splitTypeText.text.toString(),
+                                timeStamp = System.currentTimeMillis()
+                            ),
+                            args.expenseRecord!!.id,
+                            args.groupId!!
                         )
+                    } else {
+                        currentUser?.uid?.let {
+                            mainViewModel.prepareFinalExpense(
+                                ExpenseRecord(
+                                    date = mainViewModel.expensePush.value.date,
+                                    title = title,
+                                    description = description,
+                                    totalAmount = amount.toDouble(),
+                                    currency = binding.currencySpinner.text.toString(),
+                                    expenseCategory = binding.categorySpinner.text.toString(),
+                                    paidBy = it,
+                                    splitType = binding.splitTypeText.text.toString(),
+                                    splits = computedSplits
+                                )
+                            )
+                        }
                         mainViewModel.saveGroupExpense(
-                            mainViewModel.expensePush.value, args.groupId!!
+                            mainViewModel.expensePush.value,
+                            args.groupId!!
                         )
                     }
-//                    }
-
                 }
             }
         }
+    }
+
+    private fun setupNavigationListeners() {
+        binding.categorySpinner.setOnSpinnerItemSelectedListener(OnSpinnerItemSelectedListener<String> { _, _, _, newItem ->
+            mainViewModel.updateExpenseCategory(newItem)
+        })
+
         binding.Split.setOnClickListener {
-            if (validateAndSave()) {
-                val action = binding.amount.editText?.let { it1 ->
-                    AddGrpExpenseFragmentDirections.actionAddGrpExpenseFragmentToSplitAmountFragment(
-                        selectedFriends.toList().toTypedArray(),
-                        it1.text.toString().toFloat(),
-                        null,
-                        binding.splitTypeText.text.toString(),
-                        binding.currencySpinner.text.toString()
+            if (selectedFriends.isEmpty() && args.expenseRecord == null) {
+                Toast.makeText(requireContext(), "Please select friends", Toast.LENGTH_SHORT).show()
+            } else {
+                if (!TextUtils.isEmpty(binding.amount.editText?.text.toString())) {
+                    mainViewModel.updateExpenseBeforeNav(
+                        title = binding.title.editText?.text.toString(),
+                        description = binding.description.editText?.text.toString(),
+                        amount = binding.amount.editText?.text.toString(),
+                        currency = binding.currencySpinner.text.toString()
                     )
-                }
-                if (action != null) {
-                    findNavController().navigate(action)
+                    val action = binding.amount.editText?.let { it1 ->
+                        AddGrpExpenseFragmentDirections.actionAddGrpExpenseFragmentToSplitAmountFragment(
+                            selectedFriends.toList().toTypedArray(),
+                            it1.text.toString().toFloat(),
+                            null,
+                            binding.splitTypeText.text.toString(),
+                            Utils.extractCurrencyCode(binding.currencySpinner.text.toString())
+                        )
+                    }
+                    if (action != null) {
+                        findNavController().navigate(action)
+                    }
+                } else {
+                    showError("Amount cannot be empty!")
                 }
             }
         }
 
         binding.closeIcon.setOnClickListener {
             findNavController().navigateUp()
+        }
+
+        binding.addFriends.setOnClickListener {
+            args.groupId?.let {
+                val action = AddGrpExpenseFragmentDirections
+                    .actionAddGrpExpenseFragmentToAddMembersFragment(true, it)
+                findNavController().navigate(action)
+            }
+        }
+    }
+
+    private fun handleSplitTypeChanges() {
+        if (args.expenseRecord != null && args.expenseRecord!!.splitType == mainViewModel.expensePush.value.splitType) {
+            val expense = args.expenseRecord!!
+            binding.splitTypeText.text = expense.splitType
+        } else if (mainViewModel.expensePush.value.splitType.trim().isNotEmpty()) {
+            binding.splitTypeText.text = mainViewModel.expensePush.value.splitType
+        } else {
+            binding.splitTypeText.text = SplitType.EQUAL.name
         }
 
     }
@@ -199,24 +274,19 @@ class AddGrpExpenseFragment : Fragment() {
         }
     }
 
+    private fun handleExpenseSplitEqual(amount: Double, nameIdList: List<NameId>): List<Split> {
+        val amountHalf = amount / 2
+
+        val distributionList = Utils.createEqualSplits(nameIdList, amountHalf)
+        return distributionList
+    }
+
+
     private fun handleUpdateSplit(amount: Double, splits: List<Split>): List<Split> {
         val amountHalf = amount / 2
         val distributionList = Utils.updateEqualSplits(splits, amountHalf)
         return distributionList
 
-    }
-
-    private fun handleExpenseSplitEqual(amount: Double, nameIdList: List<NameId>) {
-        val amountHalf = amount / 2
-
-        val distributionList = Utils.createEqualSplits(nameIdList, amountHalf)
-        mainViewModel.updateFriendExpense(
-            ExpenseRecord(
-                totalAmount = amount,
-                splits = distributionList,
-                date = selectedDate
-            )
-        )
     }
 
 
@@ -250,15 +320,78 @@ class AddGrpExpenseFragment : Fragment() {
                     if (amount.editText?.text.isNullOrEmpty() && expenseInput.totalAmount != 0.0) {
                         amount.editText?.setText(expenseInput.totalAmount.toString())
                     }
+                    if (expenseInput.currency.trim().isNotEmpty()) {
+                        currencySpinner.selectItemByIndex(getCurrencyIndex(expenseInput.currency))
+                    }
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            mainViewModel.expenseCategory.collect {
+                if (it.trim().isNotEmpty()) {
+                    Log.d("CKLA", "IN COLLECT $it")
+                    binding.categorySpinner.selectItemByIndex(getCategoryIndex(it))
                 }
             }
         }
     }
 
 
+    private fun setupEditExpenseMode(expenseRecord: ExpenseRecord) {
+        binding.apply {
+            dateCheck.text = Utils.getCurrentDay(expenseRecord.date)
+            currencySpinner.selectItemByIndex(getCurrencyIndex(expenseRecord.currency))
+            categorySpinner.selectItemByIndex(getCategoryIndex(expenseRecord.expenseCategory))
+            title.editText?.setText(expenseRecord.title)
+            description.editText?.setText(expenseRecord.description)
+            amount.editText?.setText(expenseRecord.totalAmount.toString())
+            splitTypeText.text = expenseRecord.splitType
+        }
+    }
+
+    private fun setupNewExpenseMode() {
+        binding.apply {
+            dateCheck.text = Utils.getCurrentDay(null)
+            currencySpinner.selectItemByIndex(0)
+            categorySpinner.selectItemByIndex(0)
+            splitTypeText.text = SplitType.EQUAL.name
+        }
+        binding.titleTextView.text = "Add group expense"
+    }
+
+    private fun hideForUpdate() {
+        // Hide contact list as it's not required when editing
+        binding.selectedFrisRecyclerView.visibility = View.GONE
+        binding.noFriends.visibility = View.GONE
+        binding.shimmerViewContainer.visibility = View.GONE
+        binding.titleFriends.visibility = View.GONE
+        binding.titleTextView.text = "Update group expense"
+    }
+
+    // Helper functions for spinner indices
+    private fun getCurrencyIndex(name: String): Int {
+        val array = resources.getStringArray(R.array.currencies)
+        val index = array.indexOf(name)
+        return if (index >= 0) {
+            index
+        } else {
+            0
+        }
+    }
+
+    private fun getCategoryIndex(name: String): Int {
+        val array = resources.getStringArray(R.array.categories)
+        val index = array.indexOf(name)
+        return if (index >= 0) {
+            index
+        } else {
+            0
+        }
+    }
+
     private fun observeContacts() {
         viewLifecycleOwner.lifecycleScope.launch {
-            mainViewModel.contactsState.collect { contactsState ->
+            mainViewModel.membersState.collect { contactsState ->
                 when (contactsState) {
                     is UiState.Loading -> showShimmer()
                     is UiState.Success -> {
@@ -276,6 +409,7 @@ class AddGrpExpenseFragment : Fragment() {
             }
         }
     }
+
 
     private fun updateFriendsList(friends: List<FriendContact>) {
         friendsList = friends.toMutableList()
@@ -296,13 +430,15 @@ class AddGrpExpenseFragment : Fragment() {
         }
     }
 
-    fun setCalendarFromDate(dateString: String?) {
+    private fun setCalendarFromDate(dateString: String?) {
+        Log.d("CJL", "REC: $dateString")
         val calendar = Calendar.getInstance()
         var year: Int
         var month: Int
         var day: Int
-        if (!dateString.isNullOrEmpty()) {
-            val parts = dateString.split("-")
+        val finalString = dateString ?: mainViewModel.expensePush.value.date
+        if (finalString.trim().isNotEmpty()) {
+            val parts = finalString.split("-")
             if (parts.size == 3) {
                 year = parts[0].toInt()
                 month = parts[1].toInt() - 1 // Calendar months are 0-based
@@ -311,22 +447,28 @@ class AddGrpExpenseFragment : Fragment() {
                 calendar.set(year, month, day)
             }
         }
-
         year = calendar.get(Calendar.YEAR)
         month = calendar.get(Calendar.MONTH)
         day = calendar.get(Calendar.DAY_OF_MONTH)
+        selectedDate = "$year-${month + 1}-$day"
+        Log.d("CJL", "CONSTRUCTED: $year-${month + 1}-$day")
 
         // Open DatePicker with the specified date
         val datePickerDialog = DatePickerDialog(
             requireContext(),
             { _, selectedYear, selectedMonth, selectedDay ->
-                selectedDate = "$selectedYear-${selectedMonth + 1}-$selectedDay"
-                binding.dateCheck.text = selectedDay.toString()
             },
             year, month, day
         )
+        binding.dateCheck.text = day.toString()
+        mainViewModel.updateExpenseDate(selectedDate)
         binding.calender.setOnClickListener {
             datePickerDialog.show()
+            datePickerDialog.setOnDateSetListener { view, yearn, monthn, dayOfMonthn ->
+                selectedDate = "$yearn-${monthn + 1}-$dayOfMonthn"
+                binding.dateCheck.text = dayOfMonthn.toString()
+                mainViewModel.updateExpenseDate(selectedDate)
+            }
         }
     }
 
@@ -393,7 +535,7 @@ class AddGrpExpenseFragment : Fragment() {
                 return false
             }
 
-            selectedMembers.isEmpty() -> {
+            selectedFriends.isEmpty() && args.expenseRecord == null -> {
                 showToast("Please select at least one member.")
                 return false
             }

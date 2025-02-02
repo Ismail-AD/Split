@@ -7,9 +7,25 @@
     android:background="@color/white"
     tools:context=".UI.Fragment.GroupDetailFragment">
 
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmer_view_container"
+        android:layout_below="@id/shimmer_view_top"
+        android:layout_width="match_parent"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_height="match_parent"
+        app:shimmer_duration="1000">
+
+        <ViewStub
+            android:id="@+id/shimmer_view_friendExpenses"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </com.facebook.shimmer.ShimmerFrameLayout>
+
     <!-- Header with Gradient -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
+        android:id="@+id/topBar"
         android:layout_height="@dimen/_100sdp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -45,6 +61,7 @@
 
     <!-- App Icon -->
     <ImageView
+        android:id="@+id/ImageOfExpense"
         android:layout_width="96dp"
         android:layout_height="96dp"
         android:layout_gravity="start"
@@ -57,6 +74,7 @@
 
     <!-- Main Content -->
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/BottomAllContent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="@dimen/_100sdp"
@@ -80,6 +98,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/noexpense"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
@@ -126,17 +145,21 @@
                     android:text="Balances" />
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="@dimen/_14sdp"
-                android:text="You're the only one here!"
-                android:textSize="20sp" />
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewGroupExpenses"
+                android:layout_marginBottom="@dimen/_85sdp"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:visibility="gone"
+                android:clipToPadding="false"
+                android:layout_marginVertical="15dp"
+                android:paddingBottom="8dp" />
 
             <!-- Group Actions -->
             <LinearLayout
                 android:layout_width="match_parent"
+                android:id="@+id/newgroupelements"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/_15sdp"
                 android:orientation="vertical">
@@ -208,8 +231,8 @@
         android:id="@+id/addExp"
         android:text="Add expense"
         android:textColor="@color/white"
-        android:layout_marginBottom="@dimen/_55sdp"
         android:layout_marginEnd="@dimen/_10sdp"
+        android:layout_marginBottom="@dimen/_20sdp"
         app:backgroundTint="@color/green"
         app:icon="@drawable/history_day"
         app:iconTint="@color/white" />

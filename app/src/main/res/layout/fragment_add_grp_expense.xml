@@ -62,7 +62,7 @@
             style="@style/billWordColor"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Friends"
+            android:text="Group Members"
             android:textSize="16sp"
             android:textStyle="bold" />
 
@@ -71,29 +71,35 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:orientation="vertical"
-            android:visibility="gone">
+            android:visibility="gone"
+            android:orientation="vertical">
 
 
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/addFriends"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/_8sdp"
-                android:background="@drawable/card_border">
+                android:layout_marginTop="@dimen/_13sdp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/itemBack"
+                app:strokeWidth="1dp">
 
                 <TextView
-                    android:id="@+id/addFriends"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:drawableLeft="@drawable/addgroup"
                     android:drawablePadding="@dimen/_6sdp"
                     android:paddingHorizontal="@dimen/_25sdp"
                     android:paddingVertical="@dimen/_10sdp"
-                    android:text="Add friends"
+                    android:text="Add new members"
                     android:textColor="@android:color/black"
                     android:textSize="16sp" />
 
-            </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
         <com.facebook.shimmer.ShimmerFrameLayout
@@ -117,8 +123,6 @@
             android:paddingHorizontal="@dimen/_10sdp"
             android:visibility="gone" />
     </LinearLayout>
-
-
 
 
     <com.google.android.material.textfield.TextInputLayout
@@ -168,16 +172,18 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
+        android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/_20sdp"
-        android:layout_height="wrap_content">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
         <com.skydoves.powerspinner.PowerSpinnerView
             android:id="@+id/categorySpinner"
             style="@style/hintSpinnerWordColor"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="@dimen/_50sdp"
+            android:layout_marginEnd="@dimen/_10sdp"
+            android:layout_weight="1"
             android:gravity="start|center_vertical"
             android:hint="Select a category"
             android:padding="10dp"
@@ -186,7 +192,6 @@
             app:spinner_arrow_padding="8dp"
             app:spinner_divider_color="@color/textsmall"
             app:spinner_divider_show="true"
-            android:layout_marginEnd="@dimen/_10sdp"
             app:spinner_divider_size="0.4dp"
             app:spinner_item_array="@array/categories"
             app:spinner_item_height="46dp"
@@ -197,16 +202,18 @@
         <RelativeLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
+
             <ImageView
                 android:id="@+id/calender"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackground"
-                android:contentDescription="Remove"
                 android:layout_marginBottom="@dimen/_8sdp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:contentDescription="Remove"
+                android:focusable="true"
                 android:src="@drawable/calendar" />
+
             <TextView
                 android:id="@+id/dateCheck"
                 style="@style/billWordColor"
@@ -243,7 +250,6 @@
         app:spinner_popup_height="300dp" />
 
 
-
     <androidx.cardview.widget.CardView
         android:id="@+id/Split"
         android:layout_width="match_parent"
@@ -254,33 +260,35 @@
 
         <LinearLayout
             android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:gravity="center"
-            android:paddingVertical="@dimen/_10sdp"
-            android:layout_height="wrap_content">
+            android:paddingVertical="@dimen/_10sdp">
+
             <TextView
                 android:id="@+id/splitTypeText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:singleLine="true"
                 android:ellipsize="end"
+                android:singleLine="true"
                 android:text="EQUAL"
                 android:textAlignment="center"
+                android:textAllCaps="true"
                 android:textColor="@color/white"
                 android:textSize="16sp"
-                android:textAllCaps="true"
                 android:textStyle="bold" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
 
-                android:singleLine="true"
-                android:ellipsize="end"
-                android:text="Split"
                 android:layout_marginStart="@dimen/_6sdp"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text="Split"
                 android:textAlignment="center"
+                android:textAllCaps="true"
                 android:textColor="@color/white"
                 android:textSize="16sp"
-                android:textAllCaps="true"
                 android:textStyle="bold" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>

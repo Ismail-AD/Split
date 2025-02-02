@@ -11,6 +11,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.navOptions
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.BillAdapter
 import com.appdev.split.Adapters.ExpenseAdapter
@@ -33,16 +34,24 @@ class GroupFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentGroupBinding.inflate(inflater, container, false)
+        setupShimmer()
+
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupShimmer()
+
         binding.expensesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-
-
-
+        binding.addNewGroup.setOnClickListener {
+            findNavController().navigate(
+                R.id.action_groupFragment_to_addGroupFragment,
+                null,
+                navOptions {
+                    launchSingleTop = true
+                }
+            )
+        }
         mainViewModel.getAllGroups()
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -67,9 +76,6 @@ class GroupFragment : Fragment() {
             }
         }
 
-        binding.add.setOnClickListener {
-            findNavController().navigate(R.id.action_groupFragment_to_addGroupFragment)
-        }
     }
 
     private fun showError(message: String) {
@@ -77,7 +83,7 @@ class GroupFragment : Fragment() {
     }
 
     private fun updateRecyclerView(groups: List<GroupMetaData>) {
-        binding.add.visibility = View.VISIBLE
+        binding.addNewGroup.visibility = View.VISIBLE
         if (groups.isEmpty()) {
             binding.expensesRecyclerView.visibility = View.GONE
             binding.noData.visibility = View.VISIBLE
