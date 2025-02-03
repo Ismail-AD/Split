@@ -91,7 +91,9 @@ class SingleDostAddExpenseFragment : Fragment() {
             hideForUpdate()
             setCalendarFromDate(mainViewModel.expensePush.value.date)
         } else{
-            mainViewModel.updateExpenseCategory(binding.categorySpinner.text.toString())
+            if(mainViewModel.expenseCategory.value.trim().isEmpty()){
+                mainViewModel.updateExpenseCategory(binding.categorySpinner.text.toString())
+            }
         }
 
         handleSplitTypeChanges()

@@ -15,6 +15,7 @@ class MyFriendSelectionAdapter(
 
     private var selectedFriend: FriendContact? = null
     private val selectedFriends = mutableSetOf<FriendContact>()
+    private var preSelectedFriendIds: Set<String> = emptySet()
 
     inner class FriendViewHolder(private val binding: MyfriendsLayoutItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -55,6 +56,12 @@ class MyFriendSelectionAdapter(
             friend
         }
         onSelectionChanged(listOfNotNull(selectedFriend))
+    }
+    fun setPreSelectedFriends(friendIds: Set<String>) {
+        preSelectedFriendIds = friendIds
+        selectedFriends.clear()
+        selectedFriends.addAll(friendsList.filter { it.friendId in preSelectedFriendIds })
+        notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FriendViewHolder {

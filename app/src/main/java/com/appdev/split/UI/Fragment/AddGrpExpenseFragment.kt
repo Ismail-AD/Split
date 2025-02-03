@@ -74,16 +74,17 @@ class AddGrpExpenseFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         dialog = Dialog(requireContext())
+        args.groupId?.let { mainViewModel.fetchAllGroupMembers(it) }
         if (args.expenseRecord != null && (mainViewModel.expensePush.value.splits.isEmpty())) {
             selectedDate = args.expenseRecord!!.date
             expObjectReceived = args.expenseRecord
             mainViewModel.updateExpRec(args.expenseRecord!!)
             setupEditExpenseMode(args.expenseRecord!!)
+            observeContactsForUpdate()
         } else if (args.expenseRecord == null && mainViewModel.expensePush.value.id.trim()
                 .isEmpty()
         ) {
             setupNewExpenseMode()
-            args.groupId?.let { mainViewModel.fetchAllGroupMembers(it) }
             observeContacts()
         }
 
@@ -91,7 +92,9 @@ class AddGrpExpenseFragment : Fragment() {
             hideForUpdate()
             setCalendarFromDate(mainViewModel.expensePush.value.date)
         } else {
-            mainViewModel.updateExpenseCategory(binding.categorySpinner.text.toString())
+            if(mainViewModel.expenseCategory.value.trim().isEmpty()){
+                mainViewModel.updateExpenseCategory(binding.categorySpinner.text.toString())
+            }
             setCalendarFromDate(null)
         }
         handleSplitTypeChanges()
@@ -99,8 +102,7 @@ class AddGrpExpenseFragment : Fragment() {
         setupNavigationListeners()
         setupSaveData()
 
-        binding.currencySpinner.selectItemByIndex(0)
-        binding.categorySpinner.selectItemByIndex(0)
+
     }
 
 
@@ -397,10 +399,35 @@ class AddGrpExpenseFragment : Fragment() {
                     is UiState.Success -> {
                         hideShimmer()
                         updateFriendsList(contactsState.data)
+                        val selectedIds = mainViewModel.selectedFriendIds.value
+                        if (selectedIds.isNotEmpty()) {
+                            adapter.setPreSelectedFriends(selectedIds)
+                        }
                     }
 
                     is UiState.Error -> {
                         hideShimmer()
+                        showError(contactsState.message)
+                    }
+
+                    else -> {}
+                }
+            }
+        }
+    }
+
+    private fun observeContactsForUpdate() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            mainViewModel.membersState.collect { contactsState ->
+                when (contactsState) {
+                    is UiState.Loading -> showLoadingIndicator()
+                    is UiState.Success -> {
+                        hideLoadingIndicator()
+                        // SELETCED FRIENDS KI LIST BNA Q K SPLIT MEI BHEIJNI
+                    }
+
+                    is UiState.Error -> {
+                        hideLoadingIndicator()
                         showError(contactsState.message)
                     }
 
@@ -419,6 +446,9 @@ class AddGrpExpenseFragment : Fragment() {
             adapter = MyFriendSelectionAdapter(friendsList, true) { selectedFriends ->
                 this.selectedFriends.clear()
                 this.selectedFriends.addAll(selectedFriends)
+
+                // Update ViewModel with selected friends
+                mainViewModel.updateSelectedFriends(selectedFriends)
             }
             binding.selectedFrisRecyclerView.adapter = adapter
             binding.selectedFrisRecyclerView.layoutManager =

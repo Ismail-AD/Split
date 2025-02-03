@@ -67,6 +67,10 @@ class MainViewModel @Inject constructor(
 
     private val _expenseCategory = MutableStateFlow("")
     val expenseCategory: MutableStateFlow<String> get() = _expenseCategory
+    private val _selectedFriendIds = MutableStateFlow<Set<String>>(emptySet())
+    val selectedFriendIds: StateFlow<Set<String>> = _selectedFriendIds
+
+
 
     var _newSelectedId = -1
     private var cachedFriend: FriendContact? = null // Cache variable for storing friend data
@@ -87,6 +91,10 @@ class MainViewModel @Inject constructor(
 
     fun updateExpRec(expenseRecord: ExpenseRecord) {
         _expenseToPush.value = expenseRecord
+    }
+
+    fun updateSelectedFriends(friends: List<FriendContact>) {
+        _selectedFriendIds.value = friends.map { it.friendId }.toSet()
     }
 
     //---------------------EXPENSE LISTENER------------------
