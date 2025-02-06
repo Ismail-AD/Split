@@ -50,7 +50,9 @@ class FriendsAllExpenses : Fragment() {
     ): View? {
         _binding = FragmentFriendsAllExpensesBinding.inflate(layoutInflater, container, false)
         setupShimmer()
-        mainViewModel.updateFriendExpense(ExpenseRecord())
+        mainViewModel.updateToEmpty(ExpenseRecord())
+        mainViewModel.updateExpenseCategory("")
+        mainViewModel.updateStateToStable()
         return binding.root
     }
 
@@ -60,7 +62,6 @@ class FriendsAllExpenses : Fragment() {
         binding.backButton.setOnClickListener {
             findNavController().navigateUp()
         }
-        mainViewModel.updateStateToStable()
 
         if (args.bilList.isNotEmpty()) {
             firebaseAuth.currentUser?.uid?.let { myId ->
@@ -202,7 +203,7 @@ class FriendsAllExpenses : Fragment() {
         Log.d("CHKIAMG", "I am going in")
         friendContact?.let {
             val action = FriendsAllExpensesDirections.actionFriendsAllExpensesToBillDetails(
-                expenseList, it
+                expenseList, it,null
             )
             findNavController().navigate(action)
         }

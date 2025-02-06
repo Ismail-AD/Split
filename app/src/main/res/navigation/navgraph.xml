@@ -48,7 +48,15 @@
             app:destination="@id/personalExpenseFragment" />
         <argument
             android:name="friendData"
-            app:argType="com.appdev.split.Model.Data.FriendContact" />
+            app:argType="com.appdev.split.Model.Data.FriendContact"
+            app:nullable="true" />
+        <argument
+            android:name="GroupId"
+            app:argType="string"
+            app:nullable="true" />
+        <action
+            android:id="@+id/action_billDetails_to_addGrpExpenseFragment"
+            app:destination="@id/addGrpExpenseFragment" />
 
     </fragment>
     <fragment
@@ -82,6 +90,9 @@
         <argument
             android:name="groupMetaData"
             app:argType="com.appdev.split.Model.Data.GroupMetaData" />
+        <action
+            android:id="@+id/action_groupDetailFragment_to_billDetails"
+            app:destination="@id/billDetails" />
     </fragment>
     <fragment
         android:id="@+id/addMembersFragment"

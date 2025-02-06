@@ -52,7 +52,8 @@ class AddGrpExpenseFragment : Fragment() {
 
     private lateinit var adapter: MyFriendSelectionAdapter
     private var friendsList = mutableListOf<FriendContact>()
-    val selectedFriends = mutableSetOf<FriendContact>()
+    private var allGroupMembersList = mutableListOf<FriendContact>()
+    var selectedFriends = mutableSetOf<FriendContact>()
     val args: AddGrpExpenseFragmentArgs by navArgs()
     lateinit var dialog: Dialog
     var expObjectReceived: ExpenseRecord? = null
@@ -68,6 +69,7 @@ class AddGrpExpenseFragment : Fragment() {
         if (args.expenseRecord == null) {
             setupShimmer()
         }
+        mainViewModel.updateStateToStable()
         return binding.root
     }
 
@@ -78,6 +80,7 @@ class AddGrpExpenseFragment : Fragment() {
         if (args.expenseRecord != null && (mainViewModel.expensePush.value.splits.isEmpty())) {
             selectedDate = args.expenseRecord!!.date
             expObjectReceived = args.expenseRecord
+            Log.d("CASZ", mainViewModel.expensePush.value.paidBy)
             mainViewModel.updateExpRec(args.expenseRecord!!)
             setupEditExpenseMode(args.expenseRecord!!)
             observeContactsForUpdate()
@@ -92,7 +95,7 @@ class AddGrpExpenseFragment : Fragment() {
             hideForUpdate()
             setCalendarFromDate(mainViewModel.expensePush.value.date)
         } else {
-            if(mainViewModel.expenseCategory.value.trim().isEmpty()){
+            if (mainViewModel.expenseCategory.value.trim().isEmpty()) {
                 mainViewModel.updateExpenseCategory(binding.categorySpinner.text.toString())
             }
             setCalendarFromDate(null)
@@ -121,15 +124,17 @@ class AddGrpExpenseFragment : Fragment() {
                     listOUserInSplit.add(friend)
                 }
 
-                currentUser?.uid?.let {
-                    listOUserInSplit.add(
-                        FriendContact(
-                            friendId = it,
-                            name = mainViewModel.userData.value!!.name,
-                            contact = mainViewModel.userData.value!!.email,
-                            profileImageUrl = mainViewModel.userData.value!!.imageUrl
+                if (mainViewModel.expensePush.value.splits.isEmpty() && args.expenseRecord == null) {
+                    currentUser?.uid?.let {
+                        listOUserInSplit.add(
+                            FriendContact(
+                                friendId = it,
+                                name = mainViewModel.userData.value!!.name,
+                                contact = mainViewModel.userData.value!!.email,
+                                profileImageUrl = mainViewModel.userData.value!!.imageUrl
+                            )
                         )
-                    )
+                    }
                 }
 
                 var nameIdList: List<NameId> =
@@ -157,6 +162,7 @@ class AddGrpExpenseFragment : Fragment() {
 
                 if (validateAmount(computedSplits)) {
                     if (args.expenseRecord != null) {
+                        Log.d("CASZ", "IN ON CLICK " + mainViewModel.expensePush.value.paidBy)
                         mainViewModel.updateGroupExpenseDetail(
                             ExpenseRecord(
                                 date = mainViewModel.expensePush.value.date,
@@ -176,6 +182,8 @@ class AddGrpExpenseFragment : Fragment() {
                         )
                     } else {
                         currentUser?.uid?.let {
+                            Log.d("CASZ", "IN ON CLICK MY ID $it")
+                            Log.d("CASZ", "IN ON CLICK EXPENSE CAT ${binding.categorySpinner.text}")
                             mainViewModel.prepareFinalExpense(
                                 ExpenseRecord(
                                     date = mainViewModel.expensePush.value.date,
@@ -189,11 +197,11 @@ class AddGrpExpenseFragment : Fragment() {
                                     splits = computedSplits
                                 )
                             )
+                            mainViewModel.saveGroupExpense(
+                                mainViewModel.expensePush.value,
+                                args.groupId!!
+                            )
                         }
-                        mainViewModel.saveGroupExpense(
-                            mainViewModel.expensePush.value,
-                            args.groupId!!
-                        )
                     }
                 }
             }
@@ -239,6 +247,14 @@ class AddGrpExpenseFragment : Fragment() {
         }
 
         binding.addFriends.setOnClickListener {
+            args.groupId?.let {
+                val action = AddGrpExpenseFragmentDirections
+                    .actionAddGrpExpenseFragmentToAddMembersFragment(true, it)
+                findNavController().navigate(action)
+            }
+        }
+
+        binding.addAfterFriends.setOnClickListener {
             args.groupId?.let {
                 val action = AddGrpExpenseFragmentDirections
                     .actionAddGrpExpenseFragmentToAddMembersFragment(true, it)
@@ -296,7 +312,11 @@ class AddGrpExpenseFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             mainViewModel.operationState.collect { state ->
                 when (state) {
-                    is UiState.Error -> showError(state.message)
+                    is UiState.Error -> {
+                        hideLoadingIndicator()
+                        showError(state.message)
+                    }
+
                     UiState.Loading -> showLoadingIndicator()
                     is UiState.Success -> {
                         hideLoadingIndicator()
@@ -399,6 +419,7 @@ class AddGrpExpenseFragment : Fragment() {
                     is UiState.Success -> {
                         hideShimmer()
                         updateFriendsList(contactsState.data)
+                        allGroupMembersList = contactsState.data.toMutableList()
                         val selectedIds = mainViewModel.selectedFriendIds.value
                         if (selectedIds.isNotEmpty()) {
                             adapter.setPreSelectedFriends(selectedIds)
@@ -423,7 +444,14 @@ class AddGrpExpenseFragment : Fragment() {
                     is UiState.Loading -> showLoadingIndicator()
                     is UiState.Success -> {
                         hideLoadingIndicator()
-                        // SELETCED FRIENDS KI LIST BNA Q K SPLIT MEI BHEIJNI
+                        val allGroupMembers = contactsState.data
+
+                        val selectedMemberIds =
+                            args.expenseRecord?.splits?.map { it.userId }?.toSet() ?: emptySet()
+
+                        selectedFriends =
+                            allGroupMembers.filter { it.friendId in selectedMemberIds }
+                                .toMutableSet()
                     }
 
                     is UiState.Error -> {
@@ -441,6 +469,7 @@ class AddGrpExpenseFragment : Fragment() {
     private fun updateFriendsList(friends: List<FriendContact>) {
         friendsList = friends.toMutableList()
         if (friendsList.isNotEmpty()) {
+            binding.addAfterFriends.visibility = View.VISIBLE
             binding.selectedFrisRecyclerView.visibility = View.VISIBLE
             binding.noFriends.visibility = View.GONE
             adapter = MyFriendSelectionAdapter(friendsList, true) { selectedFriends ->
@@ -457,6 +486,7 @@ class AddGrpExpenseFragment : Fragment() {
         } else {
             binding.selectedFrisRecyclerView.visibility = View.GONE
             binding.noFriends.visibility = View.VISIBLE
+            binding.addAfterFriends.visibility = View.GONE
         }
     }
 

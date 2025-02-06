@@ -73,7 +73,18 @@ class BillDetails : Fragment() {
         setupDialog()
         setupRecyclerView()
         setupClickListeners()
-        setupSingleExpenseListener(args.billData.id, args.friendData.friendId)
+
+
+        when {
+            args.groupId != null -> {
+                setupGroupExpenseListener(args.billData.id, args.groupId!!)
+            }
+
+            args.friendData != null -> {
+                setupSingleExpenseListener(args.billData.id, args.friendData!!.friendId)
+            }
+        }
+
         updateUIWithExpenseRecord(args.billData)
     }
 
@@ -96,16 +107,45 @@ class BillDetails : Fragment() {
             }
 
             edit.setOnClickListener {
-                val action = BillDetailsDirections.actionBillDetailsToPersonalExpenseFragment(
-                    expenseRecord,
-                    args.friendData
-                )
-                findNavController().navigate(action)
+                when {
+                    args.groupId != null -> {
+                        val action =
+                            BillDetailsDirections.actionBillDetailsToAddGrpExpenseFragment(
+                                args.groupId, expenseRecord
+                            )
+                        findNavController().navigate(action)
+                    }
+
+                    args.friendData != null -> {
+                        val action =
+                            BillDetailsDirections.actionBillDetailsToPersonalExpenseFragment(
+                                expenseRecord,
+                                args.friendData
+                            )
+                        findNavController().navigate(action)
+                    }
+                }
             }
 
             delete.setOnClickListener {
                 observeOperationState()
-                mainViewModel.deleteFriendExpenseDetail(expenseRecord.id, args.friendData.friendId)
+                when {
+                    args.groupId != null -> {
+                        mainViewModel.deleteGroupExpense(
+                            expenseRecord.id,
+                            args.groupId!!
+                        )
+                    }
+
+                    args.friendData != null -> {
+                        args.friendData?.let { it1 ->
+                            mainViewModel.deleteFriendExpenseDetail(
+                                expenseRecord.id,
+                                it1.friendId
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -138,6 +178,32 @@ class BillDetails : Fragment() {
             }
     }
 
+    private fun setupGroupExpenseListener(expenseId: String, groupId: String) {
+        expensesListener?.remove()
+        expensesListener = firestore.collection("groupExpenses")
+            .document(groupId)
+            .collection("expenses")
+            .document(expenseId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("GroupExpense", "Error listening to group expense: ${error.message}")
+                    return@addSnapshotListener
+                }
+
+                snapshot?.let { documentSnapshot ->
+                    val updatedRecord = documentSnapshot.toObject(ExpenseRecord::class.java)
+                    Log.d("GroupExpense", "Updated group expense: $updatedRecord")
+                    Log.d("GroupExpense", "Current expense record: $expenseRecord")
+
+                    if (expenseRecord != updatedRecord) {
+                        updatedRecord?.let { record ->
+                            updateUIWithExpenseRecord(record)
+                        }
+                    }
+                }
+            }
+    }
+
 
     private fun updateUIWithExpenseRecord(record: ExpenseRecord) {
         expenseRecord = record
@@ -145,9 +211,11 @@ class BillDetails : Fragment() {
         _binding?.let { binding ->
             binding.title.text = record.title
             binding.date.text = "Added on ${Utils.formatDate(record.date)}"
-            binding.totalAmount.text = "${Utils.extractCurrencyCode(record.currency)}${record.totalAmount}"
+            binding.totalAmount.text =
+                "${Utils.extractCurrencyCode(record.currency)}${record.totalAmount}"
             binding.description.text = record.description
-            Glide.with(binding.root.context).load(args.friendData.profileImageUrl).error(R.drawable.profile_imaage)
+            Glide.with(binding.root.context).load(args.friendData?.profileImageUrl)
+                .error(R.drawable.profile_imaage)
                 .placeholder(R.drawable.profile_imaage)
                 .into(binding.circularImage)
 

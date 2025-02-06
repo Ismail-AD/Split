@@ -37,6 +37,7 @@ class AddGroupFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentAddGroupBinding.inflate(inflater, container, false)
+
         return binding.root
     }
 
@@ -44,23 +45,21 @@ class AddGroupFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         dialog = Dialog(requireContext())
         viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                mainViewModel.operationState.collect { state ->
-                    when (state) {
-                        is UiState.Loading -> showLoadingIndicator()
-                        is UiState.Success -> {
-                            hideLoadingIndicator()
-                            findNavController().navigateUp()
-                        }
+            mainViewModel.operationState.collect { state ->
+                when (state) {
+                    is UiState.Loading -> showLoadingIndicator()
+                    is UiState.Success -> {
+                        hideLoadingIndicator()
+                        findNavController().navigateUp()
+                    }
 
-                        is UiState.Error -> {
-                            hideLoadingIndicator()
-                            showError(state.message)
-                        }
+                    is UiState.Error -> {
+                        hideLoadingIndicator()
+                        showError(state.message)
+                    }
 
-                        UiState.Stable -> {
+                    UiState.Stable -> {
 
-                        }
                     }
                 }
             }

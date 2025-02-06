@@ -35,7 +35,7 @@ class GroupFragment : Fragment() {
     ): View {
         _binding = FragmentGroupBinding.inflate(inflater, container, false)
         setupShimmer()
-
+        mainViewModel.updateStateToStable()
         return binding.root
     }
 

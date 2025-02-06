@@ -60,6 +60,7 @@ class SingleDostAddExpenseFragment : Fragment() {
         if (args.expenseRecord == null && args.friendData == null) {
             setupShimmer()
         }
+        mainViewModel.updateStateToStable()
         return binding.root
     }
 
@@ -90,8 +91,8 @@ class SingleDostAddExpenseFragment : Fragment() {
         if (args.expenseRecord != null) {
             hideForUpdate()
             setCalendarFromDate(mainViewModel.expensePush.value.date)
-        } else{
-            if(mainViewModel.expenseCategory.value.trim().isEmpty()){
+        } else {
+            if (mainViewModel.expenseCategory.value.trim().isEmpty()) {
                 mainViewModel.updateExpenseCategory(binding.categorySpinner.text.toString())
             }
         }
@@ -129,6 +130,15 @@ class SingleDostAddExpenseFragment : Fragment() {
     private fun setupNavigationListeners() {
 
         binding.addFriends.setOnClickListener {
+            val action =
+                SingleDostAddExpenseFragmentDirections.actionPersonalExpenseFragmentToAddMembersFragment2(
+                    false, ""
+                )
+            findNavController().navigate(action)
+
+        }
+
+        binding.addAfterFriends.setOnClickListener {
             val action =
                 SingleDostAddExpenseFragmentDirections.actionPersonalExpenseFragmentToAddMembersFragment2(
                     false, ""
@@ -254,10 +264,12 @@ class SingleDostAddExpenseFragment : Fragment() {
                     args.expenseRecord == null && mainViewModel.expensePush.value.splits.isEmpty() && binding.splitTypeText.text.toString() == SplitType.EQUAL.name -> {
                         handleExpenseSplitEqual(amount.toDouble(), nameIdList)
                     }
+
                     args.expenseRecord != null && SplitType.EQUAL.name == binding.splitTypeText.text.toString() &&
                             amount.toDouble() != mainViewModel.expensePush.value.totalAmount -> {
                         handleUpdateSplit(amount.toDouble(), mainViewModel.expensePush.value.splits)
                     }
+
                     else -> mainViewModel.expensePush.value.splits
                 }
                 if (validateAmount(computedSplits)) {
@@ -301,11 +313,13 @@ class SingleDostAddExpenseFragment : Fragment() {
                                         splits = computedSplits
                                     )
                                 )
+                                Log.d("CHKITPAIDBY", "${mainViewModel.expensePush.value.paidBy}")
+
+                                mainViewModel.saveFriendExpense(
+                                    mainViewModel.expensePush.value,
+                                    friend.friendId
+                                )
                             }
-                            mainViewModel.saveFriendExpense(
-                                mainViewModel.expensePush.value,
-                                friend.friendId
-                            )
                         }
                     }
 
@@ -457,6 +471,7 @@ class SingleDostAddExpenseFragment : Fragment() {
     ) {
         friendsList = friends.toMutableList()
         if (friendsList.isNotEmpty()) {
+            binding.addAfterFriends.visibility = View.VISIBLE
             binding.selectedFrisRecyclerView.visibility = View.VISIBLE
             binding.noFriends.visibility = View.GONE
             adapter = MyFriendSelectionAdapter(friendsList, isMultiSelect = false) { friend ->
@@ -482,6 +497,7 @@ class SingleDostAddExpenseFragment : Fragment() {
         } else {
             binding.selectedFrisRecyclerView.visibility = View.GONE
             binding.noFriends.visibility = View.VISIBLE
+            binding.addAfterFriends.visibility = View.GONE
         }
     }
 

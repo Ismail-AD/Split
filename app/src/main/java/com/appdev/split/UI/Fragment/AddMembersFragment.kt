@@ -2,6 +2,7 @@ package com.appdev.split.UI.Fragment
 
 import android.app.Dialog
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -61,9 +62,14 @@ class AddMembersFragment : Fragment() {
         setupShimmer()
         setupAdapters()
         mainViewModel.fetchAllContacts()
-        mainViewModel.fetchAllGroupMembers(args.selectedGroupId)
+        if (args.selectedGroupId != null && args.selectedGroupId.trim().isNotEmpty()) {
+            Log.d("CHKJM", "GOING TO MAKE CALL ${args.selectedGroupId}")
+
+            mainViewModel.fetchAllGroupMembers(args.selectedGroupId)
+            observeGroupMembers()
+        }
         observeContacts()
-        observeGroupMembers()
+        handleAddMembersResponse()
         setupRecyclerViews()
         setupClickListeners()
         setupSearchListener()
@@ -142,8 +148,10 @@ class AddMembersFragment : Fragment() {
             }
             splitwiseFriendsAdapter.submitList(filteredFriends)
             binding.noBill.visibility = if (filteredFriends.isEmpty()) View.VISIBLE else View.GONE
-            binding.billwording.text = if (filteredFriends.isEmpty()) "No matching friends found" else ""
-            binding.splitwiseFriendsRecyclerView.visibility = if (filteredFriends.isEmpty()) View.GONE else View.VISIBLE
+            binding.billwording.text =
+                if (filteredFriends.isEmpty()) "No matching friends found" else ""
+            binding.splitwiseFriendsRecyclerView.visibility =
+                if (filteredFriends.isEmpty()) View.GONE else View.VISIBLE
         } else {
             // Handle search for non-group contacts
             if (searchText.isNotEmpty() && !isSearchActive) {
@@ -319,7 +327,6 @@ class AddMembersFragment : Fragment() {
                             }
                             if (isGroupContact) {
                                 splitwiseFriendsAdapter.submitList(savedFriendsList)
-                                isTopDataReady = true
                                 hideShimmer()
                                 handleEmptyState()
                             } else {
@@ -386,13 +393,9 @@ class AddMembersFragment : Fragment() {
         binding.fabAddMembers.setOnClickListener {
             if (selectedContacts.isNotEmpty()) {
                 if (args.isGroupContact) {
-
                     mainViewModel.addNewMembersToGroup(selectedContacts, args.selectedGroupId)
-                    handleAddMembersResponse()
                 } else {
-
                     mainViewModel.addContacts(selectedContacts)
-                    handleAddMembersResponse()
                 }
             }
         }
@@ -446,6 +449,7 @@ class AddMembersFragment : Fragment() {
                         is UiState.Loading -> showLoadingIndicator()
                         is UiState.Success -> {
                             hideLoadingIndicator()
+                            showError(state.data)
                             findNavController().navigateUp()
                         }
 
@@ -480,7 +484,7 @@ class AddMembersFragment : Fragment() {
     }
 
     private fun hideShimmer() {
-        if (isTopDataReady && isMainDataReady && isGroupMembersReady) {
+        if ((isTopDataReady && isMainDataReady) || (isMainDataReady && isGroupMembersReady)) {
             binding.shimmerContainer.visibility = View.GONE
             binding.shimmerViewContainer.stopShimmer()
             binding.shimmerViewContainer.visibility = View.GONE

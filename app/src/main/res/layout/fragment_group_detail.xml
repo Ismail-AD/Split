@@ -154,7 +154,7 @@
                 android:visibility="gone"
                 android:clipToPadding="false"
                 android:layout_marginVertical="15dp"
-                android:paddingBottom="8dp" />
+                android:paddingBottom="25dp" />
 
             <!-- Group Actions -->
             <LinearLayout
@@ -209,8 +209,8 @@
                         android:layout_marginEnd="16dp"
                         android:background="@drawable/circle_background_green"
                         android:padding="12dp"
-                        android:tint="@color/green"
-                        android:src="@drawable/link" />
+                        android:src="@drawable/link"
+                        app:tint="@color/green" />
 
                     <TextView
                         android:layout_width="wrap_content"

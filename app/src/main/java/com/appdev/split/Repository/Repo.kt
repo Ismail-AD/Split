@@ -69,6 +69,27 @@ class Repo @Inject constructor(
         }
     }
 
+    suspend fun deleteGroupExpense(
+        groupId: String,
+        expenseId: String,
+        onResult: (success: Boolean, message: String) -> Unit
+    ) {
+        try {
+            val groupExpensesCollection = firestore.collection("groupExpenses")
+                .document(groupId)
+                .collection("expenses")
+
+            groupExpensesCollection.document(expenseId)
+                .delete()
+                .await()
+
+            onResult(true, "Expense deleted successfully!")
+        } catch (e: Exception) {
+            Log.e("Repo", "Failed to delete expense: ${e.message}")
+            onResult(false, "Failed to delete expense: ${e.message}")
+        }
+    }
+
     suspend fun updateGroupExpense(
         groupId: String,
         expenseId: String,
@@ -641,9 +662,6 @@ class Repo @Inject constructor(
         onResult: (success: Boolean, message: String) -> Unit
     ) {
         try {
-//            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
-//            val sanitizedFriendContact = Utils.sanitizeEmailForFirebase(friendContact)
-
             val expenseDoc = firestore.collection("expenses")
                 .document(myUserId)
                 .collection(myFriendId)

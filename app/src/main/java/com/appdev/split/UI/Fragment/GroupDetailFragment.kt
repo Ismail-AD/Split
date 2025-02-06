@@ -52,12 +52,16 @@ class GroupDetailFragment : Fragment() {
     ): View? {
         _binding = FragmentGroupDetailBinding.inflate(layoutInflater, container, false)
         setupShimmer()
-        mainViewModel.updateFriendExpense(ExpenseRecord())
+        mainViewModel.updateToEmpty(ExpenseRecord())
+        mainViewModel.updateExpenseCategory("")
+        mainViewModel.clearSelectedFriends()
+        mainViewModel.updateStateToStable()
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         val groupData = args.groupMetaData
         Log.d("AMZ", groupData.toString())
         groupData.groupId?.let { mainViewModel.getAllGroupExpenses(groupId = it) }
@@ -138,10 +142,14 @@ class GroupDetailFragment : Fragment() {
     }
 
     fun goToDetails(expenseList: ExpenseRecord) {
-        val action = GroupDetailFragmentDirections.actionGroupDetailFragmentToAddGrpExpenseFragment(
-            args.groupMetaData.groupId,expenseList
+        val action = GroupDetailFragmentDirections.actionGroupDetailFragmentToBillDetails(
+            expenseList, null, args.groupMetaData.groupId
         )
         findNavController().navigate(action)
+//        val action = GroupDetailFragmentDirections.actionGroupDetailFragmentToAddGrpExpenseFragment(
+//            args.groupMetaData.groupId,expenseList
+//        )
+//        findNavController().navigate(action)
     }
 
     private fun setupShimmer() {

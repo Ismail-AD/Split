@@ -10,8 +10,6 @@
     tools:context=".UI.Fragment.SingleDostAddExpenseFragment">
 
 
-
-
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -56,47 +54,47 @@
         android:id="@+id/friendSelect"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_10sdp"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/titleFriends"
-            style="@style/billWordColor"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Friends"
-            android:visibility="gone"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/titleFriends"
+                style="@style/billWordColor"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Friends"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/noFriends"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_10sdp"
             android:gravity="center"
             android:orientation="vertical"
             android:visibility="gone">
 
-
-            <LinearLayout
+            <TextView
+                android:id="@+id/addFriends"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/_8sdp"
-                android:background="@drawable/card_border">
+                android:drawableLeft="@drawable/addgroup"
+                android:drawablePadding="@dimen/_6sdp"
+                android:paddingHorizontal="@dimen/_25sdp"
+                android:paddingVertical="@dimen/_10sdp"
+                android:text="Add friends"
+                android:textColor="@android:color/black"
+                android:textSize="16sp" />
 
-                <TextView
-                    android:id="@+id/addFriends"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:drawableLeft="@drawable/addgroup"
-                    android:drawablePadding="@dimen/_6sdp"
-                    android:paddingHorizontal="@dimen/_25sdp"
-                    android:paddingVertical="@dimen/_10sdp"
-                    android:text="Add friends"
-                    android:textColor="@android:color/black"
-                    android:textSize="16sp" />
-
-            </LinearLayout>
         </LinearLayout>
 
         <com.facebook.shimmer.ShimmerFrameLayout
@@ -112,13 +110,35 @@
 
         </com.facebook.shimmer.ShimmerFrameLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/selectedFrisRecyclerView"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingHorizontal="@dimen/_10sdp"
-            android:visibility="gone" />
+            android:orientation="horizontal">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/selectedFrisRecyclerView"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                android:paddingHorizontal="@dimen/_10sdp" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:id="@+id/addAfterFriends"
+                android:visibility="gone"
+                android:backgroundTint="@color/green"
+                app:srcCompat="@drawable/plus"
+                app:tint="@color/white"
+                android:contentDescription="Floating Button"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+                android:elevation="3dp"/>
+
+
+        </LinearLayout>
     </LinearLayout>
 
 
@@ -169,16 +189,18 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
+        android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/_20sdp"
-        android:layout_height="wrap_content">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
         <com.skydoves.powerspinner.PowerSpinnerView
             android:id="@+id/categorySpinner"
             style="@style/hintSpinnerWordColor"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="@dimen/_50sdp"
+            android:layout_marginEnd="@dimen/_10sdp"
+            android:layout_weight="1"
             android:gravity="start|center_vertical"
             android:hint="Select a category"
             android:padding="10dp"
@@ -187,7 +209,6 @@
             app:spinner_arrow_padding="8dp"
             app:spinner_divider_color="@color/textsmall"
             app:spinner_divider_show="true"
-            android:layout_marginEnd="@dimen/_10sdp"
             app:spinner_divider_size="0.4dp"
             app:spinner_item_array="@array/categories"
             app:spinner_item_height="46dp"
@@ -195,30 +216,32 @@
             app:spinner_popup_elevation="14dp"
             app:spinner_popup_height="330dp" />
 
-       <RelativeLayout
-           android:layout_width="wrap_content"
-           android:layout_height="wrap_content">
-           <ImageView
-               android:id="@+id/calender"
-               android:layout_width="40dp"
-               android:layout_height="40dp"
-               android:clickable="true"
-               android:focusable="true"
-               android:background="?attr/selectableItemBackground"
-               android:contentDescription="Remove"
-               android:layout_marginBottom="@dimen/_8sdp"
-               android:src="@drawable/calendar" />
-           <TextView
-               android:id="@+id/dateCheck"
-               style="@style/billWordColor"
-               android:layout_width="wrap_content"
-               android:layout_height="wrap_content"
-               android:layout_centerHorizontal="true"
-               android:layout_centerVertical="true"
-               android:text="24"
-               android:textSize="16sp"
-               android:textStyle="bold" />
-       </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/calender"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginBottom="@dimen/_8sdp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:contentDescription="Remove"
+                android:focusable="true"
+                android:src="@drawable/calendar" />
+
+            <TextView
+                android:id="@+id/dateCheck"
+                style="@style/billWordColor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:text="24"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
 
     </LinearLayout>
 
@@ -253,37 +276,38 @@
 
         <LinearLayout
             android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:gravity="center"
-            android:paddingVertical="@dimen/_10sdp"
-            android:layout_height="wrap_content">
+            android:paddingVertical="@dimen/_10sdp">
+
             <TextView
                 android:id="@+id/splitTypeText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:singleLine="true"
                 android:ellipsize="end"
+                android:singleLine="true"
                 android:text="EQUAL"
                 android:textAlignment="center"
+                android:textAllCaps="true"
                 android:textColor="@color/white"
                 android:textSize="16sp"
-                android:textAllCaps="true"
                 android:textStyle="bold" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
 
-                android:singleLine="true"
-                android:ellipsize="end"
-                android:text="Split"
                 android:layout_marginStart="@dimen/_6sdp"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text="Split"
                 android:textAlignment="center"
+                android:textAllCaps="true"
                 android:textColor="@color/white"
                 android:textSize="16sp"
-                android:textAllCaps="true"
                 android:textStyle="bold" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
-
 
 
 </LinearLayout>

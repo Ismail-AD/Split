@@ -57,14 +57,24 @@
         android:layout_marginTop="@dimen/_10sdp"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/titleFriends"
-            style="@style/billWordColor"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Group Members"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:orientation="horizontal"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/titleFriends"
+                style="@style/billWordColor"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Group Members"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+
+
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/noFriends"
@@ -115,13 +125,35 @@
 
         </com.facebook.shimmer.ShimmerFrameLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/selectedFrisRecyclerView"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingHorizontal="@dimen/_10sdp"
-            android:visibility="gone" />
+            android:orientation="horizontal">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/selectedFrisRecyclerView"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                android:paddingHorizontal="@dimen/_10sdp" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:id="@+id/addAfterFriends"
+                android:visibility="gone"
+                android:backgroundTint="@color/green"
+                app:srcCompat="@drawable/plus"
+                app:tint="@color/white"
+                android:contentDescription="Floating Button"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+                android:elevation="3dp"/>
+
+
+        </LinearLayout>
     </LinearLayout>
 
 

@@ -60,28 +60,7 @@ class HomeFragment : Fragment() {
     lateinit var dialog: Dialog
     private var isExpanded = false
 
-    private val fromBottomFabAnim: Animation by lazy {
-        AnimationUtils.loadAnimation(requireContext(), R.anim.from_bottom_fab)
-    }
-    private val toBottomFabAnim: Animation by lazy {
-        AnimationUtils.loadAnimation(requireContext(), R.anim.to_bottom_fab)
-    }
-    private val rotateClockWiseFabAnim: Animation by lazy {
-        AnimationUtils.loadAnimation(requireContext(), R.anim.rotate_clock_wise)
-    }
-    private val rotateAntiClockWiseFabAnim: Animation by lazy {
-        AnimationUtils.loadAnimation(requireContext(), R.anim.rotate_anti_clock_wise)
-    }
-    private val fromBottomBgAnim: Animation by lazy {
-        AnimationUtils.loadAnimation(requireContext(), R.anim.from_bottom_anim)
-    }
-    private val toBottomBgAnim: Animation by lazy {
-        AnimationUtils.loadAnimation(requireContext(), R.anim.to_bottom_anim)
-    }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -89,7 +68,7 @@ class HomeFragment : Fragment() {
     ): View? {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         mainViewModel.setDefault()
-
+        mainViewModel.updateStateToStable()
         return binding.root
     }
 
@@ -97,8 +76,9 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         dialog = Dialog(requireContext())
         setupShimmer()
-        binding.mainFab.setOnClickListener {
-            if (isExpanded) shrinkFab() else expandFab()
+
+        binding.addExpense.setOnClickListener {
+            onExpenseClicked()
         }
 
 
@@ -141,13 +121,6 @@ class HomeFragment : Fragment() {
         }
 
 
-
-
-
-
-
-        binding.contactFab.setOnClickListener { onContactClicked() }
-        binding.expenseFab.setOnClickListener { onExpenseClicked() }
         val uid = FirebaseAuth.getInstance().currentUser?.uid
 
         uid?.let {
@@ -185,6 +158,10 @@ class HomeFragment : Fragment() {
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        isExpanded = false
+    }
 
     private fun setupShimmer() {
         // Set the layout for the ViewStub
@@ -257,19 +234,7 @@ class HomeFragment : Fragment() {
         findNavController().navigate(action)
     }
 
-    private fun shrinkFab() {
-        binding.mainFab.startAnimation(rotateAntiClockWiseFabAnim)
-        binding.contactFab.startAnimation(toBottomFabAnim)
-        binding.expenseFab.startAnimation(toBottomFabAnim)
-        isExpanded = false
-    }
 
-    private fun expandFab() {
-        binding.mainFab.startAnimation(rotateClockWiseFabAnim)
-        binding.contactFab.startAnimation(fromBottomFabAnim)
-        binding.expenseFab.startAnimation(fromBottomFabAnim)
-        isExpanded = true
-    }
 
     override fun onDestroyView() {
         super.onDestroyView()

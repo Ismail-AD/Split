@@ -70,7 +70,13 @@ class AmountEquallyFragment(
             if (selectedMembers.find { it.id == myUserId } != null && selectedMembers.size == 1) {
                 Toast.makeText(
                     requireContext(),
-                    "You cannot add expense that only involve yourself !",
+                    "Cannot create an expense with just yourself - select friends to split with",
+                    Toast.LENGTH_LONG
+                ).show()
+            } else if (selectedMembers.isEmpty()) {
+                Toast.makeText(
+                    requireContext(),
+                    "Please select at least one friend to split expenses with",
                     Toast.LENGTH_LONG
                 ).show()
             } else {
@@ -96,7 +102,7 @@ class AmountEquallyFragment(
             }
 
             Log.d("AmountEqually", "Loaded existing split data: ${splitMemberIds.size} members")
-        } else{
+        } else {
             persons = persons.map { it.copy(isSelected = true) }
         }
     }
@@ -171,6 +177,7 @@ class AmountEquallyFragment(
     private fun getCurrentDate(): String {
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
