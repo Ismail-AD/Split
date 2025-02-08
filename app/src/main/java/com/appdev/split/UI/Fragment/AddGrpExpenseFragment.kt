@@ -2,8 +2,11 @@ package com.appdev.split.UI.Fragment
 
 import android.app.DatePickerDialog
 import android.app.Dialog
+import android.content.res.Configuration
 import android.os.Bundle
+import android.text.Editable
 import android.text.TextUtils
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -39,6 +42,8 @@ import com.appdev.split.databinding.DialogMemberListBinding
 import com.appdev.split.databinding.FragmentAddGrpExpenseBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
+import com.ozcanalasalvar.datepicker.view.datepicker.DatePicker
+import com.ozcanalasalvar.datepicker.view.popup.DatePickerPopup
 import com.skydoves.powerspinner.OnSpinnerItemSelectedListener
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -53,6 +58,8 @@ class AddGrpExpenseFragment : Fragment() {
     private lateinit var adapter: MyFriendSelectionAdapter
     private var friendsList = mutableListOf<FriendContact>()
     private var allGroupMembersList = mutableListOf<FriendContact>()
+    private var originalMembersList = mutableListOf<FriendContact>()
+
     var selectedFriends = mutableSetOf<FriendContact>()
     val args: AddGrpExpenseFragmentArgs by navArgs()
     lateinit var dialog: Dialog
@@ -76,6 +83,7 @@ class AddGrpExpenseFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         dialog = Dialog(requireContext())
+        setupSearchListener()
         args.groupId?.let { mainViewModel.fetchAllGroupMembers(it) }
         if (args.expenseRecord != null && (mainViewModel.expensePush.value.splits.isEmpty())) {
             selectedDate = args.expenseRecord!!.date
@@ -107,6 +115,52 @@ class AddGrpExpenseFragment : Fragment() {
 
 
     }
+
+    private fun showDatePickerDialog() {
+        val calendar = Calendar.getInstance()
+        var year: Int
+        var month: Int
+        var day: Int
+
+        // Parse existing selected date if available
+        if (selectedDate.trim().isNotEmpty()) {
+            val parts = selectedDate.split("-")
+            if (parts.size == 3) {
+                year = parts[0].toInt()
+                month = parts[1].toInt() - 1 // Convert to 0-based month
+                day = parts[2].toInt()
+                calendar.set(year, month, day)
+            }
+        }
+
+        year = calendar.get(Calendar.YEAR)
+        month = calendar.get(Calendar.MONTH)
+        day = calendar.get(Calendar.DAY_OF_MONTH)
+
+        val datePickerPopup = DatePickerPopup.Builder()
+            .from(requireContext())
+            .offset(4)
+            .textSize(16)
+            .selectedDate(calendar.timeInMillis)
+            .darkModeEnabled(resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES)
+            .listener(object : DatePickerPopup.DateSelectListener {
+                override fun onDateSelected(
+                    dp: DatePicker?,
+                    date: Long,
+                    day: Int,
+                    month: Int,
+                    year: Int
+                ) {
+                    selectedDate = "$year-${month + 1}-$day"
+                    mainViewModel.updateExpenseDate(selectedDate)
+                }
+            })
+            .build()
+
+        datePickerPopup.show(parentFragmentManager, "DATE_PICKER")
+    }
+
+
 
 
     private fun setupSaveData() {
@@ -212,6 +266,11 @@ class AddGrpExpenseFragment : Fragment() {
         binding.categorySpinner.setOnSpinnerItemSelectedListener(OnSpinnerItemSelectedListener<String> { _, _, _, newItem ->
             mainViewModel.updateExpenseCategory(newItem)
         })
+
+        binding.calender.setOnClickListener {
+            showDatePickerDialog()
+        }
+
 
         binding.Split.setOnClickListener {
             if (selectedFriends.isEmpty() && args.expenseRecord == null) {
@@ -361,7 +420,6 @@ class AddGrpExpenseFragment : Fragment() {
 
     private fun setupEditExpenseMode(expenseRecord: ExpenseRecord) {
         binding.apply {
-            dateCheck.text = Utils.getCurrentDay(expenseRecord.date)
             currencySpinner.selectItemByIndex(getCurrencyIndex(expenseRecord.currency))
             categorySpinner.selectItemByIndex(getCategoryIndex(expenseRecord.expenseCategory))
             title.editText?.setText(expenseRecord.title)
@@ -373,7 +431,6 @@ class AddGrpExpenseFragment : Fragment() {
 
     private fun setupNewExpenseMode() {
         binding.apply {
-            dateCheck.text = Utils.getCurrentDay(null)
             currencySpinner.selectItemByIndex(0)
             categorySpinner.selectItemByIndex(0)
             splitTypeText.text = SplitType.EQUAL.name
@@ -468,68 +525,95 @@ class AddGrpExpenseFragment : Fragment() {
 
     private fun updateFriendsList(friends: List<FriendContact>) {
         friendsList = friends.toMutableList()
+        originalMembersList = friends.toMutableList()
+
         if (friendsList.isNotEmpty()) {
             binding.addAfterFriends.visibility = View.VISIBLE
             binding.selectedFrisRecyclerView.visibility = View.VISIBLE
             binding.noFriends.visibility = View.GONE
+            binding.searchField.visibility = View.VISIBLE
+
             adapter = MyFriendSelectionAdapter(friendsList, true) { selectedFriends ->
                 this.selectedFriends.clear()
                 this.selectedFriends.addAll(selectedFriends)
-
-                // Update ViewModel with selected friends
                 mainViewModel.updateSelectedFriends(selectedFriends)
             }
             binding.selectedFrisRecyclerView.adapter = adapter
             binding.selectedFrisRecyclerView.layoutManager =
                 LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+
+            val selectedIds = mainViewModel.selectedFriendIds.value
+            if (selectedIds.isNotEmpty()) {
+                adapter.setPreSelectedFriends(selectedIds)
+            }
             adapter.notifyDataSetChanged()
         } else {
             binding.selectedFrisRecyclerView.visibility = View.GONE
             binding.noFriends.visibility = View.VISIBLE
             binding.addAfterFriends.visibility = View.GONE
+            binding.searchField.visibility = View.GONE
         }
     }
 
+    private fun setupSearchListener() {
+        binding.searchField.editText?.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                filterMembers(s.toString())
+            }
+        })
+    }
+
+    private fun filterMembers(query: String) {
+        if (query.trim().isEmpty()) {
+            friendsList.clear()
+            friendsList.addAll(originalMembersList)
+            binding.noMatchText.visibility = View.GONE
+            binding.selectedFrisRecyclerView.visibility = View.VISIBLE
+        } else {
+            val filteredList = originalMembersList.filter { member ->
+                member.name.contains(query, ignoreCase = true) ||
+                        member.contact.contains(query, ignoreCase = true)
+            }
+            friendsList.clear()
+            friendsList.addAll(filteredList)
+
+            if (filteredList.isEmpty()) {
+                binding.noMatchText.visibility = View.VISIBLE
+                binding.selectedFrisRecyclerView.visibility = View.GONE
+            } else {
+                binding.noMatchText.visibility = View.GONE
+                binding.selectedFrisRecyclerView.visibility = View.VISIBLE
+            }
+        }
+        adapter.notifyDataSetChanged()
+    }
+
     private fun setCalendarFromDate(dateString: String?) {
-        Log.d("CJL", "REC: $dateString")
         val calendar = Calendar.getInstance()
         var year: Int
         var month: Int
         var day: Int
+
         val finalString = dateString ?: mainViewModel.expensePush.value.date
         if (finalString.trim().isNotEmpty()) {
             val parts = finalString.split("-")
             if (parts.size == 3) {
                 year = parts[0].toInt()
-                month = parts[1].toInt() - 1 // Calendar months are 0-based
+                month = parts[1].toInt() - 1
                 day = parts[2].toInt()
-
                 calendar.set(year, month, day)
             }
         }
+
         year = calendar.get(Calendar.YEAR)
         month = calendar.get(Calendar.MONTH)
         day = calendar.get(Calendar.DAY_OF_MONTH)
         selectedDate = "$year-${month + 1}-$day"
-        Log.d("CJL", "CONSTRUCTED: $year-${month + 1}-$day")
 
-        // Open DatePicker with the specified date
-        val datePickerDialog = DatePickerDialog(
-            requireContext(),
-            { _, selectedYear, selectedMonth, selectedDay ->
-            },
-            year, month, day
-        )
-        binding.dateCheck.text = day.toString()
         mainViewModel.updateExpenseDate(selectedDate)
-        binding.calender.setOnClickListener {
-            datePickerDialog.show()
-            datePickerDialog.setOnDateSetListener { view, yearn, monthn, dayOfMonthn ->
-                selectedDate = "$yearn-${monthn + 1}-$dayOfMonthn"
-                binding.dateCheck.text = dayOfMonthn.toString()
-                mainViewModel.updateExpenseDate(selectedDate)
-            }
-        }
     }
 
     private fun showLoadingIndicator() {

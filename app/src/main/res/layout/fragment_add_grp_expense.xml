@@ -49,6 +49,20 @@
             android:textSize="16sp"
             android:textStyle="bold" />
     </RelativeLayout>
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/searchField"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Search Members"
+            android:inputType="text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
 
     <LinearLayout
         android:id="@+id/friendSelect"
@@ -80,36 +94,23 @@
             android:id="@+id/noFriends"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_10sdp"
             android:gravity="center"
-            android:visibility="gone"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:visibility="gone">
 
-
-            <com.google.android.material.card.MaterialCardView
+            <TextView
                 android:id="@+id/addFriends"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/_13sdp"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="@android:color/transparent"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/itemBack"
-                app:strokeWidth="1dp">
+                android:drawableLeft="@drawable/addgroup"
+                android:drawablePadding="@dimen/_6sdp"
+                android:paddingHorizontal="@dimen/_25sdp"
+                android:paddingVertical="@dimen/_10sdp"
+                android:text="Add Members"
+                android:textColor="@android:color/black"
+                android:textSize="16sp" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:drawableLeft="@drawable/addgroup"
-                    android:drawablePadding="@dimen/_6sdp"
-                    android:paddingHorizontal="@dimen/_25sdp"
-                    android:paddingVertical="@dimen/_10sdp"
-                    android:text="Add new members"
-                    android:textColor="@android:color/black"
-                    android:textSize="16sp" />
-
-            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
         <com.facebook.shimmer.ShimmerFrameLayout
@@ -139,6 +140,20 @@
                 android:visibility="gone"
                 android:paddingHorizontal="@dimen/_10sdp" />
 
+
+            <TextView
+                android:id="@+id/noMatchText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:paddingHorizontal="@dimen/_18sdp"
+                android:paddingVertical="@dimen/_33sdp"
+                android:text="No matched members"
+                android:textColor="@color/textsmall"
+                android:textSize="18sp"
+                android:visibility="gone" />
+
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -150,7 +165,7 @@
                 app:tint="@color/white"
                 android:contentDescription="Floating Button"
                 app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-                android:elevation="3dp"/>
+                android:elevation="1dp"/>
 
 
         </LinearLayout>
@@ -161,7 +176,7 @@
         android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/dp_20">
+        android:layout_marginTop="@dimen/dp_10">
 
         <com.google.android.material.textfield.TextInputEditText
             android:layout_width="match_parent"
@@ -205,7 +220,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_20sdp"
+        android:layout_marginTop="@dimen/_10sdp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
@@ -233,29 +248,20 @@
 
         <RelativeLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
 
             <ImageView
                 android:id="@+id/calender"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
+                android:layout_centerInParent="true"
                 android:layout_marginBottom="@dimen/_8sdp"
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:contentDescription="Remove"
                 android:focusable="true"
-                android:src="@drawable/calendar" />
+                android:src="@drawable/datepicker" />
 
-            <TextView
-                android:id="@+id/dateCheck"
-                style="@style/billWordColor"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_centerVertical="true"
-                android:text="24"
-                android:textSize="16sp"
-                android:textStyle="bold" />
         </RelativeLayout>
 
     </LinearLayout>
@@ -265,7 +271,7 @@
         style="@style/hintSpinnerWordColor"
         android:layout_width="match_parent"
         android:layout_height="@dimen/_50sdp"
-        android:layout_marginTop="@dimen/_15sdp"
+        android:layout_marginTop="@dimen/_10sdp"
         android:gravity="start|center_vertical"
         android:hint="Select a currency"
         android:padding="10dp"
@@ -286,7 +292,7 @@
         android:id="@+id/Split"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_20sdp"
+        android:layout_marginTop="@dimen/_10sdp"
         app:cardBackgroundColor="@color/green_2"
         app:cardCornerRadius="@dimen/_5sdp">
 

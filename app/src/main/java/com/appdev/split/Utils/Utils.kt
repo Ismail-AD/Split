@@ -12,6 +12,7 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -24,6 +25,15 @@ object Utils {
         } catch (e: Exception) {
             false
         }
+    }
+
+    fun parseDate(dateString: String): Calendar {
+        val calendar = Calendar.getInstance()
+        val parts = dateString.split("-")
+        if (parts.size == 3) {
+            calendar.set(parts[0].toInt(), parts[1].toInt() - 1, parts[2].toInt())
+        }
+        return calendar
     }
 
     fun sanitizeEmailForFirebase(email: String): String {

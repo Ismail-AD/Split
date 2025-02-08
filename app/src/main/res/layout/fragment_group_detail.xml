@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -9,7 +9,6 @@
 
     <com.facebook.shimmer.ShimmerFrameLayout
         android:id="@+id/shimmer_view_container"
-        android:layout_below="@id/shimmer_view_top"
         android:layout_width="match_parent"
         android:layout_alignWithParentIfMissing="true"
         android:layout_height="match_parent"
@@ -24,127 +23,123 @@
 
     <!-- Header with Gradient -->
     <com.google.android.material.appbar.AppBarLayout
-        android:layout_width="match_parent"
         android:id="@+id/topBar"
-        android:layout_height="@dimen/_100sdp">
+        android:layout_width="match_parent"
+        android:background="@color/white"
+        android:layout_height="wrap_content">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/orange_gradient">
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="start"
+            android:padding="10dp">
 
             <ImageButton
                 android:id="@+id/backButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_margin="16dp"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/back"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/white" />
+                app:tint="@color/black" />
 
 
-            <ImageButton
-                android:id="@+id/settingsButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_margin="16dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/setting"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/white" />
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ImageOfExpense"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:visibility="gone"
+                android:layout_marginStart="10dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/profile_imaage"
+                app:shapeAppearanceOverlay="@style/CircularImageStyle" />
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            <TextView
+                android:id="@+id/nameOfGroup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:paddingEnd="@dimen/_30sdp"
+                android:layout_gravity="center_vertical"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- App Icon -->
-    <ImageView
-        android:id="@+id/ImageOfExpense"
-        android:layout_width="96dp"
-        android:layout_height="96dp"
-        android:layout_gravity="start"
-        android:layout_marginStart="@dimen/_50sdp"
-        android:layout_marginTop="@dimen/_60sdp"
-        android:background="@drawable/app_icon_background"
-        android:padding="16dp"
-        android:src="@drawable/airplane"
-        app:tint="@color/white" />
+
+
+
 
     <!-- Main Content -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/BottomAllContent"
+        android:layout_below="@id/topBar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="@dimen/_100sdp"
         android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingHorizontal="16dp"
+            >
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="start"
-                android:id="@+id/nameOfGroup"
-                android:layout_marginStart="@dimen/_40sdp"
-                android:layout_marginTop="@dimen/_40sdp"
-                android:text="Dobe"
-                android:textSize="24sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/noexpense"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="start"
-                android:layout_marginStart="@dimen/_40sdp"
-                android:layout_marginTop="8dp"
-                android:textSize="@dimen/_13ssp"
-                android:text="No expenses here yet."
-                android:textColor="@color/gray" />
-
-            <!-- Action Buttons -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
+                android:gravity="center"
+                android:layout_below="@id/topBar"
+                android:id="@+id/addContact"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
                 android:orientation="horizontal"
-                android:weightSum="3">
+                android:padding="8dp">
 
-                <com.google.android.material.button.MaterialButton
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="@drawable/circle_background_green"
+                    android:padding="12dp"
+                    android:src="@drawable/addgroup"
+                    app:tint="@color/green" />
+
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="4dp"
-                    android:layout_weight="1"
-                    android:textSize="@dimen/_10ssp"
-                    android:text="Settle up" />
-
-                <com.google.android.material.button.MaterialButton
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:textSize="@dimen/_10ssp"
-
-                    android:text="Charts" />
-
-                <com.google.android.material.button.MaterialButton
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:layout_weight="1"
-                    android:textSize="@dimen/_10ssp"
-
-                    android:text="Balances" />
+                    android:text="Add group members"
+                    android:textColor="@color/green"
+                    android:textSize="18sp" />
             </LinearLayout>
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_gravity="start"
+                android:text="Group Expenses"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_marginTop="@dimen/_5sdp"
+                android:layout_height="wrap_content"/>
+
+               <TextView
+                   android:id="@+id/nobill"
+                   android:layout_width="wrap_content"
+                   android:layout_height="wrap_content"
+                   android:layout_marginTop="@dimen/_14sdp"
+                   android:text="no Expenses added yet!"
+                   android:textSize="@dimen/_14ssp" />
+
+<!--           </RelativeLayout>-->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerViewGroupExpenses"
                 android:layout_marginBottom="@dimen/_85sdp"
@@ -157,69 +152,7 @@
                 android:paddingBottom="25dp" />
 
             <!-- Group Actions -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:id="@+id/newgroupelements"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/_15sdp"
-                android:orientation="vertical">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:id="@+id/addContact"
-                    android:background="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:orientation="horizontal"
-                    android:padding="8dp">
-
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_marginEnd="16dp"
-                        android:background="@drawable/circle_background_green"
-                        android:padding="12dp"
-                        android:tint="@color/green"
-                        android:src="@drawable/addgroup" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Add group members"
-                        android:textColor="@color/green"
-                        android:textSize="18sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:background="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="8dp">
-
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_marginEnd="16dp"
-                        android:background="@drawable/circle_background_green"
-                        android:padding="12dp"
-                        android:src="@drawable/link"
-                        app:tint="@color/green" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Share group link"
-                        android:textColor="@color/green"
-                        android:textSize="18sp" />
-                </LinearLayout>
-            </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
@@ -227,7 +160,8 @@
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
         android:id="@+id/addExp"
         android:text="Add expense"
         android:textColor="@color/white"
@@ -237,5 +171,5 @@
         app:icon="@drawable/history_day"
         app:iconTint="@color/white" />
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</RelativeLayout>
 

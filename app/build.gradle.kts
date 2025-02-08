@@ -93,4 +93,10 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.15.1")
     annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
 
+    implementation("com.github.ozcanalasalvar.picker:datepicker:2.0.7")
+    implementation("com.github.ozcanalasalvar.picker:wheelview:2.0.7")
+
+    //For view based UI's
+    implementation("androidx.compose.material3:material3:1.3.1")
+
 }

@@ -24,6 +24,7 @@ import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.databinding.FragmentGroupDetailBinding
+import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
@@ -72,6 +73,11 @@ class GroupDetailFragment : Fragment() {
 
     private fun setupBasicUI(groupData: GroupMetaData) {
         binding.nameOfGroup.text = groupData.title
+        if (!groupData.image.isNullOrEmpty()) {
+            binding.ImageOfExpense.visibility = View.VISIBLE
+            Glide.with(requireContext()).load(groupData.image).placeholder(R.drawable.group)
+                .error(R.drawable.group).into(binding.ImageOfExpense)
+        }
     }
 
 
@@ -92,9 +98,6 @@ class GroupDetailFragment : Fragment() {
             findNavController().navigate(action)
         }
 
-        binding.settingsButton.setOnClickListener {
-            // Implement group settings navigation if needed
-        }
     }
 
     private fun observeGroupState() {
@@ -126,12 +129,10 @@ class GroupDetailFragment : Fragment() {
         val safeBinding = _binding ?: return
 
         if (expenses.isEmpty()) {
-            safeBinding.newgroupelements.visibility = View.VISIBLE
-            safeBinding.noexpense.visibility = View.VISIBLE
+            safeBinding.nobill.visibility = View.VISIBLE
             safeBinding.recyclerViewGroupExpenses.visibility = View.GONE
         } else {
-            safeBinding.newgroupelements.visibility = View.GONE
-            safeBinding.noexpense.visibility = View.GONE
+            safeBinding.nobill.visibility = View.GONE
             safeBinding.recyclerViewGroupExpenses.visibility = View.VISIBLE
 
             adapter = AllFriendExpenseAdapter(expenses, ::goToDetails)
@@ -154,7 +155,7 @@ class GroupDetailFragment : Fragment() {
 
     private fun setupShimmer() {
         // Set the layout for the ViewStub
-        binding.shimmerViewFriendExpenses.layoutResource = R.layout.shimmer_friend_all_expense
+        binding.shimmerViewFriendExpenses.layoutResource = R.layout.group_all_expenses_shimmer
         binding.shimmerViewFriendExpenses.inflate()
 
         binding.shimmerViewContainer.startShimmer()
@@ -167,7 +168,6 @@ class GroupDetailFragment : Fragment() {
 
         // Hide actual content while shimmer is showing
         binding.topBar.visibility = View.GONE
-        binding.ImageOfExpense.visibility = View.GONE
         binding.BottomAllContent.visibility = View.GONE
     }
 
@@ -176,7 +176,6 @@ class GroupDetailFragment : Fragment() {
         binding.shimmerViewContainer.visibility = View.GONE
         // Hide actual content while shimmer is showing
         binding.topBar.visibility = View.VISIBLE
-        binding.ImageOfExpense.visibility = View.VISIBLE
         binding.BottomAllContent.visibility = View.VISIBLE
 
     }

@@ -38,10 +38,29 @@
         </LinearLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:id="@+id/addContact"
+        android:layout_below="@id/topBar"
+        android:padding="8dp">
+
+        <View
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_shimmer" />
+
+        <View
+            android:layout_width="150dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="16dp"
+            android:background="@drawable/bg_shimmer" />
+    </LinearLayout>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_below="@id/topBar"
+        android:layout_below="@id/addContact"
         android:layout_height="match_parent"
         android:fillViewport="true">
 
@@ -50,9 +69,11 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp">
-
-
-
+            <View
+                android:layout_width="150dp"
+                android:layout_height="30dp"
+                android:layout_marginTop="@dimen/_5sdp"
+                android:background="@drawable/bg_shimmer" />
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

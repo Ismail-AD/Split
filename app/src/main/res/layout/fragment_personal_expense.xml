@@ -50,6 +50,19 @@
             android:textStyle="bold" />
     </RelativeLayout>
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/searchField"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Search friends"
+            android:inputType="text" />
+    </com.google.android.material.textfield.TextInputLayout>
+
     <LinearLayout
         android:id="@+id/friendSelect"
         android:layout_width="match_parent"
@@ -118,24 +131,37 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/selectedFrisRecyclerView"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:orientation="horizontal"
-                android:visibility="gone"
-                android:paddingHorizontal="@dimen/_10sdp" />
+                android:paddingHorizontal="@dimen/_10sdp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/noMatchText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:paddingHorizontal="@dimen/_18sdp"
+                android:paddingVertical="@dimen/_33sdp"
+                android:text="No matched friends"
+                android:textColor="@color/textsmall"
+                android:textSize="18sp"
+                android:visibility="gone" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/addAfterFriends"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:id="@+id/addAfterFriends"
-                android:visibility="gone"
                 android:backgroundTint="@color/green"
-                app:srcCompat="@drawable/plus"
-                app:tint="@color/white"
                 android:contentDescription="Floating Button"
+                android:elevation="1dp"
+                android:visibility="gone"
                 app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-                android:elevation="3dp"/>
+                app:srcCompat="@drawable/plus"
+                app:tint="@color/white" />
 
 
         </LinearLayout>
@@ -146,7 +172,7 @@
         android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/dp_20">
+        android:layout_marginTop="@dimen/dp_10">
 
         <com.google.android.material.textfield.TextInputEditText
             android:layout_width="match_parent"
@@ -161,7 +187,7 @@
         android:id="@+id/description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/dp_10">
+        android:layout_marginTop="@dimen/dp_5">
 
         <com.google.android.material.textfield.TextInputEditText
             android:layout_width="match_parent"
@@ -176,7 +202,7 @@
         android:id="@+id/amount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/dp_10">
+        android:layout_marginTop="@dimen/dp_5">
 
         <com.google.android.material.textfield.TextInputEditText
             android:layout_width="match_parent"
@@ -218,29 +244,20 @@
 
         <RelativeLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
 
             <ImageView
                 android:id="@+id/calender"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
+                android:layout_centerInParent="true"
                 android:layout_marginBottom="@dimen/_8sdp"
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:contentDescription="Remove"
                 android:focusable="true"
-                android:src="@drawable/calendar" />
+                android:src="@drawable/datepicker" />
 
-            <TextView
-                android:id="@+id/dateCheck"
-                style="@style/billWordColor"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_centerVertical="true"
-                android:text="24"
-                android:textSize="16sp"
-                android:textStyle="bold" />
         </RelativeLayout>
 
     </LinearLayout>
@@ -265,12 +282,11 @@
         app:spinner_popup_animation="dropdown"
         app:spinner_popup_elevation="14dp"
         app:spinner_popup_height="300dp" />
-
     <androidx.cardview.widget.CardView
         android:id="@+id/SplitType"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_20sdp"
+        android:layout_marginTop="@dimen/_10sdp"
         app:cardBackgroundColor="@color/green_2"
         app:cardCornerRadius="@dimen/_5sdp">
 
