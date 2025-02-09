@@ -25,7 +25,7 @@ fun String.toPagerPosition(): Int {
 class MyPagerAdapter(
     fragment: Fragment, private val friendsList: List<FriendContact>,
     private val totalAmount: Double,
-    val myId: String, val currency: String, splitType: String
+    val myId: String, val currency: String, splitType: String,val isGroupData:Boolean
 ) : FragmentStateAdapter(fragment) {
     val initialPosition = splitType.toPagerPosition()
 
@@ -34,9 +34,9 @@ class MyPagerAdapter(
 
     override fun createFragment(position: Int): Fragment {
         return when (position) {
-            EQUAL_SPLIT_POSITION -> AmountEquallyFragment(friendsList, totalAmount, myId, currency)
-            UNEQUAL_SPLIT_POSITION -> AmountUnEquallyFragment(friendsList, totalAmount, myId, currency)
-            PERCENTAGE_SPLIT_POSITION -> AmountPercentFragment(friendsList, totalAmount, myId, currency)
+            EQUAL_SPLIT_POSITION -> AmountEquallyFragment(friendsList, totalAmount, myId, currency,isGroupData)
+            UNEQUAL_SPLIT_POSITION -> AmountUnEquallyFragment(friendsList, totalAmount, myId, currency,isGroupData)
+            PERCENTAGE_SPLIT_POSITION -> AmountPercentFragment(friendsList, totalAmount, myId, currency,isGroupData)
             else -> throw IllegalArgumentException("Invalid tab position")
         }
     }

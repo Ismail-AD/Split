@@ -9,32 +9,26 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.PercentageDistributeAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.FriendContact
+import com.appdev.split.Model.Data.FriendExpenseRecord
 import com.appdev.split.Model.Data.Percentage
 import com.appdev.split.Model.Data.SplitType
-import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentAmountPercentBinding
-import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import kotlin.math.abs
 
 class AmountPercentFragment(
     val friendsList: List<FriendContact>,
     val totalAmount: Double,
     val myUserId: String,
-    val currency: String
+    val currency: String,
+    val isGroupData: Boolean
 ) : Fragment() {
 
     private var _binding: FragmentAmountPercentBinding? = null
@@ -57,13 +51,33 @@ class AmountPercentFragment(
 
         return binding.root
     }
+
     private fun checkViewModelData() {
         val currentExpense = mainViewModel.getExpenseObject()
+        val currentFriendExpense = mainViewModel.getFriendExpenseObject()
 
-        if (currentExpense != null && currentExpense.splits.isNotEmpty() &&
-            currentExpense.splitType == SplitType.PERCENTAGE.name) {
+
+        if (isGroupData && currentExpense != null && currentExpense.splits.isNotEmpty() &&
+            currentExpense.splitType == SplitType.PERCENTAGE.name
+        ) {
             // Update payments with existing percentages
             currentExpense.splits.forEach { split ->
+                payments.find { it.id == split.userId }?.let { payment ->
+                    // Convert amount back to percentage: (amount / total) * 100
+                    payment.percentage = split.percentage
+                    payment.amount = split.amount
+                }
+            }
+
+            // Update UI with total percentage
+            val totalPercent = payments.sumOf { it.percentage }
+            updateProgress(totalPercent)
+
+        } else if (!isGroupData && currentFriendExpense != null && currentFriendExpense.splits.isNotEmpty() &&
+            currentFriendExpense.splitType == SplitType.PERCENTAGE.name
+        ) {
+            // Update payments with existing percentages
+            currentFriendExpense.splits.forEach { split ->
                 payments.find { it.id == split.userId }?.let { payment ->
                     // Convert amount back to percentage: (amount / total) * 100
                     payment.percentage = split.percentage
@@ -80,6 +94,7 @@ class AmountPercentFragment(
         }
         setupRecyclerView()
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -131,7 +146,7 @@ class AmountPercentFragment(
     private fun setupRecyclerView() {
         binding.memberRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
-            adapter = PercentageDistributeAdapter(currency,payments, totalAmount) { percentage ->
+            adapter = PercentageDistributeAdapter(currency, payments, totalAmount) { percentage ->
                 updateProgress(percentage)
             }
         }
@@ -149,6 +164,7 @@ class AmountPercentFragment(
                         setTextColor(ContextCompat.getColor(requireContext(), R.color.error_red))
                     }
                 }
+
                 totalPercentageAllocated == 100.0 -> {
                     tvAmountLeft.apply {
                         text = "Perfect split!"
@@ -171,13 +187,27 @@ class AmountPercentFragment(
 
         val distributionList =
             Utils.createPercentageSplitsFromPayments(selectedPayments, totalAmount)
-        var expenseRecord = ExpenseRecord(
-            totalAmount = totalAmount,
-            splitType = SplitType.PERCENTAGE.name,
-            splits = distributionList
-        )
 
-        mainViewModel.updateFriendExpense(expenseRecord)
+
+        when {
+            isGroupData -> {
+                val expenseRecord = ExpenseRecord(
+                    totalAmount = totalAmount,
+                    splitType = SplitType.PERCENTAGE.name,
+                    splits = distributionList
+                )
+                mainViewModel.updateGroupExpense(expenseRecord)
+            }
+
+            else -> {
+                val friendExpenseRecord = FriendExpenseRecord(
+                    totalAmount = totalAmount,
+                    splitType = SplitType.PERCENTAGE.name,
+                    splits = distributionList
+                )
+                mainViewModel.updateFriendExpense(friendExpenseRecord)
+            }
+        }
         findNavController().navigateUp()
     }
 

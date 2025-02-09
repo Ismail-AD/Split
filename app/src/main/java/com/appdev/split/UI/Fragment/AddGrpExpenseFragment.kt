@@ -64,7 +64,8 @@ class AddGrpExpenseFragment : Fragment() {
     val args: AddGrpExpenseFragmentArgs by navArgs()
     lateinit var dialog: Dialog
     var expObjectReceived: ExpenseRecord? = null
-    var selectedDate = Utils.getCurrentDate()
+    var selectedYearMonth = Utils.getYearMonth()
+    var selectedDay = Utils.getDay()
 
 
     override fun onCreateView(
@@ -86,7 +87,8 @@ class AddGrpExpenseFragment : Fragment() {
         setupSearchListener()
         args.groupId?.let { mainViewModel.fetchAllGroupMembers(it) }
         if (args.expenseRecord != null && (mainViewModel.expensePush.value.splits.isEmpty())) {
-            selectedDate = args.expenseRecord!!.date
+            selectedYearMonth = args.expenseRecord!!.startDate
+            selectedDay = args.expenseRecord!!.endDate
             expObjectReceived = args.expenseRecord
             Log.d("CASZ", mainViewModel.expensePush.value.paidBy)
             mainViewModel.updateExpRec(args.expenseRecord!!)
@@ -101,12 +103,15 @@ class AddGrpExpenseFragment : Fragment() {
 
         if (args.expenseRecord != null) {
             hideForUpdate()
-            setCalendarFromDate(mainViewModel.expensePush.value.date)
+            setCalendarFromDate(
+                mainViewModel.expensePush.value.startDate,
+                mainViewModel.expensePush.value.endDate
+            )
         } else {
             if (mainViewModel.expenseCategory.value.trim().isEmpty()) {
                 mainViewModel.updateExpenseCategory(binding.categorySpinner.text.toString())
             }
-            setCalendarFromDate(null)
+            setCalendarFromDate(null, null)
         }
         handleSplitTypeChanges()
         observeExpenseInput()
@@ -123,12 +128,12 @@ class AddGrpExpenseFragment : Fragment() {
         var day: Int
 
         // Parse existing selected date if available
-        if (selectedDate.trim().isNotEmpty()) {
-            val parts = selectedDate.split("-")
+        if (selectedYearMonth.trim().isNotEmpty() && selectedDay.trim().isNotEmpty()) {
+            val parts = selectedYearMonth.split("-")
             if (parts.size == 3) {
                 year = parts[0].toInt()
                 month = parts[1].toInt() - 1 // Convert to 0-based month
-                day = parts[2].toInt()
+                day = selectedDay.toInt()
                 calendar.set(year, month, day)
             }
         }
@@ -151,16 +156,18 @@ class AddGrpExpenseFragment : Fragment() {
                     month: Int,
                     year: Int
                 ) {
-                    selectedDate = "$year-${month + 1}-$day"
-                    mainViewModel.updateExpenseDate(selectedDate)
+                    selectedYearMonth = "$year-${month + 1}"
+                    selectedDay = "$day"
+                    mainViewModel.updateExpenseDate(
+                        selectedYearMonth,
+                        selectedDay
+                    )
                 }
             })
             .build()
 
         datePickerPopup.show(parentFragmentManager, "DATE_PICKER")
     }
-
-
 
 
     private fun setupSaveData() {
@@ -219,7 +226,8 @@ class AddGrpExpenseFragment : Fragment() {
                         Log.d("CASZ", "IN ON CLICK " + mainViewModel.expensePush.value.paidBy)
                         mainViewModel.updateGroupExpenseDetail(
                             ExpenseRecord(
-                                date = mainViewModel.expensePush.value.date,
+                                startDate = mainViewModel.expensePush.value.startDate,
+                                endDate = mainViewModel.expensePush.value.endDate,
                                 title = title,
                                 description = description,
                                 totalAmount = amount.toDouble(),
@@ -238,21 +246,22 @@ class AddGrpExpenseFragment : Fragment() {
                         currentUser?.uid?.let {
                             Log.d("CASZ", "IN ON CLICK MY ID $it")
                             Log.d("CASZ", "IN ON CLICK EXPENSE CAT ${binding.categorySpinner.text}")
-                            mainViewModel.prepareFinalExpense(
-                                ExpenseRecord(
-                                    date = mainViewModel.expensePush.value.date,
-                                    title = title,
-                                    description = description,
-                                    totalAmount = amount.toDouble(),
-                                    currency = binding.currencySpinner.text.toString(),
-                                    expenseCategory = binding.categorySpinner.text.toString(),
-                                    paidBy = it,
-                                    splitType = binding.splitTypeText.text.toString(),
-                                    splits = computedSplits
-                                )
+
+                            val newExpense = ExpenseRecord(
+                                startDate = mainViewModel.expensePush.value.startDate,
+                                endDate = mainViewModel.expensePush.value.endDate,
+                                title = title,
+                                description = description,
+                                totalAmount = amount.toDouble(),
+                                currency = binding.currencySpinner.text.toString(),
+                                expenseCategory = binding.categorySpinner.text.toString(),
+                                paidBy = it,
+                                splitType = binding.splitTypeText.text.toString(),
+                                splits = computedSplits
                             )
+
                             mainViewModel.saveGroupExpense(
-                                mainViewModel.expensePush.value,
+                                newExpense,
                                 args.groupId!!
                             )
                         }
@@ -289,7 +298,7 @@ class AddGrpExpenseFragment : Fragment() {
                             it1.text.toString().toFloat(),
                             null,
                             binding.splitTypeText.text.toString(),
-                            Utils.extractCurrencyCode(binding.currencySpinner.text.toString())
+                            Utils.extractCurrencyCode(binding.currencySpinner.text.toString()),true
                         )
                     }
                     if (action != null) {
@@ -591,19 +600,20 @@ class AddGrpExpenseFragment : Fragment() {
         adapter.notifyDataSetChanged()
     }
 
-    private fun setCalendarFromDate(dateString: String?) {
+    private fun setCalendarFromDate(startDateString: String?, endDateString: String?) {
         val calendar = Calendar.getInstance()
         var year: Int
         var month: Int
         var day: Int
 
-        val finalString = dateString ?: mainViewModel.expensePush.value.date
-        if (finalString.trim().isNotEmpty()) {
+        val initialString = startDateString ?: mainViewModel.expensePush.value.startDate
+        val finalString = startDateString ?: mainViewModel.expensePush.value.startDate
+        if (finalString.trim().isNotEmpty() && initialString.trim().isNotEmpty()) {
             val parts = finalString.split("-")
             if (parts.size == 3) {
                 year = parts[0].toInt()
                 month = parts[1].toInt() - 1
-                day = parts[2].toInt()
+                day = endDateString?.toInt() ?: 0
                 calendar.set(year, month, day)
             }
         }
@@ -611,9 +621,10 @@ class AddGrpExpenseFragment : Fragment() {
         year = calendar.get(Calendar.YEAR)
         month = calendar.get(Calendar.MONTH)
         day = calendar.get(Calendar.DAY_OF_MONTH)
-        selectedDate = "$year-${month + 1}-$day"
+        selectedYearMonth = "$year-${month + 1}"
+        selectedDay = "$day"
 
-        mainViewModel.updateExpenseDate(selectedDate)
+        mainViewModel.updateExpenseDate(selectedYearMonth, selectedDay)
     }
 
     private fun showLoadingIndicator() {

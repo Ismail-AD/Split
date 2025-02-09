@@ -28,7 +28,11 @@
         android:id="@+id/history"
         android:name="com.appdev.split.UI.Fragment.HistoryFragment"
         android:label="fragment_history"
-        tools:layout="@layout/fragment_history" />
+        tools:layout="@layout/fragment_history" >
+        <action
+            android:id="@+id/action_history_to_billDetails"
+            app:destination="@id/billDetails" />
+    </fragment>
     <fragment
         android:id="@+id/profile"
         android:name="com.appdev.split.UI.Fragment.ProfileFragment"
@@ -41,7 +45,8 @@
         tools:layout="@layout/fragment_bill_details" >
         <argument
             android:name="BillData"
-            app:argType="com.appdev.split.Model.Data.ExpenseRecord" />
+            app:argType="com.appdev.split.Model.Data.ExpenseRecord"
+            app:nullable="true" />
 
         <action
             android:id="@+id/action_billDetails_to_personalExpenseFragment"
@@ -57,6 +62,18 @@
         <action
             android:id="@+id/action_billDetails_to_addGrpExpenseFragment"
             app:destination="@id/addGrpExpenseFragment" />
+        <argument
+            android:name="FriendsExpense"
+            app:argType="com.appdev.split.Model.Data.FriendExpenseRecord"
+            app:nullable="true" />
+        <argument
+            android:name="groupImageUrl"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="friendId"
+            app:argType="string"
+            app:nullable="true" />
 
     </fragment>
     <fragment
@@ -156,6 +173,9 @@
         <argument
             android:name="currency"
             app:argType="string" />
+        <argument
+            android:name="isGroupData"
+            app:argType="boolean" />
 
     </fragment>
     <fragment
@@ -169,7 +189,7 @@
             app:destination="@id/splitAmountFragment" />
         <argument
             android:name="expenseRecord"
-            app:argType="com.appdev.split.Model.Data.ExpenseRecord"
+            app:argType="com.appdev.split.Model.Data.FriendExpenseRecord"
             app:nullable="true" />
 
         <action
@@ -190,7 +210,7 @@
             app:destination="@id/billDetails" />
         <argument
             android:name="BilList"
-            app:argType="com.appdev.split.Model.Data.ExpenseRecord[]" />
+            app:argType="com.appdev.split.Model.Data.FriendExpenseRecord[]" />
         <argument
             android:name="friendUserId"
             app:argType="string" />

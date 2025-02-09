@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.AllFriendExpenseAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.FriendContact
+import com.appdev.split.Model.Data.FriendExpenseRecord
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
@@ -50,7 +51,7 @@ class FriendsAllExpenses : Fragment() {
     ): View? {
         _binding = FragmentFriendsAllExpensesBinding.inflate(layoutInflater, container, false)
         setupShimmer()
-        mainViewModel.updateToEmpty(ExpenseRecord())
+        mainViewModel.updateGFriendExpenseToEmpty(FriendExpenseRecord())
         mainViewModel.updateExpenseCategory("")
         mainViewModel.updateStateToStable()
         return binding.root
@@ -72,7 +73,7 @@ class FriendsAllExpenses : Fragment() {
                 // Use Firestore instead of Realtime Database
                 val expensesRef = firestore.collection("expenses")
                     .document(myId)
-                    .collection(args.friendUserId)
+                    .collection("friendsExpenses").whereEqualTo("friendId",args.friendUserId)
 
                 // Create a snapshot listener
                 expensesRef.addSnapshotListener { snapshot, error ->
@@ -82,10 +83,10 @@ class FriendsAllExpenses : Fragment() {
                     }
 
                     if (snapshot != null) {
-                        val newExpenses = mutableListOf<ExpenseRecord>()
+                        val newExpenses = mutableListOf<FriendExpenseRecord>()
 
                         for (doc in snapshot.documents) {
-                            val expenseRecord = doc.toObject(ExpenseRecord::class.java)
+                            val expenseRecord = doc.toObject(FriendExpenseRecord::class.java)
                             if (expenseRecord != null) {
                                 newExpenses.add(expenseRecord)
                             } else {
@@ -181,7 +182,7 @@ class FriendsAllExpenses : Fragment() {
         }
     }
 
-    private fun updateRecyclerView(expenses: List<ExpenseRecord>) {
+    private fun updateRecyclerView(expenses: List<FriendExpenseRecord>) {
         // Check if binding is null before accessing
         val safeBinding = _binding ?: return
 
@@ -199,11 +200,11 @@ class FriendsAllExpenses : Fragment() {
         }
     }
 
-    fun goToDetails(expenseList: ExpenseRecord) {
+    fun goToDetails(expenseList: FriendExpenseRecord) {
         Log.d("CHKIAMG", "I am going in")
         friendContact?.let {
             val action = FriendsAllExpensesDirections.actionFriendsAllExpensesToBillDetails(
-                expenseList, it,null
+                null, it,null,expenseList,null,null
             )
             findNavController().navigate(action)
         }

@@ -25,12 +25,14 @@
     <color name="forest_green">#218721</color>
 
 
+    <color name="emptyState">#F3EEFF</color>
+    <color name="ClickedState">#996BFF</color>
 
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
     <color name="official_splitwise_orange">#FF5216</color>
-
+    <color name="myFilledState">#181A1F</color>
 
 
     <color name="color_grey_soft">#BCBEC1</color>

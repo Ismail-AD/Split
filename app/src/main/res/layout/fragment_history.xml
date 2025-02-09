@@ -1,18 +1,130 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     tools:context=".UI.Fragment.HistoryFragment">
 
-    <com.ozcanalasalvar.datepicker.view.datepicker.DatePicker
-        android:id="@+id/datepicker"
+    <RelativeLayout
+        android:id="@+id/shimmerContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/shimmer_view_top"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:shimmer_duration="1000">
+
+            <ViewStub
+                android:id="@+id/shimmer_view_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.facebook.shimmer.ShimmerFrameLayout>
+
+        <com.facebook.shimmer.ShimmerFrameLayout
+            android:id="@+id/shimmer_view_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/shimmer_view_top"
+            app:shimmer_duration="1000">
+
+            <ViewStub
+                android:id="@+id/shimmer_view_home"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </com.facebook.shimmer.ShimmerFrameLayout>
+    </RelativeLayout>
+    <LinearLayout
+        android:id="@+id/noData"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:gravity="center">
+
+        <TextView
+            style="@style/billWordColor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No History!"
+            android:textSize="18sp" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/topLayer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_10sdp"
-        app:offset="1"
-        android:hapticFeedbackEnabled="false"
-        app:textSize="18" />
+        android:layout_marginHorizontal="@dimen/_10sdp"
+        android:layout_marginTop="16dp"
+        android:orientation="vertical">
 
-</FrameLayout>
+        <TextView
+            android:id="@+id/totalSpent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="10dp"
+            android:text="Rs.3400"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnPrevious"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Previous"
+                android:src="@drawable/back" />
+
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/chartViewPager"
+                android:layout_width="0dp"
+                android:layout_height="300dp"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/btnNext"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Next"
+                android:rotation="180"
+                android:src="@drawable/back" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/noBill"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/topLayer"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <TextView
+            style="@style/billWordColor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No bills created yet!"
+            android:textSize="18sp" />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_recent_bills"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/noBill"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="@dimen/_50sdp"
+        android:clipToPadding="false" />
+
+</RelativeLayout>

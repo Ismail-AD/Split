@@ -68,7 +68,7 @@ class SplitAmountFragment : Fragment() {
             this,
             list.toList(),
             amount,
-            currentUser?.uid ?: "", currency = args.currency,args.splitType
+            currentUser?.uid ?: "", currency = args.currency,args.splitType,args.isGroupData
         )
 
 

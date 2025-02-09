@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.BillAdapter
 import com.appdev.split.Model.Data.Bill
 import com.appdev.split.Model.Data.ExpenseRecord
+import com.appdev.split.Model.Data.FriendExpenseRecord
 import com.appdev.split.Model.Data.TransactionItem
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
@@ -49,7 +50,7 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var adapter: BillAdapter
     val mainViewModel by activityViewModels<MainViewModel>()
-    var expenses: Map<String, List<ExpenseRecord>> = mapOf()
+    var expenses: Map<String, List<FriendExpenseRecord>> = mapOf()
 
     private var isTopDataReady = false
     private var isMainDataReady = false
@@ -204,7 +205,7 @@ class HomeFragment : Fragment() {
     }
 
 
-    private fun updateRecyclerView(expenses: Map<String, List<ExpenseRecord>>) {
+    private fun updateRecyclerView(expenses: Map<String, List<FriendExpenseRecord>>) {
 
 
         if (expenses.isEmpty()) {
@@ -242,7 +243,7 @@ class HomeFragment : Fragment() {
         _binding = null
     }
 
-    fun goToDetails(expenseList: List<ExpenseRecord>, email: String) {
+    fun goToDetails(expenseList: List<FriendExpenseRecord>, email: String) {
         val action = HomeFragmentDirections.actionHomePageToFriendsAllExpenses(
             expenseList.toTypedArray(),
             email

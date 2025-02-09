@@ -14,11 +14,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.SplitMembersAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.FriendContact
+import com.appdev.split.Model.Data.FriendExpenseRecord
 import com.appdev.split.Model.Data.Member
 import com.appdev.split.Model.Data.NameId
 import com.appdev.split.Model.Data.SplitType
 import com.appdev.split.Model.ViewModel.MainViewModel
-import com.appdev.split.R
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentAmountEquallyBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -31,7 +31,8 @@ class AmountEquallyFragment(
     val friends: List<FriendContact>,
     val totalAmount: Double,
     val myUserId: String,
-    val currency: String
+    val currency: String,
+    val isGroupData: Boolean
 ) : Fragment() {
     private var _binding: FragmentAmountEquallyBinding? = null
     val binding get() = _binding!!
@@ -90,11 +91,22 @@ class AmountEquallyFragment(
     private fun checkViewModelData() {
         // Get the current expense record from ViewModel
         val currentExpense = mainViewModel.getExpenseObject()
-        Log.d("AmountEqually", "${currentExpense.splits}")
+        val currentFriendExpense = mainViewModel.getFriendExpenseObject()
 
-        if (currentExpense != null && currentExpense.splits.isNotEmpty() && currentExpense.splitType == SplitType.EQUAL.name) {
+
+        if (isGroupData && currentExpense != null && currentExpense.splits.isNotEmpty() && currentExpense.splitType == SplitType.EQUAL.name) {
             // Get the IDs of members who are part of the split
             val splitMemberIds = currentExpense.splits.map { it.userId }.toSet()
+
+            // Update the persons list based on split data
+            persons = persons.map { person ->
+                person.copy(isSelected = person.id in splitMemberIds)
+            }
+
+            Log.d("AmountEqually", "Loaded existing split data: ${splitMemberIds.size} members")
+        } else if (!isGroupData && currentFriendExpense != null && currentFriendExpense.splits.isNotEmpty() && currentFriendExpense.splitType == SplitType.EQUAL.name) {
+            // Get the IDs of members who are part of the split
+            val splitMemberIds = currentFriendExpense.splits.map { it.userId }.toSet()
 
             // Update the persons list based on split data
             persons = persons.map { person ->
@@ -164,13 +176,28 @@ class AmountEquallyFragment(
 
         val distributionList = Utils.createEqualSplits(nameIdList, amountPerPerson)
 
-        val expenseRecord = ExpenseRecord(
-            totalAmount = totalAmount,
-            splitType = SplitType.EQUAL.name,
-            splits = distributionList
-        )
 
-        mainViewModel.updateFriendExpense(expenseRecord)
+
+
+        when {
+            isGroupData -> {
+                val expenseRecord = ExpenseRecord(
+                    totalAmount = totalAmount,
+                    splitType = SplitType.EQUAL.name,
+                    splits = distributionList
+                )
+                mainViewModel.updateGroupExpense(expenseRecord)
+            }
+
+            else -> {
+                val expenseRecord = FriendExpenseRecord(
+                    totalAmount = totalAmount,
+                    splitType = SplitType.EQUAL.name,
+                    splits = distributionList
+                )
+                mainViewModel.updateFriendExpense(expenseRecord)
+            }
+        }
         findNavController().navigateUp()
     }
 

@@ -18,6 +18,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.AllFriendExpenseAdapter
+import com.appdev.split.Adapters.GroupDetailExpenseAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.GroupMetaData
 import com.appdev.split.Model.Data.UiState
@@ -38,7 +39,7 @@ class GroupDetailFragment : Fragment() {
     private val mainViewModel by activityViewModels<MainViewModel>()
     private val args: GroupDetailFragmentArgs by navArgs()
     private lateinit var dialog: Dialog
-    private lateinit var adapter: AllFriendExpenseAdapter
+    private lateinit var adapter: GroupDetailExpenseAdapter
 
     @Inject
     lateinit var firestore: FirebaseFirestore
@@ -53,7 +54,7 @@ class GroupDetailFragment : Fragment() {
     ): View? {
         _binding = FragmentGroupDetailBinding.inflate(layoutInflater, container, false)
         setupShimmer()
-        mainViewModel.updateToEmpty(ExpenseRecord())
+        mainViewModel.updateGroupExpenseToEmpty(ExpenseRecord())
         mainViewModel.updateExpenseCategory("")
         mainViewModel.clearSelectedFriends()
         mainViewModel.updateStateToStable()
@@ -135,7 +136,7 @@ class GroupDetailFragment : Fragment() {
             safeBinding.nobill.visibility = View.GONE
             safeBinding.recyclerViewGroupExpenses.visibility = View.VISIBLE
 
-            adapter = AllFriendExpenseAdapter(expenses, ::goToDetails)
+            adapter = GroupDetailExpenseAdapter(expenses, ::goToDetails)
             safeBinding.recyclerViewGroupExpenses.adapter = adapter
             safeBinding.recyclerViewGroupExpenses.layoutManager =
                 LinearLayoutManager(requireContext())
@@ -144,7 +145,7 @@ class GroupDetailFragment : Fragment() {
 
     fun goToDetails(expenseList: ExpenseRecord) {
         val action = GroupDetailFragmentDirections.actionGroupDetailFragmentToBillDetails(
-            expenseList, null, args.groupMetaData.groupId
+            expenseList, null, args.groupMetaData.groupId,null,args.groupMetaData.groupType,null
         )
         findNavController().navigate(action)
 //        val action = GroupDetailFragmentDirections.actionGroupDetailFragmentToAddGrpExpenseFragment(

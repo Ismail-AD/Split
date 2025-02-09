@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.MyFriendSelectionAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.FriendContact
+import com.appdev.split.Model.Data.FriendExpenseRecord
 import com.appdev.split.Model.Data.NameId
 import com.appdev.split.Model.Data.Split
 import com.appdev.split.Model.Data.SplitType
@@ -53,13 +54,15 @@ class SingleDostAddExpenseFragment : Fragment() {
     private var originalFriendsList = mutableListOf<FriendContact>()
 
     private var selectedFriend: FriendContact? = null
-    var selectedDate = Utils.getCurrentDate()
+    var selectedYearMonth = Utils.getYearMonth()
+    var selectedDay = Utils.getDay()
     lateinit var dialog: Dialog
 
     val args: SingleDostAddExpenseFragmentArgs by navArgs()
-    var expObjectReceived: ExpenseRecord? = null
+    var expObjectReceived: FriendExpenseRecord? = null
 
     val listOUserInSplit: MutableList<FriendContact> = mutableListOf()
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -84,21 +87,25 @@ class SingleDostAddExpenseFragment : Fragment() {
             mainViewModel.fetchAllContacts()
             observeContacts()
         }
-        if (args.expenseRecord != null && (mainViewModel.expensePush.value.splits.isEmpty())) {
-            selectedDate = args.expenseRecord!!.date
+        if (args.expenseRecord != null && (mainViewModel.friendExpensePush.value.splits.isEmpty())) {
+            selectedYearMonth = args.expenseRecord!!.startDate
+            selectedDay = args.expenseRecord!!.endDate
             expObjectReceived = args.expenseRecord
-            mainViewModel.updateExpRec(args.expenseRecord!!)
+            mainViewModel.updateFriendExpRec(args.expenseRecord!!)
             setupEditExpenseMode(args.expenseRecord!!)
-        } else if (args.expenseRecord == null && mainViewModel.expensePush.value.id.trim()
+        } else if (args.expenseRecord == null && mainViewModel.friendExpensePush.value.id.trim()
                 .isEmpty()
         ) {
             setupNewExpenseMode()
-            setCalendarFromDate(null)
+            setCalendarFromDate(null, null)
         }
 
         if (args.expenseRecord != null) {
             hideForUpdate()
-            setCalendarFromDate(mainViewModel.expensePush.value.date)
+            setCalendarFromDate(
+                mainViewModel.friendExpensePush.value.startDate,
+                mainViewModel.friendExpensePush.value.endDate
+            )
         } else {
             if (mainViewModel.expenseCategory.value.trim().isEmpty()) {
                 mainViewModel.updateExpenseCategory(binding.categorySpinner.text.toString())
@@ -169,7 +176,7 @@ class SingleDostAddExpenseFragment : Fragment() {
                     .show()
             } else {
                 if (!TextUtils.isEmpty(binding.amount.editText?.text.toString())) {
-                    mainViewModel.updateExpenseBeforeNav(
+                    mainViewModel.updateFriendExpenseBeforeNav(
                         title = binding.title.editText?.text.toString(),
                         description = binding.description.editText?.text.toString(),
                         amount = binding.amount.editText?.text.toString(),
@@ -182,7 +189,7 @@ class SingleDostAddExpenseFragment : Fragment() {
                                 .toFloat(),
                             selectedFriend,
                             binding.splitTypeText.text.toString(),
-                            Utils.extractCurrencyCode(binding.currencySpinner.text.toString())
+                            Utils.extractCurrencyCode(binding.currencySpinner.text.toString()),false
                         )
 
                     }
@@ -207,12 +214,12 @@ class SingleDostAddExpenseFragment : Fragment() {
         var day: Int
 
         // Parse existing selected date if available
-        if (selectedDate.trim().isNotEmpty()) {
-            val parts = selectedDate.split("-")
+        if (selectedYearMonth.trim().isNotEmpty() && selectedDay.trim().isNotEmpty()) {
+            val parts = selectedYearMonth.split("-")
             if (parts.size == 3) {
                 year = parts[0].toInt()
                 month = parts[1].toInt() - 1 // Convert to 0-based month
-                day = parts[2].toInt()
+                day = selectedDay.toInt()
                 calendar.set(year, month, day)
             }
         }
@@ -235,8 +242,12 @@ class SingleDostAddExpenseFragment : Fragment() {
                     month: Int,
                     year: Int
                 ) {
-                    selectedDate = "$year-${month + 1}-$day"
-                    mainViewModel.updateExpenseDate(selectedDate)
+                    selectedYearMonth = "$year-${month + 1}"
+                    selectedDay = "$day"
+                    mainViewModel.updateFriendExpenseDate(
+                        selectedYearMonth,
+                        selectedDay
+                    )
                 }
             })
             .build()
@@ -245,20 +256,20 @@ class SingleDostAddExpenseFragment : Fragment() {
     }
 
 
-
-    private fun setCalendarFromDate(dateString: String?) {
+    private fun setCalendarFromDate(startDateString: String?, endDateString: String?) {
         val calendar = Calendar.getInstance()
         var year: Int
         var month: Int
         var day: Int
 
-        val finalString = dateString ?: mainViewModel.expensePush.value.date
-        if (finalString.trim().isNotEmpty()) {
+        val initialString = startDateString ?: mainViewModel.friendExpensePush.value.startDate
+        val finalString = startDateString ?: mainViewModel.friendExpensePush.value.startDate
+        if (finalString.trim().isNotEmpty() && initialString.trim().isNotEmpty()) {
             val parts = finalString.split("-")
             if (parts.size == 3) {
                 year = parts[0].toInt()
                 month = parts[1].toInt() - 1
-                day = parts[2].toInt()
+                day = endDateString?.toInt() ?: 0
                 calendar.set(year, month, day)
             }
         }
@@ -266,9 +277,10 @@ class SingleDostAddExpenseFragment : Fragment() {
         year = calendar.get(Calendar.YEAR)
         month = calendar.get(Calendar.MONTH)
         day = calendar.get(Calendar.DAY_OF_MONTH)
-        selectedDate = "$year-${month + 1}-$day"
+        selectedYearMonth = "$year-${month + 1}"
+        selectedDay = "$day"
 
-        mainViewModel.updateExpenseDate(selectedDate)
+        mainViewModel.updateFriendExpenseDate(selectedYearMonth, selectedDay)
     }
 
     private fun setupSaveData() {
@@ -301,65 +313,58 @@ class SingleDostAddExpenseFragment : Fragment() {
                 // if user didn't change the preset EQUAL SPLIT then calculate data
 //                    if (mainViewModel.expensePush.value.date.isEmpty() || mainViewModel.expensePush.value.totalAmount < 1f) {
                 val computedSplits = when {
-                    args.expenseRecord == null && mainViewModel.expensePush.value.splits.isEmpty() && binding.splitTypeText.text.toString() == SplitType.EQUAL.name -> {
+                    args.expenseRecord == null && mainViewModel.friendExpensePush.value.splits.isEmpty() && binding.splitTypeText.text.toString() == SplitType.EQUAL.name -> {
                         handleExpenseSplitEqual(amount.toDouble(), nameIdList)
                     }
 
                     args.expenseRecord != null && SplitType.EQUAL.name == binding.splitTypeText.text.toString() &&
-                            amount.toDouble() != mainViewModel.expensePush.value.totalAmount -> {
-                        handleUpdateSplit(amount.toDouble(), mainViewModel.expensePush.value.splits)
+                            amount.toDouble() != mainViewModel.friendExpensePush.value.totalAmount -> {
+                        handleUpdateSplit(amount.toDouble(), mainViewModel.friendExpensePush.value.splits)
                     }
 
-                    else -> mainViewModel.expensePush.value.splits
+                    else -> mainViewModel.friendExpensePush.value.splits
                 }
                 if (validateAmount(computedSplits)) {
                     if (args.expenseRecord != null) {
                         mainViewModel.updateFriendExpenseDetail(
-                            ExpenseRecord(
-                                date = mainViewModel.expensePush.value.date,
+                            FriendExpenseRecord(
+                                friendId = args.friendData!!.friendId,
+                                startDate = mainViewModel.friendExpensePush.value.startDate,
+                                endDate = mainViewModel.friendExpensePush.value.endDate,
                                 title = title,
                                 description = description,
                                 totalAmount = amount.toDouble(),
                                 currency = binding.currencySpinner.text.toString(),
                                 expenseCategory = binding.categorySpinner.text.toString(),
                                 splits = computedSplits,
-                                paidBy = mainViewModel.expensePush.value.paidBy,
-                                id = mainViewModel.expensePush.value.id,
+                                paidBy = mainViewModel.friendExpensePush.value.paidBy,
+                                id = mainViewModel.friendExpensePush.value.id,
                                 splitType = binding.splitTypeText.text.toString(),
                                 timeStamp = System.currentTimeMillis()
                             ),
-
-                            args.expenseRecord!!.id,
-                            args.friendData!!.friendId
+                            args.expenseRecord!!.id
                         )
                     } else {
-                        Log.d("CHKITMOM", "IN ELSE BLOCK")
-
-                        selectedFriend?.let { friend ->
-                            Log.d("CHKITMOM", "$listOUserInSplit")
-                            Log.d("CHKITMOM", "${mainViewModel.expensePush.value.splits}")
-
-                            FirebaseAuth.getInstance().currentUser?.uid?.let {
-                                mainViewModel.prepareFinalExpense(
-                                    ExpenseRecord(
-                                        date = mainViewModel.expensePush.value.date,
-                                        title = title,
-                                        description = description,
-                                        totalAmount = amount.toDouble(),
-                                        currency = binding.currencySpinner.text.toString(),
-                                        expenseCategory = binding.categorySpinner.text.toString(),
-                                        paidBy = it,
-                                        splitType = binding.splitTypeText.text.toString(),
-                                        splits = computedSplits
-                                    )
+                        if (selectedFriend != null && FirebaseAuth.getInstance().currentUser?.uid != null && selectedFriend != null) {
+                            // Add this right after creating the ExpenseRecord
+                            val newExpense =
+                                FriendExpenseRecord(
+                                    friendId = selectedFriend!!.friendId,
+                                    startDate = mainViewModel.friendExpensePush.value.startDate,
+                                    endDate = mainViewModel.friendExpensePush.value.endDate,
+                                    title = title,
+                                    description = description,
+                                    totalAmount = amount.toDouble(),
+                                    currency = binding.currencySpinner.text.toString(),
+                                    expenseCategory = binding.categorySpinner.text.toString(),
+                                    paidBy = FirebaseAuth.getInstance().currentUser!!.uid,
+                                    splitType = binding.splitTypeText.text.toString(),
+                                    splits = computedSplits
                                 )
-                                Log.d("CHKITPAIDBY", "${mainViewModel.expensePush.value.paidBy}")
 
-                                mainViewModel.saveFriendExpense(
-                                    mainViewModel.expensePush.value,
-                                    friend.friendId
-                                )
-                            }
+                            mainViewModel.saveFriendExpense(
+                                newExpense
+                            )
                         }
                     }
 
@@ -405,7 +410,7 @@ class SingleDostAddExpenseFragment : Fragment() {
     }
 
 
-    private fun setupEditExpenseMode(expenseRecord: ExpenseRecord) {
+    private fun setupEditExpenseMode(expenseRecord: FriendExpenseRecord) {
         binding.apply {
             currencySpinner.selectItemByIndex(getCurrencyIndex(expenseRecord.currency))
             categorySpinner.selectItemByIndex(getCategoryIndex(expenseRecord.expenseCategory))
@@ -414,6 +419,7 @@ class SingleDostAddExpenseFragment : Fragment() {
             amount.editText?.setText(expenseRecord.totalAmount.toString())
         }
     }
+
     private fun setupNewExpenseMode() {
         binding.apply {
             currencySpinner.selectItemByIndex(0)
@@ -436,13 +442,12 @@ class SingleDostAddExpenseFragment : Fragment() {
     }
 
 
-
     private fun handleSplitTypeChanges() {
-        if (args.expenseRecord != null && args.expenseRecord!!.splitType == mainViewModel.expensePush.value.splitType) {
+        if (args.expenseRecord != null && args.expenseRecord!!.splitType == mainViewModel.friendExpensePush.value.splitType) {
             val expense = args.expenseRecord!!
             binding.splitTypeText.text = expense.splitType
-        } else if (mainViewModel.expensePush.value.splitType.trim().isNotEmpty()) {
-            binding.splitTypeText.text = mainViewModel.expensePush.value.splitType
+        } else if (mainViewModel.friendExpensePush.value.splitType.trim().isNotEmpty()) {
+            binding.splitTypeText.text = mainViewModel.friendExpensePush.value.splitType
         } else {
             binding.splitTypeText.text = SplitType.EQUAL.name
         }
@@ -478,7 +483,7 @@ class SingleDostAddExpenseFragment : Fragment() {
 
     private fun observeExpenseInput() {
         viewLifecycleOwner.lifecycleScope.launch {
-            mainViewModel.expensePush.collect { expenseInput ->
+            mainViewModel.friendExpensePush.collect { expenseInput ->
                 binding.apply {
                     if (title.editText?.text.isNullOrEmpty()) {
                         title.editText?.setText(expenseInput.title)

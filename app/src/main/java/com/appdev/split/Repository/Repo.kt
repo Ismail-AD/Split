@@ -6,13 +6,16 @@ import com.appdev.split.Model.Data.Contact
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
+import com.appdev.split.Model.Data.FriendExpenseRecord
 import com.appdev.split.Model.Data.GroupMembersWrapper
 import com.appdev.split.Model.Data.GroupMetaData
+import com.appdev.split.Model.Data.MySpending
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Room.DaoClasses.ContactDao
 import com.appdev.split.Utils.Utils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +29,7 @@ import javax.inject.Inject
 
 class Repo @Inject constructor(
     private val contactDao: ContactDao,
-    private val firestore:FirebaseFirestore,
+    private val firestore: FirebaseFirestore,
     val firebaseAuth: FirebaseAuth,
     val supabaseClient: SupabaseClient
 ) {
@@ -133,7 +136,10 @@ class Repo @Inject constructor(
                     try {
                         document.toObject(ExpenseRecord::class.java)
                     } catch (e: Exception) {
-                        Log.e("Repo", "Failed to map document to ExpenseRecord: ${document.id}, error: ${e.message}")
+                        Log.e(
+                            "Repo",
+                            "Failed to map document to ExpenseRecord: ${document.id}, error: ${e.message}"
+                        )
                         null
                     }
                 }
@@ -151,7 +157,6 @@ class Repo @Inject constructor(
             onResult(false, null, "Failed to retrieve group expenses: ${e.message}")
         }
     }
-
 
 
     //----------------------MANAGE GROUP MEMBERS-----------------
@@ -238,7 +243,7 @@ class Repo @Inject constructor(
             val groupId = saveGroupToFirestore(publicUrl, title, groupType, userid)
             onSuccess("Group created successfully", groupId)
         } catch (e: Exception) {
-            Log.d("CHKJM","${e.message}")
+            Log.d("CHKJM", "${e.message}")
             onError("Failed to create group: ${e.message}")
         }
     }
@@ -253,7 +258,10 @@ class Repo @Inject constructor(
                     // Fallback to detecting from bytes
                     else -> when {
                         imageBytes.size >= 2 && imageBytes[0] == 0xFF.toByte() && imageBytes[1] == 0xD8.toByte() -> "jpg"
-                        imageBytes.size >= 8 && String(imageBytes.take(8).toByteArray()) == "PNG\r\n\u001a\n" -> "png"
+                        imageBytes.size >= 8 && String(
+                            imageBytes.take(8).toByteArray()
+                        ) == "PNG\r\n\u001a\n" -> "png"
+
                         else -> "jpg" // Default fallback
                     }
                 } ?: "jpg"
@@ -265,7 +273,7 @@ class Repo @Inject constructor(
                 }
                 val fileName = "${UUID.randomUUID()}.$safeExtension"
                 val fullPath = "$folderPath/$fileName"
-                Log.d("CHKJM","$fullPath")
+                Log.d("CHKJM", "$fullPath")
 
                 val bucket = supabaseClient.storage.from(bucketId)
                 bucket.upload(
@@ -314,9 +322,11 @@ class Repo @Inject constructor(
     }
 
 
-
-
-    suspend fun getAllGroups(userid: String, onSuccess: (List<GroupMetaData>) -> Unit, onError: (String) -> Unit) {
+    suspend fun getAllGroups(
+        userid: String,
+        onSuccess: (List<GroupMetaData>) -> Unit,
+        onError: (String) -> Unit
+    ) {
         try {
 //            val sanitizedMail = Utils.sanitizeEmailForFirebase(mail)
             val groupsSnapshot = firestore.collection("groups")
@@ -368,7 +378,7 @@ class Repo @Inject constructor(
                             .addOnSuccessListener {
                                 result("Account created successfully", true)
                             }
-                            .addOnFailureListener { e->
+                            .addOnFailureListener { e ->
                                 e.message?.let { Log.d("CHKAZ", it) }
                                 result("Account created, but data upload failed", false)
                             }
@@ -391,7 +401,10 @@ class Repo @Inject constructor(
                     // Fallback to detecting from bytes
                     else -> when {
                         imageBytes.size >= 2 && imageBytes[0] == 0xFF.toByte() && imageBytes[1] == 0xD8.toByte() -> "jpg"
-                        imageBytes.size >= 8 && String(imageBytes.take(8).toByteArray()) == "PNG\r\n\u001a\n" -> "png"
+                        imageBytes.size >= 8 && String(
+                            imageBytes.take(8).toByteArray()
+                        ) == "PNG\r\n\u001a\n" -> "png"
+
                         else -> "jpg" // Default fallback
                     }
                 } ?: "jpg"
@@ -414,7 +427,7 @@ class Repo @Inject constructor(
 
                 bucket.publicUrl(fullPath)
             } catch (e: Exception) {
-                Log.d("CHKAZ","${e.message}")
+                Log.d("CHKAZ", "${e.message}")
                 throw Exception("${e.message}")
             }
         }
@@ -465,20 +478,20 @@ class Repo @Inject constructor(
     fun getAllContacts(myUserId: String): Flow<List<FriendContact>> = flow {
 //        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
 //        if (Utils.isInternetAvailable()) {
-            val friendsList = mutableListOf<FriendContact>()
-            currentUser?.let {
-                val snapshot = firestore.collection("users")
-                    .document(myUserId)
-                    .collection("friends")
-                    .get()
-                    .await()
+        val friendsList = mutableListOf<FriendContact>()
+        currentUser?.let {
+            val snapshot = firestore.collection("users")
+                .document(myUserId)
+                .collection("friends")
+                .get()
+                .await()
 
-                for (doc in snapshot.documents) {
-                    doc.toObject(FriendContact::class.java)?.let { friendsList.add(it) }
-                }
+            for (doc in snapshot.documents) {
+                doc.toObject(FriendContact::class.java)?.let { friendsList.add(it) }
             }
-            Log.d("CHKJA", friendsList.toString())
-            emit(friendsList)
+        }
+        Log.d("CHKJA", friendsList.toString())
+        emit(friendsList)
 //        } else {
 //            val friendsRoom = contactDao.getAllContacts().first()
 //            val newList = friendsRoom.map { friend ->
@@ -492,7 +505,11 @@ class Repo @Inject constructor(
 //        }
     }
 
-    suspend fun insertContact(contact: Friend, myUserId: String, onResult: (success: Boolean, message: String) -> Unit) {
+    suspend fun insertContact(
+        contact: Friend,
+        myUserId: String,
+        onResult: (success: Boolean, message: String) -> Unit
+    ) {
 //        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
         try {
             contactDao.insertContact(contact)
@@ -513,13 +530,17 @@ class Repo @Inject constructor(
                     onResult(true, "Contact added successfully")
                 }
             }
-        }catch (e:Exception){
+        } catch (e: Exception) {
             onResult(false, "Failed to save contact: ${e.message}")
         }
     }
 
 
-    suspend fun updateContact(contact: Friend, myId: String,onResult: (success: Boolean, message: String) -> Unit) {
+    suspend fun updateContact(
+        contact: Friend,
+        myId: String,
+        onResult: (success: Boolean, message: String) -> Unit
+    ) {
 //        val sanitizedMail = Utils.sanitizeEmailForFirebase(email)
         try {
             contactDao.updateContact(contact)
@@ -657,14 +678,14 @@ class Repo @Inject constructor(
 
     suspend fun saveFriendExpense(
         myUserId: String,
-        myFriendId: String,
-        expense: ExpenseRecord,
+        expense: FriendExpenseRecord,
         onResult: (success: Boolean, message: String) -> Unit
     ) {
+        val myContribution = expense.splits.find { it.userId == myUserId }?.amount ?: 0.0
         try {
             val expenseDoc = firestore.collection("expenses")
                 .document(myUserId)
-                .collection(myFriendId)
+                .collection("friendsExpenses")
                 .document()
 
             val expenseWithId = expense.copy(
@@ -672,7 +693,13 @@ class Repo @Inject constructor(
                 timeStamp = System.currentTimeMillis()
             )
 
+
             expenseDoc.set(expenseWithId).await()
+            updateTotalExpense(
+                myContribution,
+                expense.startDate,
+                myUserId
+            )
             onResult(true, "Expense saved successfully!")
         } catch (e: Exception) {
             Log.e("Repo", "Failed to save expense: ${e.message}")
@@ -680,24 +707,128 @@ class Repo @Inject constructor(
         }
     }
 
+    suspend fun getExpensesByDate(
+        myUserId: String,
+        targetDate: String,
+        onResult: (List<FriendExpenseRecord>, String?) -> Unit
+    ) {
+        try {
+            val snapshot = firestore.collection("expenses")
+                .document(myUserId)
+                .collection("friendsExpenses")
+                .whereEqualTo("startDate", targetDate)
+                .orderBy("timeStamp", Query.Direction.DESCENDING)
+                .get()
+                .await()
+
+            val expenses = snapshot.documents.mapNotNull { doc ->
+                doc.toObject(FriendExpenseRecord::class.java)
+            }
+
+            onResult(expenses, null)
+        } catch (e: Exception) {
+            Log.e("Repo", "Failed to fetch expenses: ${e.message}")
+            onResult(emptyList(), e.message)
+        }
+    }
+
+    suspend fun getMonthsTotalSpent(
+        monthYearList: List<String>,
+        userId: String,
+        onResult: (List<MySpending>?, String?) -> Unit
+    ) {
+        try {
+            val results = monthYearList.map { monthYear ->
+                val parts = monthYear.split("-")
+                val year = parts[0]
+                val month = parts[1]
+
+                try {
+                    val data = firestore.collection("mySpending")
+                        .document(userId)
+                        .collection(year + month)
+                        .get()
+                        .await()
+
+                    if (data.isEmpty) {
+                        MySpending(month, 0.0)
+                    } else {
+                        val spending =
+                            data.documents[0].toObject(MySpending::class.java) ?: MySpending(
+                                month,
+                                0.0
+                            )
+                        spending
+                    }
+                } catch (e: Exception) {
+                    Log.e("Repo", "Failed to fetch expense for $monthYear: ${e.message}")
+                    MySpending(month, 0.0)
+                }
+            }
+
+            onResult(results, null)
+        } catch (e: Exception) {
+            Log.e("Repo", "Failed to fetch multiple months expense: ${e.message}")
+            onResult(null, e.message)
+        }
+    }
+
+
+    private suspend fun updateTotalExpense(
+        amount: Double,
+        startDateString: String,
+        userId: String
+    ) {
+        try {
+            val parts = startDateString.split("-")
+            if (parts.size > 1) {
+                val year = parts[0]
+                val month = parts[1]
+                val collectionRef = firestore.collection("mySpending")
+                    .document(userId)
+                    .collection(year + month)
+
+                // Try to fetch existing spending document for this month
+                val dataFetched = collectionRef.get().await()
+
+                if (dataFetched.isEmpty) {
+                    // No existing spending record for this month - create new one
+                    val newSpending = MySpending(
+                        id = collectionRef.document().id,
+                        totalAmountSpend = amount
+                    )
+                    collectionRef.document(newSpending.id).set(newSpending).await()
+                } else {
+                    // Update existing spending record
+                    val existingSpending = dataFetched.documents[0].toObject(MySpending::class.java)
+                    existingSpending?.let { spending ->
+                        val updatedSpending = spending.copy(
+                            totalAmountSpend = spending.totalAmountSpend + amount
+                        )
+                        collectionRef.document(spending.id).set(updatedSpending).await()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Handle the error appropriately
+            throw e
+        }
+    }
+
+
     suspend fun updateFriendExpense(
         myUserId: String,
-        friendId: String,
         expenseId: String,
-        updatedExpense: ExpenseRecord,
+        updatedExpense: FriendExpenseRecord,
         onResult: (success: Boolean, message: String) -> Unit
     ) {
         try {
-//            val sanitizedMyEmail = Utils.sanitizeEmailForFirebase(myEmail)
-//            val sanitizedFriendContact = Utils.sanitizeEmailForFirebase(friendContact)
-
             firestore.collection("expenses")
                 .document(myUserId)
-                .collection(friendId)
+                .collection("friendsExpenses")
                 .document(expenseId)
                 .set(updatedExpense)
                 .await()
-
             onResult(true, "Expense updated successfully!")
         } catch (e: Exception) {
             Log.e("Repo", "Failed to update expense: ${e.message}")
@@ -707,7 +838,6 @@ class Repo @Inject constructor(
 
     suspend fun deleteFriendExpense(
         myUserId: String,
-        friendId: String,
         expenseId: String,
         onResult: (success: Boolean, message: String) -> Unit
     ) {
@@ -715,7 +845,7 @@ class Repo @Inject constructor(
 
             firestore.collection("expenses")
                 .document(myUserId)
-                .collection(friendId)
+                .collection("friendsExpenses")
                 .document(expenseId)
                 .delete()
                 .await()
@@ -759,7 +889,7 @@ class Repo @Inject constructor(
 
     suspend fun getAllFriendExpenses(
         myUserId: String,
-        onResult: (success: Boolean, expenses: Map<String, List<ExpenseRecord>>?, message: String) -> Unit
+        onResult: (success: Boolean, expenses: Map<String, List<FriendExpenseRecord>>?, message: String) -> Unit
     ) {
         try {
             val friendsSnapshot = firestore.collection("users")
@@ -768,7 +898,7 @@ class Repo @Inject constructor(
                 .get()
                 .await()
             if (!friendsSnapshot.isEmpty) {
-                val allExpenses = mutableMapOf<String, List<ExpenseRecord>>()
+                val allExpenses = mutableMapOf<String, List<FriendExpenseRecord>>()
 
                 // For each friend
                 for (friendDoc in friendsSnapshot.documents) {
@@ -777,30 +907,33 @@ class Repo @Inject constructor(
                     // Get expenses for this friend
                     val friendExpensesSnapshot = firestore.collection("expenses")
                         .document(myUserId)
-                        .collection(friendContact)
+                        .collection("friendsExpenses").whereEqualTo("friendId", friendContact)
                         .get()
                         .await()
-                    Log.d("CHKIU","FRIEND SHOT :${friendExpensesSnapshot.isEmpty}")
+                    Log.d("CHKIU", "FRIEND SHOT :${friendExpensesSnapshot.isEmpty}")
 
                     val friendExpenses = friendExpensesSnapshot.documents.mapNotNull { document ->
                         try {
-                            val expense = document.toObject(ExpenseRecord::class.java)
+                            val expense = document.toObject(FriendExpenseRecord::class.java)
                             Log.d("CHKIU", "Mapped ExpenseRecord: $expense")
                             expense
                         } catch (e: Exception) {
-                            Log.e("CHKIU", "Failed to map document to ExpenseRecord: ${document.id}, error: ${e.message}")
+                            Log.e(
+                                "CHKIU",
+                                "Failed to map document to ExpenseRecord: ${document.id}, error: ${e.message}"
+                            )
                             null
                         }
                     }
                     Log.d("CHKIU", "FRIEND OBJECT: $friendExpenses")
 
-                    Log.d("CHKIU","FRIEND OBJECT :${friendExpenses}")
+                    Log.d("CHKIU", "FRIEND OBJECT :${friendExpenses}")
 
                     if (friendExpenses.isNotEmpty()) {
                         allExpenses[friendContact] = friendExpenses
                     }
                 }
-                Log.d("CHKIU","$allExpenses")
+                Log.d("CHKIU", "$allExpenses")
 
                 if (allExpenses.isNotEmpty()) {
                     onResult(true, allExpenses, "All expenses retrieved successfully!")

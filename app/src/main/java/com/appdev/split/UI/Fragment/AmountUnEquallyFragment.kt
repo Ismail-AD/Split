@@ -10,23 +10,19 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.PaymentDistributeAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.FriendContact
+import com.appdev.split.Model.Data.FriendExpenseRecord
 import com.appdev.split.Model.Data.PaymentDistribute
 import com.appdev.split.Model.Data.SplitType
-import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentAmounUntEquallyBinding
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -37,7 +33,8 @@ class AmountUnEquallyFragment(
     val friendsList: List<FriendContact>,
     val totalAmount: Double,
     val myUserId: String,
-    val currency: String
+    val currency: String,
+    val isGroupData: Boolean
 ) : Fragment() {
 
     private var _binding: FragmentAmounUntEquallyBinding? = null
@@ -69,9 +66,11 @@ class AmountUnEquallyFragment(
 
     private fun checkViewModelData() {
         val currentExpense = mainViewModel.getExpenseObject()
+        val currentFriendExpense = mainViewModel.getFriendExpenseObject()
+
         Log.d("CHKMEA","$currentExpense")
 
-        if (currentExpense != null && currentExpense.splits.isNotEmpty() &&
+        if (isGroupData && currentExpense != null && currentExpense.splits.isNotEmpty() &&
             currentExpense.splitType == SplitType.UNEQUAL.name) {
             Log.d("CHKMEA","WITHIN")
 
@@ -87,7 +86,25 @@ class AmountUnEquallyFragment(
             val totalAllocated = payments.sumOf { it.amount }
             updateTotalAmount(totalAllocated)
 
-        } else {
+        }
+        else if (!isGroupData && currentFriendExpense != null && currentFriendExpense.splits.isNotEmpty() &&
+            currentFriendExpense.splitType == SplitType.UNEQUAL.name) {
+            Log.d("CHKMEA","WITHIN")
+
+            // Update payments with existing amounts
+            currentFriendExpense.splits.forEach { split ->
+                payments.find { it.id == split.userId }?.let { payment ->
+                    payment.amount = split.amount
+                }
+            }
+            Log.d("CHKMEA","$payments")
+
+            // Update UI with total amount
+            val totalAllocated = payments.sumOf { it.amount }
+            updateTotalAmount(totalAllocated)
+
+        }
+        else {
             updateTotalAmount(0.0)
         }
         setupRecyclerView()
@@ -205,11 +222,25 @@ class AmountUnEquallyFragment(
         val selectedPayments = payments.filter { it.amount > 0 }
         val distributionList = Utils.createUnequalSplitsFromPayments(selectedPayments)
 
-        var expenseRecord = ExpenseRecord(
-            totalAmount = totalAmount, splitType = SplitType.UNEQUAL.name,
-            splits = distributionList
-        )
-        mainViewModel.updateFriendExpense(expenseRecord)
+        when {
+            isGroupData -> {
+                val expenseRecord = ExpenseRecord(
+                    totalAmount = totalAmount,
+                    splitType = SplitType.UNEQUAL.name,
+                    splits = distributionList
+                )
+                mainViewModel.updateGroupExpense(expenseRecord)
+            }
+
+            else -> {
+                val friendExpenseRecord = FriendExpenseRecord(
+                    totalAmount = totalAmount,
+                    splitType = SplitType.UNEQUAL.name,
+                    splits = distributionList
+                )
+                mainViewModel.updateFriendExpense(friendExpenseRecord)
+            }
+        }
         findNavController().navigateUp()
 
     }

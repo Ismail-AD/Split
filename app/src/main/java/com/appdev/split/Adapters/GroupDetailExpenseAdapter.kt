@@ -5,17 +5,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.appdev.split.Model.Data.FriendExpenseRecord
+import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Utils.Utils
 import com.appdev.split.Utils.Utils.getCurrentUserId
 import com.appdev.split.databinding.ItemRecentBillBinding
-import com.google.firebase.auth.FirebaseAuth
 import kotlin.random.Random
 
-class AllFriendExpenseAdapter(
-    private val expenses: List<FriendExpenseRecord>, // Change to FriendExpenseRecord
-    val navigate: (FriendExpenseRecord) -> Unit
-) : RecyclerView.Adapter<AllFriendExpenseAdapter.BillViewHolder>() {
+class GroupDetailExpenseAdapter(
+    private val expenses: List<ExpenseRecord>, // Change to ExpenseRecord
+    val navigate: (ExpenseRecord) -> Unit
+) : RecyclerView.Adapter<GroupDetailExpenseAdapter.BillViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BillViewHolder {
         val binding =
@@ -33,9 +32,10 @@ class AllFriendExpenseAdapter(
     inner class BillViewHolder(private val binding: ItemRecentBillBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(expense: FriendExpenseRecord) { // Changed from Bill to FriendExpenseRecord
-            binding.billName.text = expense.title // Assuming FriendExpenseRecord has a 'name' field
-            binding.billDate.text = expense.startDate + "-" + expense.endDate // Assuming FriendExpenseRecord has a 'date' field
+        fun bind(expense: ExpenseRecord) { // Changed from Bill to ExpenseRecord
+            binding.billName.text = expense.title // Assuming ExpenseRecord has a 'name' field
+            binding.billDate.text =
+                expense.startDate + "-" + expense.endDate // Assuming ExpenseRecord has a 'date' field
 
             binding.currency.text = Utils.extractCurrencyCode(expense.currency)
 

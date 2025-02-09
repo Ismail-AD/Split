@@ -8,7 +8,9 @@ import com.appdev.split.Model.Data.Contact
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
+import com.appdev.split.Model.Data.FriendExpenseRecord
 import com.appdev.split.Model.Data.GroupMetaData
+import com.appdev.split.Model.Data.MySpending
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Repository.Repo
@@ -52,8 +54,16 @@ class MainViewModel @Inject constructor(
     val individualExpensesState: StateFlow<UiState<List<ExpenseRecord>>> get() = _individualExpensesState
 
     private val _allExpensesState =
-        MutableStateFlow<UiState<Map<String, List<ExpenseRecord>>>>(UiState.Success(emptyMap()))
-    val allExpensesState: StateFlow<UiState<Map<String, List<ExpenseRecord>>>> get() = _allExpensesState
+        MutableStateFlow<UiState<Map<String, List<FriendExpenseRecord>>>>(UiState.Success(emptyMap()))
+    val allExpensesState: StateFlow<UiState<Map<String, List<FriendExpenseRecord>>>> get() = _allExpensesState
+
+    private val _monthBaseExpensesState =
+        MutableStateFlow<UiState<List<FriendExpenseRecord>>>(UiState.Loading)
+    val monthBaseExpensesState: StateFlow<UiState<List<FriendExpenseRecord>>> get() = _monthBaseExpensesState
+
+    private val _monthsTotalSpentState =
+        MutableStateFlow<UiState<List<MySpending>>>(UiState.Loading)
+    val monthsTotalSpentState: StateFlow<UiState<List<MySpending>>> get() = _monthsTotalSpentState
 
     private val _GroupExpensesState =
         MutableStateFlow<UiState<List<ExpenseRecord>>>(UiState.Loading)
@@ -66,6 +76,9 @@ class MainViewModel @Inject constructor(
     private val _individualFriendState = MutableStateFlow<UiState<FriendContact>>(UiState.Loading)
     val FriendState: StateFlow<UiState<FriendContact>> get() = _individualFriendState
 
+    private val _friendExpenseToPush = MutableStateFlow(FriendExpenseRecord())
+    val friendExpensePush: MutableStateFlow<FriendExpenseRecord> get() = _friendExpenseToPush
+
     private val _expenseToPush = MutableStateFlow(ExpenseRecord())
     val expensePush: MutableStateFlow<ExpenseRecord> get() = _expenseToPush
 
@@ -77,6 +90,10 @@ class MainViewModel @Inject constructor(
 
     var _newSelectedId = -1
     private var cachedFriend: FriendContact? = null // Cache variable for storing friend data
+
+
+    var monthsWithYears: List<String> = emptyList()
+
 
     private val _loadingState = MutableStateFlow(false)
     val loadingState: StateFlow<Boolean> = _loadingState
@@ -94,6 +111,10 @@ class MainViewModel @Inject constructor(
 
     fun updateExpRec(expenseRecord: ExpenseRecord) {
         _expenseToPush.value = expenseRecord
+    }
+
+    fun updateFriendExpRec(expenseRecord: FriendExpenseRecord) {
+        _friendExpenseToPush.value = expenseRecord
     }
 
     fun updateSelectedFriends(friends: List<FriendContact>) {
@@ -118,7 +139,8 @@ class MainViewModel @Inject constructor(
             .collection("friends")
             .addSnapshotListener { friendsSnapshot, friendsError ->
                 if (friendsError != null || friendsSnapshot == null) {
-                    _allExpensesState.value = UiState.Error(friendsError?.message ?: "Unknown error")
+                    _allExpensesState.value =
+                        UiState.Error(friendsError?.message ?: "Unknown error")
                     return@addSnapshotListener
                 }
 
@@ -127,38 +149,45 @@ class MainViewModel @Inject constructor(
 
                 // Create a new scope for managing concurrent listeners
                 viewModelScope.launch {
-                    val allExpenses = mutableMapOf<String, List<ExpenseRecord>>()
+                    val allExpenses = mutableMapOf<String, List<FriendExpenseRecord>>()
                     val deferredResults = friendsSnapshot.documents.map { friendDoc ->
                         async {
                             val friendContact = friendDoc.id
-                            val expenses = suspendCancellableCoroutine<List<ExpenseRecord>> { continuation ->
-                                val listener = firestore.collection("expenses")
-                                    .document(userId)
-                                    .collection(friendContact)
-                                    .addSnapshotListener { expensesSnapshot, expensesError ->
-                                        if (expensesError != null) {
-                                            Log.e("MainViewModel", "Error fetching expenses", expensesError)
-                                            continuation.resume(emptyList())
-                                            return@addSnapshotListener
+                            val expenses =
+                                suspendCancellableCoroutine<List<FriendExpenseRecord>> { continuation ->
+                                    val listener = firestore.collection("expenses")
+                                        .document(userId)
+                                        .collection("friendsExpenses")
+                                        .whereEqualTo("friendId", friendContact)
+                                        .addSnapshotListener { expensesSnapshot, expensesError ->
+                                            if (expensesError != null) {
+                                                Log.e(
+                                                    "MainViewModel",
+                                                    "Error fetching expenses",
+                                                    expensesError
+                                                )
+                                                continuation.resume(emptyList())
+                                                return@addSnapshotListener
+                                            }
+
+                                            val friendExpenses =
+                                                expensesSnapshot?.documents?.mapNotNull { document ->
+                                                    document.toObject(FriendExpenseRecord::class.java)
+                                                } ?: emptyList()
+
+                                            if (!continuation.isCompleted) {
+                                                continuation.resume(friendExpenses)
+                                            }
                                         }
 
-                                        val friendExpenses = expensesSnapshot?.documents?.mapNotNull { document ->
-                                            document.toObject(ExpenseRecord::class.java)
-                                        } ?: emptyList()
+                                    // Store the listener for cleanup
+                                    friendExpenseListeners[friendContact] = listener
 
-                                        if (!continuation.isCompleted) {
-                                            continuation.resume(friendExpenses)
-                                        }
+                                    continuation.invokeOnCancellation {
+                                        listener.remove()
+                                        friendExpenseListeners.remove(friendContact)
                                     }
-
-                                // Store the listener for cleanup
-                                friendExpenseListeners[friendContact] = listener
-
-                                continuation.invokeOnCancellation {
-                                    listener.remove()
-                                    friendExpenseListeners.remove(friendContact)
                                 }
-                            }
                             friendDoc.id to expenses
                         }
                     }
@@ -175,6 +204,7 @@ class MainViewModel @Inject constructor(
                 }
             }
     }
+
     // Call this in onCleared to prevent memory leaks
     override fun onCleared() {
         super.onCleared()
@@ -386,8 +416,7 @@ class MainViewModel @Inject constructor(
 
     //---------------------Friend Expense----------------------
     fun saveFriendExpense(
-        expenseRecord: ExpenseRecord,
-        friendsId: String
+        expenseRecord: FriendExpenseRecord
     ) {
         Log.d("CHKITMOM", "${expenseRecord.splits}")
         _operationState.value = UiState.Loading
@@ -396,7 +425,6 @@ class MainViewModel @Inject constructor(
                 firebaseAuth.currentUser?.uid?.let { myId ->
                     repo.saveFriendExpense(
                         myId,
-                        friendsId,
                         expenseRecord
                     ) { success, message ->
                         if (success) {
@@ -413,9 +441,8 @@ class MainViewModel @Inject constructor(
     }
 
     fun updateFriendExpenseDetail(
-        expenseRecord: ExpenseRecord,
-        expenseId: String,
-        friendsContact: String
+        expenseRecord: FriendExpenseRecord,
+        expenseId: String
     ) {
         _operationState.value = UiState.Loading
         viewModelScope.launch {
@@ -423,7 +450,6 @@ class MainViewModel @Inject constructor(
                 firebaseAuth.currentUser?.uid?.let { uid ->
                     repo.updateFriendExpense(
                         uid,
-                        friendsContact,
                         expenseId,
                         expenseRecord
                     ) { success, message ->
@@ -443,8 +469,7 @@ class MainViewModel @Inject constructor(
 
 
     fun deleteFriendExpenseDetail(
-        expenseId: String,
-        friendsId: String
+        expenseId: String
     ) {
         _operationState.value = UiState.Loading
         viewModelScope.launch {
@@ -452,7 +477,6 @@ class MainViewModel @Inject constructor(
                 firebaseAuth.currentUser?.uid?.let { uid ->
                     repo.deleteFriendExpense(
                         uid,
-                        friendsId,
                         expenseId
                     ) { success, message ->
                         if (success) {
@@ -465,6 +489,59 @@ class MainViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _operationState.value = UiState.Error(e.message ?: "Failed to save expense")
+            }
+        }
+    }
+
+    fun getMonthlyExpense(
+        targetDate: String
+    ) {
+        _monthBaseExpensesState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.uid?.let { myId ->
+                    repo.getExpensesByDate(
+                        myId,
+                        targetDate
+                    ) { listOfExpenses, message ->
+                        if (listOfExpenses.isNotEmpty()) {
+                            _monthBaseExpensesState.value = UiState.Success(listOfExpenses)
+                        } else if (message != null) {
+                            _monthBaseExpensesState.value = UiState.Error(message)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _monthBaseExpensesState.value = UiState.Error(e.message ?: "Failed to save expense")
+            }
+        }
+    }
+
+    fun getMonthsTotalSpent(
+        monthYearList: List<String>
+    ) {
+        monthsWithYears = monthYearList
+        _monthsTotalSpentState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                firebaseAuth.currentUser?.uid?.let { myId ->
+                    repo.getMonthsTotalSpent(
+                        monthYearList,
+                        myId
+                    ) { listOfExpenses, message ->
+                        if (listOfExpenses != null) {
+                            if (listOfExpenses.isNotEmpty()) {
+                                _monthsTotalSpentState.value = UiState.Success(listOfExpenses)
+                            } else {
+                                _monthsTotalSpentState.value = UiState.Success(emptyList())
+                            }
+                        } else if (message != null) {
+                            _monthsTotalSpentState.value = UiState.Error(message)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _monthsTotalSpentState.value = UiState.Error(e.message ?: "Failed to save expense")
             }
         }
     }
@@ -567,6 +644,21 @@ class MainViewModel @Inject constructor(
         )
     }
 
+    fun updateFriendExpenseBeforeNav(
+        title: String,
+        description: String,
+        amount: String,
+        currency: String
+    ) {
+        _friendExpenseToPush.value = _friendExpenseToPush.value.copy(
+            title = title,
+            description = description,
+            totalAmount = amount.toDouble(),
+            currency = currency
+        )
+    }
+
+
 //    fun updateExpenseCategory(
 //        category: String
 //    ) {
@@ -585,29 +677,52 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    fun updateExpenseDate(
-        date: String
+
+    fun updateFriendExpenseDate(
+        startDate: String,
+        endDate: String
     ) {
-        _expenseToPush.value = _expenseToPush.value.copy(date = date)
-        Log.d("CJL", date)
+        _friendExpenseToPush.value =
+            _friendExpenseToPush.value.copy(startDate = startDate, endDate = endDate)
+    }
+
+    fun updateExpenseDate(
+        startDate: String,
+        endDate: String
+    ) {
+        _expenseToPush.value = _expenseToPush.value.copy(startDate = startDate, endDate = endDate)
     }
 
 
-    fun prepareFinalExpense(expenseRecord: ExpenseRecord) {
-        _expenseToPush.value = _expenseToPush.value.copy(
-            totalAmount = expenseRecord.totalAmount,
-            currency = expenseRecord.currency,
-            expenseCategory = expenseRecord.expenseCategory,
-            paidBy = expenseRecord.paidBy,
+//    fun prepareFinalExpense(expenseRecord: ExpenseRecord) {
+//        Log.d("DEBUG_EXPENSE_", "IN VM: " + expenseRecord.paidBy)
+//        _expenseToPush.value = _expenseToPush.value.copy(
+//            totalAmount = expenseRecord.totalAmount,
+//            currency = expenseRecord.currency,
+//            expenseCategory = expenseRecord.expenseCategory,
+//            paidBy = expenseRecord.paidBy,
+//            splitType = expenseRecord.splitType,
+//            // Preserve existing title and description
+//            title = expenseRecord.title,
+//            description = expenseRecord.description,
+//            splits = expenseRecord.splits
+//        )
+//        Log.d("DEBUG_EXPENSE_", expensePush.value.toString())
+//        Log.d("DEBUG_EXPENSE_", _expenseToPush.value.toString())
+//    }
+
+    fun updateFriendExpense(expenseRecord: FriendExpenseRecord) {
+        _friendExpenseToPush.value = _friendExpenseToPush.value.copy(
             splitType = expenseRecord.splitType,
+            totalAmount = expenseRecord.totalAmount,
+            splits = expenseRecord.splits,
             // Preserve existing title and description
-            title = expenseRecord.title,
-            description = expenseRecord.description,
-            splits = expenseRecord.splits
+            title = _friendExpenseToPush.value.title.ifEmpty { expenseRecord.title },
+            description = _friendExpenseToPush.value.description.ifEmpty { expenseRecord.description }
         )
     }
 
-    fun updateFriendExpense(expenseRecord: ExpenseRecord) {
+    fun updateGroupExpense(expenseRecord: ExpenseRecord) {
         _expenseToPush.value = _expenseToPush.value.copy(
             splitType = expenseRecord.splitType,
             totalAmount = expenseRecord.totalAmount,
@@ -618,13 +733,21 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    fun updateToEmpty(expenseRecord: ExpenseRecord) {
+    fun updateGroupExpenseToEmpty(expenseRecord: ExpenseRecord) {
         _expenseToPush.value = expenseRecord
+    }
+
+    fun updateGFriendExpenseToEmpty(expenseRecord: FriendExpenseRecord) {
+        _friendExpenseToPush.value = expenseRecord
     }
 
 
     fun getExpenseObject(): ExpenseRecord {
         return _expenseToPush.value
+    }
+
+    fun getFriendExpenseObject(): FriendExpenseRecord {
+        return _friendExpenseToPush.value
     }
 
     fun setDefault() {

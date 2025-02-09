@@ -11,6 +11,7 @@ import com.appdev.split.Model.Data.SplitType
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -44,6 +45,15 @@ object Utils {
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
     }
 
+    fun getYearMonth(): String {
+        return SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
+    }
+
+    fun getDay(): String {
+        return SimpleDateFormat("dd", Locale.getDefault()).format(Date())
+    }
+
+
     fun getCurrentDay(input: String?): String {
         return if (!input.isNullOrEmpty()) {
             // Parse the input date and extract the day
@@ -58,10 +68,17 @@ object Utils {
 
     fun formatDate(inputDate: String): String {
         val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val outputFormat = SimpleDateFormat("dd MMM, yyyy", Locale.getDefault())
-        val date = inputFormat.parse(inputDate) // Parse input string to Date
-        return outputFormat.format(date!!) // Format Date to desired string
+        val outputFormat = SimpleDateFormat("MMM yyyy", Locale.getDefault()) // Changed format
+
+        return try {
+            val date = inputFormat.parse(inputDate)
+            outputFormat.format(date!!)
+        } catch (e: ParseException) {
+            inputDate // Return the original string if parsing fails
+        }
     }
+
+
 
     fun extractCurrencyCode(input: String): String {
         // Find the substring within parentheses

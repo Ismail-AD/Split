@@ -21,6 +21,7 @@ import com.appdev.split.Model.Data.Bill
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
+import com.appdev.split.Model.Data.FriendExpenseRecord
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
@@ -48,7 +49,8 @@ class BillDetails : Fragment() {
     private val args: BillDetailsArgs by navArgs()
     private val mainViewModel by activityViewModels<MainViewModel>()
     private lateinit var splitDetailsAdapter: SplitDetailsAdapter
-    private var expenseRecord: ExpenseRecord = ExpenseRecord()
+    private var expenseRecord: ExpenseRecord? = ExpenseRecord()
+    private var friendExpense: FriendExpenseRecord? = FriendExpenseRecord()
     private var expensesListener: ListenerRegistration? = null
 
     @Inject
@@ -56,13 +58,13 @@ class BillDetails : Fragment() {
 
     @Inject
     lateinit var firebaseAuth: FirebaseAuth
-
+    private var friendData: FriendContact? = null
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentBillDetailsBinding.inflate(inflater, container, false)
-        mainViewModel.updateFriendExpense(ExpenseRecord())
+        setupShimmer()
         return binding.root
     }
 
@@ -73,19 +75,35 @@ class BillDetails : Fragment() {
         setupDialog()
         setupRecyclerView()
         setupClickListeners()
+        args.friendId?.let { friendId ->
+            observeFriendData()
+            mainViewModel.getFriendNameById(friendId)
+        }
 
 
         when {
             args.groupId != null -> {
-                setupGroupExpenseListener(args.billData.id, args.groupId!!)
+                mainViewModel.updateGroupExpense(ExpenseRecord())
+                args.billData?.let { setupGroupExpenseListener(it.id, args.groupId!!) }
             }
 
             args.friendData != null -> {
-                setupSingleExpenseListener(args.billData.id, args.friendData!!.friendId)
+                mainViewModel.updateFriendExpense(FriendExpenseRecord())
+
+                args.friendsExpense?.let {
+                    setupSingleExpenseListener(
+                        it.id,
+                        args.friendData!!.friendId
+                    )
+                }
             }
         }
 
-        updateUIWithExpenseRecord(args.billData)
+        if (args.billData != null) {
+            updateUIWithExpenseRecord(args.billData, null)
+        } else {
+            updateUIWithExpenseRecord(null, args.friendsExpense)
+        }
     }
 
     private fun setupDialog() {
@@ -97,6 +115,48 @@ class BillDetails : Fragment() {
         binding.splitDetailsRecyclerView.apply {
             adapter = splitDetailsAdapter
             layoutManager = LinearLayoutManager(requireContext())
+        }
+    }
+
+    private fun setupShimmer() {
+        binding.shimmerViewBar.layoutResource = R.layout.billdetails_shimmer
+        binding.shimmerViewBar.inflate()
+    }
+
+    private fun showShimmer() {
+        binding.main.visibility = View.GONE
+        binding.shimmerViewTop.startShimmer()
+    }
+
+    private fun hideShimmer() {
+        binding.shimmerViewTop.stopShimmer()
+        binding.main.visibility = View.VISIBLE
+    }
+
+    private fun observeFriendData() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            mainViewModel.FriendState.collect { state ->
+                when (state) {
+                    is UiState.Loading -> {
+                        showShimmer()
+                    }
+
+                    is UiState.Success -> {
+                        friendData = state.data
+                        hideShimmer()
+                        updateUIWithExpenseRecord(null, args.friendsExpense)
+                    }
+
+                    is UiState.Error -> {
+                        hideShimmer()
+                        showError(state.message)
+                    }
+
+                    is UiState.Stable -> {
+                        // No-op
+                    }
+                }
+            }
         }
     }
 
@@ -119,7 +179,7 @@ class BillDetails : Fragment() {
                     args.friendData != null -> {
                         val action =
                             BillDetailsDirections.actionBillDetailsToPersonalExpenseFragment(
-                                expenseRecord,
+                                friendExpense,
                                 args.friendData
                             )
                         findNavController().navigate(action)
@@ -131,17 +191,18 @@ class BillDetails : Fragment() {
                 observeOperationState()
                 when {
                     args.groupId != null -> {
-                        mainViewModel.deleteGroupExpense(
-                            expenseRecord.id,
-                            args.groupId!!
-                        )
+                        expenseRecord?.let { it1 ->
+                            mainViewModel.deleteGroupExpense(
+                                it1.id,
+                                args.groupId!!
+                            )
+                        }
                     }
 
                     args.friendData != null -> {
-                        args.friendData?.let { it1 ->
+                        friendExpense?.let { it2 ->
                             mainViewModel.deleteFriendExpenseDetail(
-                                expenseRecord.id,
-                                it1.friendId
+                                it2.id
                             )
                         }
                     }
@@ -157,7 +218,7 @@ class BillDetails : Fragment() {
         expensesListener?.remove()
         expensesListener = firestore.collection("expenses")
             .document(userId)
-            .collection(friendId)
+            .collection("friendsExpenses")
             .document(expenseId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -166,12 +227,12 @@ class BillDetails : Fragment() {
                 }
 
                 snapshot?.let { documentSnapshot ->
-                    val updatedRecord = documentSnapshot.toObject(ExpenseRecord::class.java)
+                    val updatedRecord = documentSnapshot.toObject(FriendExpenseRecord::class.java)
                     Log.d("CHKUPA", "UPDATED ONE: ${updatedRecord}")
                     Log.d("CHKUPA", "RECEIVED ONE: ${expenseRecord}")
-                    if (expenseRecord != updatedRecord) {
+                    if (friendExpense != updatedRecord) {
                         updatedRecord?.let { record ->
-                            updateUIWithExpenseRecord(record)
+                            updateUIWithExpenseRecord(null, record)
                         }
                     }
                 }
@@ -197,7 +258,7 @@ class BillDetails : Fragment() {
 
                     if (expenseRecord != updatedRecord) {
                         updatedRecord?.let { record ->
-                            updateUIWithExpenseRecord(record)
+                            updateUIWithExpenseRecord(record, null)
                         }
                     }
                 }
@@ -205,28 +266,80 @@ class BillDetails : Fragment() {
     }
 
 
-    private fun updateUIWithExpenseRecord(record: ExpenseRecord) {
-        expenseRecord = record
-
+    private fun updateUIWithExpenseRecord(
+        record: ExpenseRecord?,
+        friendExpenseRecord: FriendExpenseRecord?
+    ) {
         _binding?.let { binding ->
-            binding.title.text = record.title
-            binding.date.text = "Added on ${Utils.formatDate(record.date)}"
-            binding.totalAmount.text =
-                "${Utils.extractCurrencyCode(record.currency)}${record.totalAmount}"
-            binding.description.text = record.description
-            Glide.with(binding.root.context).load(args.friendData?.profileImageUrl)
-                .error(R.drawable.profile_imaage)
-                .placeholder(R.drawable.profile_imaage)
-                .into(binding.circularImage)
+            when {
+                record != null -> {
+                    expenseRecord = record
+                    binding.title.text = record.title
+                    binding.date.text =
+                        "Added on ${record.startDate + "-" + record.endDate}"
+                    binding.totalAmount.text =
+                        "${Utils.extractCurrencyCode(record.currency)}${record.totalAmount}"
+                    binding.description.text = record.description
 
-            splitDetailsAdapter.updateData(
-                record.splits,
-                record.splitType,
-                record.totalAmount,
-                record.currency
-            )
+                    splitDetailsAdapter.updateData(
+                        record.splits,
+                        record.splitType,
+                        record.totalAmount,
+                        record.currency
+                    )
+                    binding.circularImage.visibility = View.GONE
+                    binding.groupIcon.visibility = View.VISIBLE
+                    when (args.groupImageUrl) {
+                        "Couple" -> binding.groupIcon.setImageResource(R.drawable.love)
+                        "Home" -> binding.groupIcon.setImageResource(R.drawable.home)
+                        "Trip" -> binding.groupIcon.setImageResource(R.drawable.airplane)
+                        else -> {
+                            binding.groupIcon.setImageResource(R.drawable.airplane)
+                        }
+                    }
+                }
+
+                friendExpenseRecord != null -> {
+                    friendExpense = friendExpenseRecord
+                    binding.title.text = friendExpenseRecord.title
+                    binding.date.text =
+                        "Added on ${friendExpenseRecord.startDate + "-" + friendExpenseRecord.endDate}"
+                    binding.totalAmount.text =
+                        "${Utils.extractCurrencyCode(friendExpenseRecord.currency)}${friendExpenseRecord.totalAmount}"
+                    binding.description.text = friendExpenseRecord.description
+
+                    splitDetailsAdapter.updateData(
+                        friendExpenseRecord.splits,
+                        friendExpenseRecord.splitType,
+                        friendExpenseRecord.totalAmount,
+                        friendExpenseRecord.currency
+                    )
+                    binding.groupIcon.visibility = View.GONE
+                    binding.circularImage.visibility = View.VISIBLE
+                    if (args.friendData != null) {
+                        Glide.with(binding.root.context)
+                            .load(args.friendData?.profileImageUrl)
+                            .error(R.drawable.profile_imaage)
+                            .placeholder(R.drawable.profile_imaage)
+                            .into(binding.circularImage)
+                    } else {
+                        friendData?.let {
+                            Glide.with(binding.root.context)
+                                .load(it.profileImageUrl)
+                                .error(R.drawable.profile_imaage)
+                                .placeholder(R.drawable.profile_imaage)
+                                .into(binding.circularImage)
+                        }
+                    }
+                }
+
+                else -> {}
+            }
+
+
         }
     }
+
 
     private fun showError(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
