@@ -14,6 +14,7 @@ import com.appdev.split.Model.Data.MySpending
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Repository.Repo
+import com.appdev.split.Utils.Utils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
@@ -496,6 +497,8 @@ class MainViewModel @Inject constructor(
     fun getMonthlyExpense(
         targetDate: String
     ) {
+        Log.d("CHKAZa", "I AM CALLED with ${targetDate}")
+
         _monthBaseExpensesState.value = UiState.Loading
         viewModelScope.launch {
             try {
@@ -504,11 +507,9 @@ class MainViewModel @Inject constructor(
                         myId,
                         targetDate
                     ) { listOfExpenses, message ->
-                        if (listOfExpenses.isNotEmpty()) {
-                            _monthBaseExpensesState.value = UiState.Success(listOfExpenses)
-                        } else if (message != null) {
-                            _monthBaseExpensesState.value = UiState.Error(message)
-                        }
+
+                        _monthBaseExpensesState.value = UiState.Success(listOfExpenses)
+
                     }
                 }
             } catch (e: Exception) {

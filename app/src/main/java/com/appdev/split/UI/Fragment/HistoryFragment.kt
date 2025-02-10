@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -54,7 +55,10 @@ class HistoryFragment : Fragment() {
     var monthySpendings: Double = 0.0
 
     var expenses: List<FriendExpenseRecord> = listOf()
+    var spendingList: List<MySpending> = listOf()
     val mainViewModel by activityViewModels<MainViewModel>()
+    var selectedMonth: String = (Calendar.getInstance().get(Calendar.MONTH) + 1).toString()
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -71,10 +75,17 @@ class HistoryFragment : Fragment() {
         }
     }
 
+    companion object {
+        var hasInitialLoadOccurred = false
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mainViewModel.getMonthlyExpense(Utils.getYearMonth())
+        if (!hasInitialLoadOccurred) {
+            mainViewModel.getMonthlyExpense(Utils.getYearMonth())
+            hasInitialLoadOccurred = true
+        }
         mainViewModel.getMonthsTotalSpent(getCurrentlyVisibleMonths())
         val months = listOf(
             "Jan", "Feb", "Mar", "Apr",
@@ -95,8 +106,10 @@ class HistoryFragment : Fragment() {
                 monthYearSubset
             ).apply {
                 setOnMonthSelectedListener { selectedMonthYear ->
-                    // Handle the selected month-year
-                    mainViewModel.getMonthlyExpense(selectedMonthYear)
+                    if (selectedMonth != selectedMonthYear) {
+                        selectedMonth = selectedMonthYear
+                        mainViewModel.getMonthlyExpense(selectedMonthYear)
+                    }
                 }
             }
             chartFragments.add(chartFragment)
@@ -146,22 +159,29 @@ class HistoryFragment : Fragment() {
                         is UiState.Loading -> {
                             if (!returnShimmerState()) {
                                 showTopShimmer()
+                                if (binding.recyclerViewRecentBills.visibility == View.VISIBLE) {
+                                    val params =
+                                        binding.recyclerViewRecentBills.layoutParams as RelativeLayout.LayoutParams
+                                    params.addRule(RelativeLayout.BELOW, R.id.shimmer_view_top)
+                                    params.setMargins(0, 65, 0, 50)
+                                    binding.recyclerViewRecentBills.layoutParams = params
+
+                                }
                             }
                         }
 
                         is UiState.Success -> {
-                            isTopDataReady = true
-                            hideTopShimmer()
-                            monthySpendings = state.data.sumOf { it.totalAmountSpend }
-                            binding.totalSpent.text = String.format("%.2f", monthySpendings)
-                            updateChartData(state.data)
+                            Log.d("CHL", "Top " + state.data)
 
+                            isTopDataReady = true
+                            spendingList = state.data
+                            checkAndUpdateUI()
                         }
 
                         is UiState.Error -> {
                             isTopDataReady = true
                             hideTopShimmer()
-                            Log.d("CHL","Top "+state.message)
+                            Log.d("CHL", "Top " + state.message)
                             Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
                         }
 
@@ -179,21 +199,22 @@ class HistoryFragment : Fragment() {
                 mainViewModel.monthBaseExpensesState.collect { state ->
                     when (state) {
                         is UiState.Loading -> {
+                            Log.d("CHL", "Bottom $state")
+
                             showBottomShimmer()
                         }
 
                         is UiState.Success -> {
+                            Log.d("CHL", "Bottom ${state.data} top data : ${isTopDataReady}")
                             isMainDataReady = true
-                            if (isTopDataReady) {
-                                hideBottomShimmer()
-                                expenses = state.data
-                                updateRecyclerView(expenses)
-                            }
+                            expenses = state.data
+                            checkAndUpdateUI()
                         }
 
                         is UiState.Error -> {
                             hideBottomShimmer()
-                            Log.d("CHL","Bottom "+state.message)
+                            Log.d("CHL", "Bottom ${state.message}")
+
 
                             Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
                         }
@@ -207,9 +228,32 @@ class HistoryFragment : Fragment() {
         }
     }
 
+    private fun checkAndUpdateUI() {
+        if (isTopDataReady && isMainDataReady) {
+            hideShimmers()
+            Log.d("CJAK", spendingList.toString())
+            Log.d("CJAK", selectedMonth)
+            val selectedMonthSpending =
+                spendingList.firstOrNull { it.month == selectedMonth }?.totalAmountSpend ?: 0.0
+            binding.totalSpent.text = String.format("%.2f", selectedMonthSpending)
+            updateRecyclerView(expenses)
+            updateChartData(spendingList)
+        }
+    }
+
+    private fun hideShimmers() {
+        hideTopShimmer()
+        hideBottomShimmer()
+    }
+
     private fun updateRecyclerView(expenses: List<FriendExpenseRecord>) {
         // Check if binding is null before accessing
         val safeBinding = _binding ?: return
+
+        val params = safeBinding.recyclerViewRecentBills.layoutParams as RelativeLayout.LayoutParams
+        params.addRule(RelativeLayout.BELOW, R.id.topLayer)
+        params.setMargins(0, 0, 0, 50)
+        safeBinding.recyclerViewRecentBills.layoutParams = params
 
         if (expenses.isEmpty()) {
             safeBinding.noBill.visibility = View.VISIBLE
@@ -238,18 +282,18 @@ class HistoryFragment : Fragment() {
     private fun updateChartData(spendingList: List<MySpending>) {
         val chartData = spendingList.map { it.totalAmountSpend.toFloat() }
 
-        for (i in chartPagerAdapter.fragments.indices) {
-            val fragment = chartPagerAdapter.fragments[i] as? ChartFragment
-            val startIndex = i * 3
-            val endIndex = minOf(startIndex + 3, chartData.size)
+        chartPagerAdapter.fragments.forEachIndexed { i, fragment ->
+            (fragment as? ChartFragment)?.let { chartFragment ->
+                val startIndex = i * 3
+                val endIndex = minOf(startIndex + 3, chartData.size)
 
-            if (fragment != null && startIndex < endIndex) {
-                val subsetData = chartData.subList(startIndex, endIndex)
-                fragment.updateChartData(subsetData)
+                if (startIndex < endIndex) {
+                    val subsetData = chartData.subList(startIndex, endIndex)
+                    chartFragment.updateChartData(subsetData)
+                }
             }
         }
     }
-
 
     private fun areMonthListsDifferent(list1: List<String>, list2: List<String>): Boolean {
         // First check if sizes are different
@@ -304,9 +348,10 @@ class HistoryFragment : Fragment() {
     }
 
     private fun hideTopShimmer() {
-        binding.shimmerViewBar.visibility = View.GONE
+        binding.shimmerViewBar.visibility = View.INVISIBLE
         binding.shimmerViewTop.stopShimmer()
         binding.topLayer.visibility = View.VISIBLE
+
     }
 
     private fun showBottomShimmer() {

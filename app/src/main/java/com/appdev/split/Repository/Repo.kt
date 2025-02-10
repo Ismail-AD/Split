@@ -725,6 +725,7 @@ class Repo @Inject constructor(
                 doc.toObject(FriendExpenseRecord::class.java)
             }
 
+            Log.d("CHJAZ", expenses.toString())
             onResult(expenses, null)
         } catch (e: Exception) {
             Log.e("Repo", "Failed to fetch expenses: ${e.message}")
@@ -751,18 +752,20 @@ class Repo @Inject constructor(
                         .await()
 
                     if (data.isEmpty) {
-                        MySpending(month, 0.0)
+                        MySpending(month, month = month, year = month, 0.0)
                     } else {
                         val spending =
                             data.documents[0].toObject(MySpending::class.java) ?: MySpending(
                                 month,
+                                month = month,
+                                year = month,
                                 0.0
                             )
                         spending
                     }
                 } catch (e: Exception) {
                     Log.e("Repo", "Failed to fetch expense for $monthYear: ${e.message}")
-                    MySpending(month, 0.0)
+                    MySpending(month, month = month, year = month, 0.0)
                 }
             }
 
@@ -795,6 +798,7 @@ class Repo @Inject constructor(
                     // No existing spending record for this month - create new one
                     val newSpending = MySpending(
                         id = collectionRef.document().id,
+                        year = year, month = month,
                         totalAmountSpend = amount
                     )
                     collectionRef.document(newSpending.id).set(newSpending).await()

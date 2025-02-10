@@ -91,6 +91,7 @@ dependencies {
     implementation("io.ktor:ktor-client-android:3.0.2")
     implementation("io.github.jan-tennert.supabase:storage-kt:3.0.2")
     implementation("com.github.bumptech.glide:glide:4.15.1")
+    implementation("com.github.AnyChart:AnyChart-Android:1.1.5")
     annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
 
     implementation("com.github.ozcanalasalvar.picker:datepicker:2.0.7")

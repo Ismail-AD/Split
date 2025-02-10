@@ -5,44 +5,41 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:padding="16dp"
     tools:context=".UI.Fragment.HistoryFragment">
 
-    <RelativeLayout
-        android:id="@+id/shimmerContainer"
+
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmer_view_top"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        app:shimmer_duration="1000">
 
-        <com.facebook.shimmer.ShimmerFrameLayout
-            android:id="@+id/shimmer_view_top"
+        <ViewStub
+            android:id="@+id/shimmer_view_bar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:shimmer_duration="1000">
+            android:layout_height="wrap_content" />
+    </com.facebook.shimmer.ShimmerFrameLayout>
 
-            <ViewStub
-                android:id="@+id/shimmer_view_bar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </com.facebook.shimmer.ShimmerFrameLayout>
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmer_view_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/shimmer_view_top"
+        app:shimmer_duration="1000">
 
-        <com.facebook.shimmer.ShimmerFrameLayout
-            android:id="@+id/shimmer_view_container"
+        <ViewStub
+            android:id="@+id/shimmer_view_home"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@id/shimmer_view_top"
-            app:shimmer_duration="1000">
+            android:layout_height="wrap_content" />
+    </com.facebook.shimmer.ShimmerFrameLayout>
 
-            <ViewStub
-                android:id="@+id/shimmer_view_home"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </com.facebook.shimmer.ShimmerFrameLayout>
-    </RelativeLayout>
     <LinearLayout
         android:id="@+id/noData"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone"
-        android:gravity="center">
+        android:gravity="center"
+        android:visibility="gone">
 
         <TextView
             style="@style/billWordColor"
@@ -51,13 +48,15 @@
             android:text="No History!"
             android:textSize="18sp" />
     </LinearLayout>
+
     <LinearLayout
         android:id="@+id/topLayer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="@dimen/_10sdp"
-        android:layout_marginTop="16dp"
-        android:orientation="vertical">
+        android:layout_marginTop="10dp"
+        android:orientation="vertical"
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/totalSpent"
@@ -121,10 +120,10 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view_recent_bills"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_below="@id/noBill"
-        android:layout_marginTop="8dp"
         android:layout_marginBottom="@dimen/_50sdp"
-        android:clipToPadding="false" />
+        android:clipToPadding="false"
+        android:visibility="gone" />
 
 </RelativeLayout>

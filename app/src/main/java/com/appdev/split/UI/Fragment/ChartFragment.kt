@@ -17,14 +17,22 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
+import java.util.Calendar
 
 
 class ChartFragment : Fragment() {
-    private lateinit var binding: FragmentChartBinding
+    private var _binding: FragmentChartBinding? = null
+    private val binding get() = _binding!!
     private var months: List<String> = emptyList()
     private var values: List<Float> = emptyList()
     private var monthsWithYears: List<String> = emptyList()
     private var onMonthSelectedListener: ((String) -> Unit)? = null
+    private var pendingChartUpdate: List<Float>? = null
+    private var firstSelectionDone = false
+
+    private val currentMonthIndex = Calendar.getInstance().get(Calendar.MONTH)
+    private val currentMonthYear = "${Calendar.getInstance().get(Calendar.YEAR)}-${currentMonthIndex + 1}"
+
 
     companion object {
         fun newInstance(
@@ -41,14 +49,19 @@ class ChartFragment : Fragment() {
     }
 
     fun setOnMonthSelectedListener(listener: (String) -> Unit) {
-        onMonthSelectedListener = listener
+        onMonthSelectedListener = { monthYear ->
+            if ((!firstSelectionDone && !HistoryFragment.hasInitialLoadOccurred) || monthYear != currentMonthYear) {
+                listener(monthYear)
+                firstSelectionDone = true
+            }
+        }
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentChartBinding.inflate(inflater, container, false)
+        _binding = FragmentChartBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -60,9 +73,19 @@ class ChartFragment : Fragment() {
         monthsWithYears = arguments?.getStringArrayList("monthsWithYears") ?: emptyList()
 
         setupBarChart()
+        val initialSelection = monthsWithYears.indexOf(currentMonthYear)
+        if (initialSelection != -1) {
+            binding.barChart.highlightValue(initialSelection.toFloat(), 0)
+            onMonthSelectedListener?.invoke(currentMonthYear)
+        }
+        pendingChartUpdate?.let {
+            updateChartData(it)
+            pendingChartUpdate = null
+        }
     }
 
     private fun setupBarChart() {
+        if (!isAdded) return
         val entries = values.mapIndexed { index, value -> BarEntry(index.toFloat(), value) }
 
         val dataSet = BarDataSet(entries, "Monthly Expenses").apply {
@@ -84,36 +107,49 @@ class ChartFragment : Fragment() {
                 granularity = 1f
                 setDrawGridLines(false)
             }
+            isHighlightPerDragEnabled = false
+            setScaleEnabled(false) // Disable zooming
+            setPinchZoom(false) // Disable pinch zoom
 
             axisLeft.apply {
                 axisMinimum = 0f
-                // Consider making this dynamic based on max value
                 val maxValue = values.maxOrNull() ?: 20000f
-                axisMaximum = maxValue * 1.2f // Add 20% padding
+                axisMaximum = maxValue * 1.2f
                 setLabelCount(3, true)
                 granularity = maxValue / 2
             }
             axisRight.isEnabled = false
+
             setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
                 override fun onValueSelected(e: Entry?, h: Highlight?) {
                     e?.let {
                         val index = it.x.toInt()
-                        if (index in monthsWithYears.indices) {
+                        if (index in monthsWithYears.indices && it.y > 0f) { // Ignore bars with zero height
                             onMonthSelectedListener?.invoke(monthsWithYears[index])
                         }
                     }
                 }
 
-                override fun onNothingSelected() {
-                    // Optional: Handle when nothing is selected
-                }
+                override fun onNothingSelected() {}
             })
         }
     }
 
+
     fun updateChartData(newValues: List<Float>) {
+        if (!isAdded || _binding == null) {
+            // Store the update for later if the fragment isn't ready
+            pendingChartUpdate = newValues
+            return
+        }
+
         values = newValues
         setupBarChart()
     }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
 
 }

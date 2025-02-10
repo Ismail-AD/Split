@@ -46,7 +46,7 @@ object Utils {
     }
 
     fun getYearMonth(): String {
-        return SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
+        return SimpleDateFormat("yyyy-M", Locale.getDefault()).format(Date())
     }
 
     fun getDay(): String {
