@@ -150,6 +150,7 @@ class HistoryFragment : Fragment() {
 
     }
 
+
     private fun setupStateObservers() {
         // Observer for months total spent (Top Data)
         viewLifecycleOwner.lifecycleScope.launch {

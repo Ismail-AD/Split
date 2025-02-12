@@ -7,7 +7,9 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.appdev.split.Model.Data.Contact
+import com.appdev.split.R
 import com.appdev.split.databinding.ItemContactBinding
+import com.bumptech.glide.Glide
 
 class ContactsAdapter(
     private val onContactSelected: (Contact, Boolean) -> Unit
@@ -34,11 +36,12 @@ class ContactsAdapter(
             contactName.text = contact.name
             selected.visibility =
                 if (selectedContacts.contains(contact)) View.VISIBLE else View.GONE
-            contactNumber.text = contact.number
-            contactNumber.visibility = if (contact.isFriend) View.GONE else View.VISIBLE
             exists.visibility = if (contact.isFriend) View.VISIBLE else View.GONE
 
-
+            Glide.with(holder.binding.root.context).load(contact.imageUrl)
+                .error(R.drawable.profile_imaage)
+                .placeholder(R.drawable.profile_imaage)
+                .into(holder.binding.contactIcon)
             myContact.alpha = if (contact.isFriend) 0.5f else 1f
             myContact.isEnabled = !contact.isFriend
             root.setOnClickListener {

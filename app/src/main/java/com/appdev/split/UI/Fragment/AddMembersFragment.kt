@@ -309,6 +309,7 @@ class AddMembersFragment : Fragment() {
         selectedContactsAdapter.updateContacts(selectedContacts.toList())
         binding.selectedContactsRecyclerView.visibility =
             if (selectedContacts.isEmpty()) View.GONE else View.VISIBLE
+        binding.curveCard.visibility = if (selectedContacts.isEmpty()) View.GONE else View.VISIBLE
     }
 
     private fun observeContacts() {
@@ -373,6 +374,7 @@ class AddMembersFragment : Fragment() {
             adapter = selectedContactsAdapter
             visibility = View.GONE  // Initially hidden
         }
+        binding.curveCard.visibility = View.GONE
 
         // Setup Splitwise friends RecyclerView
         binding.splitwiseFriendsRecyclerView.apply {

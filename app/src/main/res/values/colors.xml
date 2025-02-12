@@ -23,7 +23,9 @@
     <color name="green_2">#1cc29f</color>
     <color name="grey">#EEEEEE</color>
     <color name="forest_green">#218721</color>
+    <color name="red">#FF0000</color>
 
+    <color name="figma_yellowish">#F5DB54</color>
 
     <color name="emptyState">#F3EEFF</color>
     <color name="ClickedState">#996BFF</color>
@@ -49,4 +51,6 @@
     <color name="textsmall">#6F7478</color>
     <color name="tabtext">#000000</color>
     <color name="error_red">#FF5252</color>
+
+
 </resources>

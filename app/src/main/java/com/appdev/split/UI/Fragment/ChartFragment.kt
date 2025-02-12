@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import com.appdev.split.Graph.CustomBarGraph
 import com.appdev.split.R
 import com.appdev.split.databinding.FragmentChartBinding
 import com.github.mikephil.charting.data.BarData
@@ -31,7 +32,8 @@ class ChartFragment : Fragment() {
     private var firstSelectionDone = false
 
     private val currentMonthIndex = Calendar.getInstance().get(Calendar.MONTH)
-    private val currentMonthYear = "${Calendar.getInstance().get(Calendar.YEAR)}-${currentMonthIndex + 1}"
+    private val currentMonthYear =
+        "${Calendar.getInstance().get(Calendar.YEAR)}-${currentMonthIndex + 1}"
 
 
     companion object {
@@ -84,57 +86,38 @@ class ChartFragment : Fragment() {
         }
     }
 
+
+    // In ChartFragment
     private fun setupBarChart() {
         if (!isAdded) return
-        val entries = values.mapIndexed { index, value -> BarEntry(index.toFloat(), value) }
 
-        val dataSet = BarDataSet(entries, "Monthly Expenses").apply {
-            color = ContextCompat.getColor(requireContext(), R.color.myFilledState)
-            valueTextSize = 12f
-            highLightColor = ContextCompat.getColor(requireContext(), R.color.ClickedState)
-            isHighlightEnabled = true
-            highLightAlpha = 255
+        val customBars = values.mapIndexed { index, value ->
+            CustomBarGraph.BarData(
+                value = value,
+                label = months[index]
+            )
         }
 
         binding.barChart.apply {
-            data = BarData(dataSet)
-            description.isEnabled = false
-            animateY(1000)
-            setFitBars(true)
+            // Set maximum value with 20% padding
+            val maxValue = 1000f
+            setMaxValue(maxValue)
+            setYAxisConfig(0f, maxValue * 1.2f, 3)
+            // Set data and animate
+            setOnBarClickListener(object : CustomBarGraph.OnBarClickListener {
 
-            xAxis.apply {
-                valueFormatter = IndexAxisValueFormatter(months)
-                granularity = 1f
-                setDrawGridLines(false)
-            }
-            isHighlightPerDragEnabled = false
-            setScaleEnabled(false) // Disable zooming
-            setPinchZoom(false) // Disable pinch zoom
 
-            axisLeft.apply {
-                axisMinimum = 0f
-                val maxValue = values.maxOrNull() ?: 20000f
-                axisMaximum = maxValue * 1.2f
-                setLabelCount(3, true)
-                granularity = maxValue / 2
-            }
-            axisRight.isEnabled = false
-
-            setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
-                override fun onValueSelected(e: Entry?, h: Highlight?) {
-                    e?.let {
-                        val index = it.x.toInt()
-                        if (index in monthsWithYears.indices && it.y > 0f) { // Ignore bars with zero height
-                            onMonthSelectedListener?.invoke(monthsWithYears[index])
-                        }
+                override fun onBarClick(barData: CustomBarGraph.BarData, position: Int) {
+                    if (position in monthsWithYears.indices && barData.value > 0f) {
+                        onMonthSelectedListener?.invoke(monthsWithYears[position])
                     }
                 }
-
-                override fun onNothingSelected() {}
             })
+
+            // Set data
+            setData(customBars)
         }
     }
-
 
     fun updateChartData(newValues: List<Float>) {
         if (!isAdded || _binding == null) {
@@ -143,9 +126,11 @@ class ChartFragment : Fragment() {
             return
         }
 
+
         values = newValues
         setupBarChart()
     }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

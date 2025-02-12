@@ -6,9 +6,9 @@
     tools:context=".UI.Fragment.ChartFragment">
 
 
-    <com.github.mikephil.charting.charts.BarChart
+    <com.appdev.split.Graph.CustomBarGraph
         android:id="@+id/barChart"
         android:layout_width="match_parent"
-        android:layout_height="250dp"/>
+        android:layout_height="250dp" />
 
 </FrameLayout>

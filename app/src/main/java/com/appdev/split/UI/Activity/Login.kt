@@ -3,6 +3,7 @@ package com.appdev.split.UI.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import com.appdev.split.Model.Data.UserEntity
@@ -35,8 +36,10 @@ class Login : AppCompatActivity() {
             if (email.trim().isNotEmpty()
                 && password.trim().isNotEmpty()
             ) {
+                showLoading()
                 val userEntity = UserEntity("", email, password)
                 mainViewModel.startLogin(userEntity) { message, success ->
+                    hideLoading()
                     if (success) {
                         val intent2 = Intent(this, EntryActivity::class.java)
                         startActivity(intent2)
@@ -48,6 +51,28 @@ class Login : AppCompatActivity() {
             } else {
                 Toast.makeText(this, "fill all the fields", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun showLoading() {
+        binding.loadingLayout.apply {
+            visibility = View.VISIBLE
+            animate()
+                .alpha(1f)
+                .setDuration(200)
+                .start()
+        }
+    }
+
+    private fun hideLoading() {
+        binding.loadingLayout.apply {
+            animate()
+                .alpha(0f)
+                .setDuration(200)
+                .withEndAction {
+                    visibility = View.GONE
+                }
+                .start()
         }
     }
 }

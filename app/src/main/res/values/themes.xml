@@ -3,6 +3,7 @@
     <style name="Base.Theme.Split" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+
     </style>
 
     <style name="CircularImageView">
@@ -11,6 +12,7 @@
     </style>
 
     <style name="Theme.Split" parent="Base.Theme.Split" />
+
     <style name="CircleImageView" parent="Widget.MaterialComponents.ShapeableImageView">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
@@ -19,6 +21,7 @@
     <style name="bottom_menu">
         <item name="menu">@menu/bottom_menu</item>
     </style>
+
     <style name="Background">
         <item name="backgroundColor">@color/white</item>
     </style>
@@ -26,18 +29,29 @@
     <style name="indicatorColor">
         <item name="indicatorColor">#c8c4ed</item>
     </style>
+
     <style name="WordColor">
         <item name="android:textColor">#0288D1</item>
     </style>
+
     <style name="billWordColor">
         <item name="android:textColor">#1C1C1E</item>
     </style>
+    <style name="buttonBackground">
+        <item name="android:backgroundTint">@color/myFilledState</item>
+    </style>
+    <style name="CancelButtonBackground">
+        <item name="android:backgroundTint">@color/grey</item>
+    </style>
+
     <style name="iconTintColor">
         <item name="tint">#1C1C1E</item>
     </style>
+
     <style name="backBillData">
         <item name="android:background">@drawable/rounded_item_background</item>
     </style>
+
     <style name="CircularImageStyle" parent="ShapeAppearance.MaterialComponents.SmallComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
@@ -51,5 +65,22 @@
         <item name="spinner_popup_background">@color/white</item>
     </style>
 
+    <style name="CustomTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/black</item>
+        <item name="boxBackgroundColor">@color/white</item>
+        <item name="hintTextColor">@color/myFilledState</item>
+        <item name="android:textColorHint">@color/myFilledState</item>
+        <item name="cursorErrorColor">@color/myFilledState</item>
+        <item name="cursorColor">@color/myFilledState</item>
+
+        <item name="endIconTint">@color/myFilledState</item>
+        <item name="startIconTint">@color/myFilledState</item>
+    </style>
+
+    <style name="CustomTextInputEditText">
+        <item name="android:textColor">@color/myFilledState</item>
+        <item name="android:textColorHint">@color/myFilledState</item>
+        <item name="android:textCursorDrawable">@drawable/day_cursor</item>
+    </style>
 
 </resources>

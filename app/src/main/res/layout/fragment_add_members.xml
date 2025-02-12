@@ -40,20 +40,40 @@
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/selectedContactsRecyclerView"
+    <androidx.cardview.widget.CardView
+        android:id="@+id/curveCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/appBarLayout"
+        android:layout_marginHorizontal="@dimen/_10sdp"
         android:layout_marginBottom="8dp"
-        android:orientation="horizontal"
-        android:paddingHorizontal="@dimen/_10sdp" />
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/curved_background"
+            android:paddingVertical="20dp"
+            android:paddingHorizontal="8dp">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/selectedContactsRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:clipToPadding="false"
+                android:paddingHorizontal="@dimen/_10sdp" />
+
+        </FrameLayout>
+
+    </androidx.cardview.widget.CardView>
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/selectedContactsRecyclerView"
+        android:layout_below="@id/curveCard"
         android:layout_above="@id/fabAddMembers">
 
         <LinearLayout

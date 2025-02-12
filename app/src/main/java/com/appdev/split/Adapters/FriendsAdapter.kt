@@ -13,6 +13,7 @@ import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.R
 import com.appdev.split.databinding.FriendsLayoutBinding
+import com.bumptech.glide.Glide
 
 class FriendsAdapter(
     private val enableSelection: Boolean = false,
@@ -49,6 +50,9 @@ class FriendsAdapter(
         fun bind(friend: FriendContact, isSelected: Boolean, isMember: Boolean) {
             binding.apply {
                 friendName.text = friend.name
+                Glide.with(binding.root.context).load(friend.profileImageUrl).error(R.drawable.profile_imaage)
+                    .placeholder(R.drawable.profile_imaage)
+                    .into(binding.profileImage)
 
                 // Apply green background for existing members
                 friendName.setTextColor(

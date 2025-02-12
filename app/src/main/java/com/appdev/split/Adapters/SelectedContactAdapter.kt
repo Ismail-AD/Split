@@ -5,6 +5,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.appdev.split.Model.Data.Contact
 import com.appdev.split.databinding.ItemSelectedContactBinding
 import android.view.ViewGroup
+import com.appdev.split.R
+import com.bumptech.glide.Glide
 
 class SelectedContactsAdapter(
     private var contacts: List<Contact>,
@@ -30,6 +32,10 @@ class SelectedContactsAdapter(
             closeButton.setOnClickListener {
                 onRemoveClick(contact)
             }
+            Glide.with(holder.binding.root.context).load(contact.imageUrl)
+                .error(R.drawable.profile_imaage)
+                .placeholder(R.drawable.profile_imaage)
+                .into(holder.binding.contactIcon)
         }
     }
 

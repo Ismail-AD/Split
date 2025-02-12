@@ -4,37 +4,73 @@
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
     </style>
+
     <style name="CircularImageView">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
+
     <style name="CircleImageView" parent="Widget.MaterialComponents.ShapeableImageView">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
+
     <style name="bottom_menu">
         <item name="menu">@menu/bottom_night</item>
     </style>
+
     <style name="Background">
         <item name="backgroundColor">#26272d</item>
     </style>
+
     <style name="indicatorColor">
         <item name="indicatorColor">#26272d</item>
     </style>
+
     <style name="WordColor">
         <item name="android:textColor">@color/white</item>
     </style>
+
     <style name="backBillData">
         <item name="android:background">@drawable/round_item_background_night</item>
     </style>
+
     <style name="billWordColor">
         <item name="android:textColor">#FFFFFF</item>
     </style>
+
     <style name="CircularImageStyle" parent="ShapeAppearance.MaterialComponents.SmallComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
+
     <style name="iconTintColor">
         <item name="tint">#1C1C1E</item>
+    </style>
+
+
+    <style name="buttonBackground">
+        <item name="android:backgroundTint">@color/ClickedState</item>
+    </style>
+    <style name="CancelButtonBackground">
+        <item name="android:backgroundTint">@color/grey</item>
+    </style>
+
+    <!-- EDIT TEXT  -->
+    <style name="CustomTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/text_stroke</item>
+        <item name="boxBackgroundColor">@android:color/transparent</item>
+        <item name="hintTextColor">@color/grey</item>
+        <item name="android:textColorHint">@color/grey</item>
+        <item name="cursorErrorColor">@color/white</item>
+        <item name="cursorColor">@color/white</item>
+
+        <item name="endIconTint">@color/grey</item>
+        <item name="startIconTint">@color/grey</item>
+    </style>
+
+    <style name="CustomTextInputEditText">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textColorHint">@color/white</item>
     </style>
 </resources>

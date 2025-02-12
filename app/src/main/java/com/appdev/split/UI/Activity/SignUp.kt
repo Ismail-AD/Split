@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
@@ -41,7 +42,7 @@ class SignUp : AppCompatActivity() {
                     .isNotEmpty() && binding.etSignUpEmail.editText?.text!!.isNotEmpty()
                 && binding.etSignUpPassword.editText?.text!!.isNotEmpty()
             ) {
-
+                showLoading()
                 val imageBytes = uri?.let { uri ->
                     try {
                         contentResolver.openInputStream(uri)?.use {
@@ -64,6 +65,7 @@ class SignUp : AppCompatActivity() {
                 )
 
                 mainViewModel.startSignUp(userEntity = userEntity,uri=uri, imageBytes = imageBytes) { message, success ->
+                    hideLoading()
                     if (success) {
                         val intent2 = Intent(this, Login::class.java)
                         intent2.putExtra("email", userEntity.email)
@@ -94,6 +96,28 @@ class SignUp : AppCompatActivity() {
         }
 
 
+    }
+
+    private fun showLoading() {
+        binding.loadingLayout.apply {
+            visibility = View.VISIBLE
+            animate()
+                .alpha(1f)
+                .setDuration(200)
+                .start()
+        }
+    }
+
+    private fun hideLoading() {
+        binding.loadingLayout.apply {
+            animate()
+                .alpha(0f)
+                .setDuration(200)
+                .withEndAction {
+                    visibility = View.GONE
+                }
+                .start()
+        }
     }
 
     private fun openGallery() {

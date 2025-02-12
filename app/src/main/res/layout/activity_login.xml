@@ -2,9 +2,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Background"
     android:layout_width="match_parent"
-    android:layout_gravity="center_horizontal"
     android:layout_height="match_parent"
+    android:layout_gravity="center_horizontal"
     tools:context=".UI.Activity.Login">
 
     <ImageView
@@ -13,51 +14,51 @@
         android:layout_height="100dp"
         android:layout_margin="@dimen/dp_10"
         android:src="@drawable/logomark_2"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toTopOf="parent" />
 
 
     <com.google.android.material.textfield.TextInputLayout
 
         android:id="@+id/etEmail"
+        style="@style/CustomTextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/dp_10"
-        app:layout_constraintStart_toStartOf="parent"
         android:paddingHorizontal="@dimen/dp_15"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/ivLogo">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etLoginEmail"
+            android:textCursorDrawable="@drawable/day_cursor"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/your_email_address"
-            android:inputType="textEmailAddress"
-            android:textColor="@color/black"
-            android:textColorHint="@color/green_2" />
+            android:inputType="textEmailAddress" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/etPassword"
+        style="@style/CustomTextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/dp_10"
+        android:paddingHorizontal="@dimen/dp_15"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/etEmail"
-        android:paddingHorizontal="@dimen/dp_15"
         app:passwordToggleEnabled="true">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etLoginPassword"
+            style="@style/CustomTextInputEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/your_password"
-            android:inputType="textPassword"
-            android:textColor="@color/black"
-            android:textColorHint="@color/green_2" />
+            android:inputType="textPassword" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -81,9 +82,9 @@
                 android:id="@+id/btnBackLogin"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_margin="20dp"
-                android:backgroundTint="@color/grey"
+                android:layout_weight="1"
+                style="@style/CancelButtonBackground"
                 android:text="@string/back"
                 android:textColor="@color/black" />
 
@@ -91,9 +92,9 @@
                 android:id="@+id/btnDoneLogin"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_margin="20dp"
-                android:backgroundTint="@color/green_2"
+                android:layout_weight="1"
+                style="@style/buttonBackground"
                 android:text="@string/done"
                 android:textColor="@color/white" />
 
@@ -108,9 +109,55 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="25dp"
         android:text="@string/forgot_password"
+        style="@style/billWordColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/buttonLayout" />
+
+    <FrameLayout
+        android:id="@+id/loadingLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#99000000" />
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            app:cardBackgroundColor="@color/ClickedState"
+            app:cardCornerRadius="10dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <ProgressBar
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:indeterminateTint="@color/white" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Please wait..."
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+    </FrameLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
