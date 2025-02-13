@@ -64,7 +64,9 @@ class BillDetails : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentBillDetailsBinding.inflate(inflater, container, false)
-        setupShimmer()
+        args.friendId?.let {
+            setupShimmer()
+        }
         return binding.root
     }
 

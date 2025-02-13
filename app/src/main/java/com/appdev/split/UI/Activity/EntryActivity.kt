@@ -7,6 +7,7 @@ import android.view.View
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.appdev.split.R
+import com.appdev.split.Utils.ThemeUtils
 import com.appdev.split.databinding.ActivityEntryBinding
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -18,7 +19,11 @@ class EntryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityEntryBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        if (ThemeUtils.isDarkMode(this)) {
+            ThemeUtils.setStatusBarDark(this, R.color.darkBackground)
+        } else {
+            ThemeUtils.setStatusBarLight(this, R.color.screenBack)
+        }
         val hostFragment =
             supportFragmentManager.findFragmentById(binding.navHostFragment.id) as NavHostFragment
 

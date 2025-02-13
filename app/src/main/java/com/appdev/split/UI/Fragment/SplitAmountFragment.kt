@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.appdev.split.Adapters.EQUAL_SPLIT_POSITION
 import com.appdev.split.Adapters.MyPagerAdapter
@@ -62,6 +63,9 @@ class SplitAmountFragment : Fragment() {
 
         }
 
+        binding.closeIcon.setOnClickListener {
+            findNavController().navigateUp()
+        }
 
 
         val pagerAdapter = MyPagerAdapter(

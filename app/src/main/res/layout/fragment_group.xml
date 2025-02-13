@@ -37,21 +37,21 @@
     </LinearLayout>
 
 
-    <TextView
-        android:id="@+id/overallStatus"
-        style="@style/billWordColor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:text="Overall, you are owed $611.50"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+<!--    <TextView-->
+<!--        android:id="@+id/overallStatus"-->
+<!--        style="@style/billWordColor"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:visibility="gone"-->
+<!--        android:text="Overall, you are owed $611.50"-->
+<!--        android:textSize="18sp"-->
+<!--        android:textStyle="bold" />-->
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/expensesRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/overallStatus"
+        android:layout_below="@id/noData"
         android:paddingTop="10dp"
         android:visibility="gone" />
 
@@ -67,7 +67,7 @@
         android:layout_marginBottom="@dimen/_50sdp"
         android:text="Start a new group"
         android:textColor="@color/white"
-        app:backgroundTint="@color/green"
+        style="@style/FloatButtonBackground"
         app:icon="@drawable/addgroup"
         app:iconTint="@color/white" />
 

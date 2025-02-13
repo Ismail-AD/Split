@@ -14,13 +14,23 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
+    <style name="singleIconTintColor">
+        <item name="tint">#1C1C1E</item>
+    </style>
+    <style name="hintSpinnerWordColor">
+        <item name="android:textColorHint">@color/white</item>
+        <item name="android:background">@drawable/srch_view_back_night</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="spinner_arrow_tint">@color/white</item>
+        <item name="spinner_popup_background">@color/darkItemBack</item>
+    </style>
 
     <style name="bottom_menu">
         <item name="menu">@menu/bottom_night</item>
     </style>
 
     <style name="Background">
-        <item name="backgroundColor">#26272d</item>
+        <item name="android:background">#26272d</item>
     </style>
 
     <style name="indicatorColor">
@@ -31,26 +41,44 @@
         <item name="android:textColor">@color/white</item>
     </style>
 
+    <style name="BillDetailBackground">
+        <item name="android:background">@drawable/bill_detail_back</item>
+    </style>
     <style name="backBillData">
         <item name="android:background">@drawable/round_item_background_night</item>
     </style>
-
+    <style name="FloatButtonBackground">
+        <item name="backgroundTint">@color/ClickedState</item>
+    </style>
     <style name="billWordColor">
         <item name="android:textColor">#FFFFFF</item>
     </style>
+    <style name="switchTheme">
+        <item name="trackTint">@drawable/track_selector</item>
+        <item name="thumbTint">@drawable/thumb_night</item>
+    </style>
+
 
     <style name="CircularImageStyle" parent="ShapeAppearance.MaterialComponents.SmallComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
-
-    <style name="iconTintColor">
-        <item name="tint">#1C1C1E</item>
+    <style name="CommonBackground">
+        <item name="android:background">@color/darkItemBack</item>
     </style>
-
+    <style name="iconTintColor">
+        <item name="tint">@color/white</item>
+    </style>
+    <style name="drawableTint">
+        <item name="android:drawableTint">@color/white</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
 
     <style name="buttonBackground">
         <item name="android:backgroundTint">@color/ClickedState</item>
+    </style>
+    <style name="CardButtonBackground">
+        <item name="cardBackgroundColor">@color/ClickedState</item>
     </style>
     <style name="CancelButtonBackground">
         <item name="android:backgroundTint">@color/grey</item>

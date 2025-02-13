@@ -68,8 +68,9 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        mainViewModel.setDefault()
+        mainViewModel.setFriendDefault()
         mainViewModel.updateStateToStable()
+
         return binding.root
     }
 

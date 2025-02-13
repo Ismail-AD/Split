@@ -4,6 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
+    style="@style/Background"
     android:layout_height="match_parent"
     tools:context=".UI.Fragment.AmountEquallyFragment">
 
@@ -42,7 +43,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="$50.00/person"
-                android:textColor="@color/black"
+                style="@style/billWordColor"
                 android:textStyle="bold" />
 
             <TextView
@@ -58,6 +59,7 @@
             android:id="@+id/selectAllCheckBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            style="@style/billWordColor"
             android:checked="true"
             android:text="All" />
     </LinearLayout>

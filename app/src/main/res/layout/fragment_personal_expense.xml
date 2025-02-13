@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -52,13 +53,17 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/searchField"
+        style="@style/CustomTextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:visibility="gone"
         android:layout_marginBottom="16dp">
 
         <com.google.android.material.textfield.TextInputEditText
+            style="@style/CustomTextInputEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+
             android:hint="Search friends"
             android:inputType="text" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -105,7 +110,7 @@
                 android:paddingHorizontal="@dimen/_25sdp"
                 android:paddingVertical="@dimen/_10sdp"
                 android:text="Add friends"
-                android:textColor="@android:color/black"
+                style="@style/drawableTint"
                 android:textSize="16sp" />
 
         </LinearLayout>
@@ -170,47 +175,50 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/title"
+        style="@style/CustomTextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+
         android:layout_marginTop="@dimen/dp_10">
 
         <com.google.android.material.textfield.TextInputEditText
+            style="@style/CustomTextInputEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Title"
-            android:inputType="textPersonName"
-            android:textColor="@color/black"
-            android:textColorHint="@color/green_2" />
+            android:inputType="textPersonName" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/description"
+        style="@style/CustomTextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+
         android:layout_marginTop="@dimen/dp_5">
 
         <com.google.android.material.textfield.TextInputEditText
+            style="@style/CustomTextInputEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Descritpion"
-            android:inputType="text"
-            android:textColor="@color/black"
-            android:textColorHint="@color/green_2" />
+            android:inputType="text" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/amount"
+        style="@style/CustomTextInputLayout"
         android:layout_width="match_parent"
+
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/dp_5">
 
         <com.google.android.material.textfield.TextInputEditText
+            style="@style/CustomTextInputEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Amount"
-            android:inputType="numberSigned"
-            android:textColor="@color/black"
-            android:textColorHint="@color/green_2" />
+            android:inputType="numberSigned" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <LinearLayout
@@ -282,12 +290,13 @@
         app:spinner_popup_animation="dropdown"
         app:spinner_popup_elevation="14dp"
         app:spinner_popup_height="300dp" />
+
     <androidx.cardview.widget.CardView
         android:id="@+id/SplitType"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/_10sdp"
-        app:cardBackgroundColor="@color/green_2"
+        style="@style/CardButtonBackground"
         app:cardCornerRadius="@dimen/_5sdp">
 
         <LinearLayout

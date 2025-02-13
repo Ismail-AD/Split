@@ -3,6 +3,8 @@ package com.appdev.split.UI.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.appdev.split.R
+import com.appdev.split.Utils.ThemeUtils
 import com.appdev.split.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
@@ -14,7 +16,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        if (ThemeUtils.isDarkMode(this)) {
+            ThemeUtils.setStatusBarDark(this, R.color.darkBackground)
+        } else {
+            ThemeUtils.setStatusBarLight(this, R.color.screenBack)
+        }
         var firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
 
         if (firebaseAuth.currentUser != null) {

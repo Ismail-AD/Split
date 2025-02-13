@@ -13,6 +13,9 @@
     <color name="colorIcon">#0288D1</color>
     <color name="yellowback">#FFE082</color>
     <color name="itemBack">#1C1C1E</color>
+    <color name="dropDownBack">#292B33</color>
+    <color name="screenBack">#F3F3F5</color>
+    <color name="darkItemBack">#31333D</color>
 
 
     <color name="mint_leaf">#00b894</color>
@@ -35,6 +38,7 @@
     <color name="colorAccent">#D81B60</color>
     <color name="official_splitwise_orange">#FF5216</color>
     <color name="myFilledState">#181A1F</color>
+    <color name="darkBackground">#26272d</color>
 
 
     <color name="color_grey_soft">#BCBEC1</color>
@@ -47,6 +51,7 @@
     <color name="chip_unselected_border">#E0E0E0</color>
     <color name="primary">#FF4B39</color>
     <color name="green">#328C75</color>
+    <color name="myback">#E0E0E0</color>
 
     <color name="textsmall">#6F7478</color>
     <color name="tabtext">#000000</color>

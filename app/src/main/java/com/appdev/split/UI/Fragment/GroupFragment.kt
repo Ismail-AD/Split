@@ -89,7 +89,7 @@ class GroupFragment : Fragment() {
             binding.noData.visibility = View.VISIBLE
         } else {
             binding.noData.visibility = View.GONE
-            binding.overallStatus.visibility = View.VISIBLE
+//            binding.overallStatus.visibility = View.VISIBLE
             binding.expensesRecyclerView.visibility = View.VISIBLE
             // Update adapter with the new data
             expenseAdapter = ExpenseAdapter(groups, ::move)

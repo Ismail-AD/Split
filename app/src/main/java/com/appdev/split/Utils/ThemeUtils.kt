@@ -9,14 +9,18 @@ import androidx.annotation.ColorRes
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 
+
 object ThemeUtils {
     private const val PREF_NAME = "theme_prefs"
     private const val PREF_THEME_MODE = "theme_mode"
+    private const val THEME_MODE_LIGHT = "light"
+    private const val THEME_MODE_DARK = "dark"
+    private const val THEME_MODE_SYSTEM = "system"
 
     enum class ThemeMode(val value: String) {
-        SYSTEM("system"),
-        LIGHT("light"),
-        DARK("dark")
+        SYSTEM(THEME_MODE_SYSTEM),
+        LIGHT(THEME_MODE_LIGHT),
+        DARK(THEME_MODE_DARK)
     }
 
     fun setStatusBarLight(activity: Activity, @ColorRes color: Int) {
@@ -46,21 +50,33 @@ object ThemeUtils {
             .putString(PREF_THEME_MODE, themeMode.value)
             .apply()
 
-        applyTheme(themeMode)
+        applyTheme(context, themeMode)
     }
 
     fun getCurrentThemeMode(context: Context): ThemeMode {
         val savedMode = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-            .getString(PREF_THEME_MODE, ThemeMode.SYSTEM.value)
+            .getString(PREF_THEME_MODE, THEME_MODE_SYSTEM) // Default to system theme
         return ThemeMode.entries.find { it.value == savedMode } ?: ThemeMode.SYSTEM
     }
 
-    private fun applyTheme(themeMode: ThemeMode) {
+
+    private fun applyTheme(context: Context, themeMode: ThemeMode) {
         when (themeMode) {
             ThemeMode.LIGHT -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
             ThemeMode.DARK -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            ThemeMode.SYSTEM -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+            ThemeMode.SYSTEM -> {
+                // For system mode, check the current system theme
+                val currentNightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+                when (currentNightMode) {
+                    Configuration.UI_MODE_NIGHT_YES -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+                    Configuration.UI_MODE_NIGHT_NO -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                    else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+                }
+            }
         }
+    }
+    fun isDarkModeActivated(context: Context): Boolean {
+        return getCurrentThemeMode(context) == ThemeMode.DARK
     }
 
     fun isDarkMode(context: Context): Boolean {

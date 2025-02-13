@@ -26,7 +26,7 @@
         app:cnb_addLeftInset="false"
         app:cnb_addRightInset="false"
         app:cnb_addTopInset="false"
-        android:background="#f2f3f5"
+        style="@style/CommonBackground"
         app:cnb_unselectedColor="#A5C3C6"
         app:cnb_radius="8dp"
         app:cnb_iconSize="24dp"

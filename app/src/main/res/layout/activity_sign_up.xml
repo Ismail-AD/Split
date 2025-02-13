@@ -2,10 +2,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".UI.Activity.SignUp">
-
 
 
     <ImageView
@@ -14,16 +14,16 @@
         android:layout_height="100dp"
         android:layout_margin="@dimen/dp_10"
         android:src="@drawable/logomark_2"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
         android:id="@+id/imageParent"
-        app:layout_constraintTop_toBottomOf="@id/ivLogo"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center">
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/ivLogo">
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/ivImageTakerSplitWise"
@@ -32,38 +32,39 @@
             android:layout_margin="@dimen/dp_10"
             android:scaleType="centerCrop"
             android:src="@drawable/profile_imaage"
-            app:shapeAppearanceOverlay="@style/CircleImageView"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
+            app:layout_constraintTop_toTopOf="parent"
+            app:shapeAppearanceOverlay="@style/CircleImageView" />
 
 
         <ImageView
             android:id="@+id/ivCameraSplitWise"
             android:layout_width="32dp"
             android:layout_height="32dp"
+            android:background="@drawable/circle_background"
             android:padding="4dp"
             android:src="@drawable/ic_baseline_camera_alt_24"
             app:layout_constraintBottom_toBottomOf="@id/ivImageTakerSplitWise"
             app:layout_constraintEnd_toEndOf="@id/ivImageTakerSplitWise"
             app:layout_constraintHorizontal_bias="1.0"
-            android:background="@drawable/circle_background"
             app:layout_constraintVertical_bias="1.0" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/etSignUpFullName"
+        style="@style/CustomTextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/dp_10"
-        app:layout_constraintTop_toBottomOf="@id/imageParent"
         android:paddingHorizontal="@dimen/dp_15"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/imageParent">
 
         <com.google.android.material.textfield.TextInputEditText
+            style="@style/CustomTextInputEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/full_name"
@@ -73,18 +74,19 @@
     </com.google.android.material.textfield.TextInputLayout>
 
 
-
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/etSignUpEmail"
+        style="@style/CustomTextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/dp_10"
         android:paddingHorizontal="@dimen/dp_15"
-        app:layout_constraintTop_toBottomOf="@id/etSignUpFullName"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/etSignUpFullName">
 
         <com.google.android.material.textfield.TextInputEditText
+            style="@style/CustomTextInputEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/your_email_address"
@@ -95,16 +97,18 @@
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/etSignUpPassword"
+        style="@style/CustomTextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/dp_10"
         android:paddingHorizontal="@dimen/dp_15"
-        app:layout_constraintTop_toBottomOf="@id/etSignUpEmail"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etSignUpEmail"
         app:passwordToggleEnabled="true">
 
         <com.google.android.material.textfield.TextInputEditText
+            style="@style/CustomTextInputEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/your_password"
@@ -123,25 +127,28 @@
         app:layout_constraintTop_toBottomOf="@+id/etSignUpPassword">
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:orientation="horizontal">
 
             <Button
                 android:id="@+id/btnBackSign"
-                android:layout_width="wrap_content"
+                style="@style/CancelButtonBackground"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:backgroundTint="@color/grey"
+                android:layout_margin="20dp"
+                android:layout_weight="1"
                 android:text="@string/back"
                 android:textColor="@color/black" />
 
             <Button
                 android:id="@+id/btnDoneSign"
-                android:layout_width="wrap_content"
+                style="@style/buttonBackground"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="40dp"
-                android:backgroundTint="@color/forest_green"
+                android:layout_margin="20dp"
+                android:layout_weight="1"
                 android:text="@string/done"
                 android:textColor="@color/white" />
         </LinearLayout>
@@ -150,19 +157,22 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:paddingHorizontal="@dimen/_30sdp"
+        android:textAlignment="center"
         android:layout_marginTop="@dimen/dp_25"
-        android:layout_marginHorizontal="@dimen/_20sdp"
         android:text="@string/by_signing_up"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        style="@style/billWordColor"
         app:layout_constraintTop_toBottomOf="@+id/buttonLayout" />
 
     <FrameLayout
         android:id="@+id/loadingLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone"
-        android:background="#80000000">
+        android:background="#80000000"
+        android:visibility="gone">
+
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -172,8 +182,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            app:cardCornerRadius="10dp"
-            app:cardBackgroundColor="@color/ClickedState">
+            app:cardBackgroundColor="@color/ClickedState"
+            app:cardCornerRadius="10dp">
 
             <LinearLayout
                 android:layout_width="wrap_content"

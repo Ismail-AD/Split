@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:orientation="vertical"
     android:layout_height="match_parent"
+    style="@style/Background"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".UI.Fragment.SplitAmountFragment">
 
@@ -39,7 +40,7 @@
         android:id="@+id/tabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?android:attr/windowBackground"
+        style="@style/Background"
         app:tabGravity="fill"
         app:tabIndicatorHeight="4dp"
         app:tabIndicatorFullWidth="true"

@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
+    style="@style/Background"
     android:scrollbars="vertical"
     tools:context=".UI.Fragment.AddGrpExpenseFragment">
 
@@ -53,12 +54,16 @@
         android:id="@+id/searchField"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        style="@style/CustomTextInputLayout"
+
         android:layout_marginBottom="16dp"
         android:visibility="gone">
 
         <com.google.android.material.textfield.TextInputEditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            style="@style/CustomTextInputEditText"
+
             android:hint="Search Members"
             android:inputType="text" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -108,7 +113,7 @@
                 android:paddingHorizontal="@dimen/_25sdp"
                 android:paddingVertical="@dimen/_10sdp"
                 android:text="Add Members"
-                android:textColor="@android:color/black"
+                style="@style/drawableTint"
                 android:textSize="16sp" />
 
         </LinearLayout>
@@ -176,20 +181,23 @@
         android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        style="@style/CustomTextInputLayout"
+
         android:layout_marginTop="@dimen/dp_10">
 
         <com.google.android.material.textfield.TextInputEditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Title"
-            android:inputType="textPersonName"
-            android:textColor="@color/black"
-            android:textColorHint="@color/green_2" />
+            style="@style/CustomTextInputEditText"
+            android:inputType="textPersonName" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/description"
         android:layout_width="match_parent"
+        style="@style/CustomTextInputLayout"
+
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/dp_10">
 
@@ -197,24 +205,25 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Descritpion"
-            android:inputType="text"
-            android:textColor="@color/black"
-            android:textColorHint="@color/green_2" />
+            style="@style/CustomTextInputEditText"
+
+            android:inputType="text" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/amount"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        style="@style/CustomTextInputLayout"
+
         android:layout_marginTop="@dimen/dp_10">
 
         <com.google.android.material.textfield.TextInputEditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Amount"
-            android:inputType="numberSigned"
-            android:textColor="@color/black"
-            android:textColorHint="@color/green_2" />
+            style="@style/CustomTextInputEditText"
+            android:inputType="numberSigned" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <LinearLayout
@@ -293,7 +302,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/_10sdp"
-        app:cardBackgroundColor="@color/green_2"
+        style="@style/CardButtonBackground"
         app:cardCornerRadius="@dimen/_5sdp">
 
         <LinearLayout

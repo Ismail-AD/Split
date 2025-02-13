@@ -8,6 +8,8 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Model.ViewModel.MainViewModel
+import com.appdev.split.R
+import com.appdev.split.Utils.ThemeUtils
 import com.appdev.split.databinding.ActivityLoginBinding
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -21,7 +23,11 @@ class Login : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        if (ThemeUtils.isDarkMode(this)) {
+            ThemeUtils.setStatusBarDark(this, R.color.darkBackground)
+        } else {
+            ThemeUtils.setStatusBarLight(this, R.color.white)
+        }
         if (intent.getStringExtra("email").toString() != "null")
             binding.etEmail.editText?.setText(intent.getStringExtra("email").toString())
 

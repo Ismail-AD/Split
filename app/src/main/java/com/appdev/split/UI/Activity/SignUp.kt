@@ -14,6 +14,8 @@ import androidx.activity.viewModels
 import androidx.core.content.ContentProviderCompat.requireContext
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Model.ViewModel.MainViewModel
+import com.appdev.split.R
+import com.appdev.split.Utils.ThemeUtils
 import com.appdev.split.databinding.ActivitySignUpBinding
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -29,7 +31,11 @@ class SignUp : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySignUpBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        if (ThemeUtils.isDarkMode(this)) {
+            ThemeUtils.setStatusBarDark(this, R.color.darkBackground)
+        } else {
+            ThemeUtils.setStatusBarLight(this, R.color.screenBack)
+        }
 
         binding.btnBackSign.setOnClickListener {
             val intent = Intent(this, MainActivity::class.java)

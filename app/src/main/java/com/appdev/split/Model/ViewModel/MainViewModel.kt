@@ -754,6 +754,9 @@ class MainViewModel @Inject constructor(
     fun setDefault() {
         _expenseToPush.value = ExpenseRecord()
     }
+    fun setFriendDefault() {
+        _friendExpenseToPush.value = FriendExpenseRecord()
+    }
 
     //---------------------CONTACTS--------------------
     fun fetchAllContacts() {

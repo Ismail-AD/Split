@@ -23,7 +23,14 @@
     </style>
 
     <style name="Background">
-        <item name="backgroundColor">@color/white</item>
+        <item name="android:background">@color/screenBack</item>
+    </style>
+
+    <style name="CommonBackground">
+        <item name="android:background">@color/white</item>
+    </style>
+    <style name="BillDetailBackground">
+        <item name="android:background">@drawable/rounded_card_background</item>
     </style>
 
     <style name="indicatorColor">
@@ -37,17 +44,28 @@
     <style name="billWordColor">
         <item name="android:textColor">#1C1C1E</item>
     </style>
+    <style name="drawableTint">
+        <item name="android:drawableTint">#1C1C1E</item>
+        <item name="android:textColor">#1C1C1E</item>
+    </style>
     <style name="buttonBackground">
         <item name="android:backgroundTint">@color/myFilledState</item>
     </style>
-    <style name="CancelButtonBackground">
-        <item name="android:backgroundTint">@color/grey</item>
+    <style name="CardButtonBackground">
+        <item name="cardBackgroundColor">@color/myFilledState</item>
     </style>
-
+    <style name="CancelButtonBackground">
+        <item name="android:backgroundTint">@color/white</item>
+    </style>
+    <style name="FloatButtonBackground">
+        <item name="backgroundTint">@color/myFilledState</item>
+    </style>
     <style name="iconTintColor">
         <item name="tint">#1C1C1E</item>
     </style>
-
+    <style name="singleIconTintColor">
+        <item name="tint">#1C1C1E</item>
+    </style>
     <style name="backBillData">
         <item name="android:background">@drawable/rounded_item_background</item>
     </style>
@@ -57,6 +75,10 @@
         <item name="cornerSize">50%</item>
     </style>
 
+    <style name="switchTheme">
+        <item name="trackTint">@drawable/track_selector</item>
+        <item name="thumbTint">@drawable/thumb_selector</item>
+    </style>
     <style name="hintSpinnerWordColor">
         <item name="android:textColorHint">#F0000000</item>
         <item name="android:background">@drawable/srchview_back</item>
@@ -64,7 +86,6 @@
         <item name="spinner_arrow_tint">#F0000000</item>
         <item name="spinner_popup_background">@color/white</item>
     </style>
-
     <style name="CustomTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <item name="boxStrokeColor">@color/black</item>
         <item name="boxBackgroundColor">@color/white</item>

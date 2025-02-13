@@ -13,6 +13,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        style="@style/backBillData"
         android:padding="16dp">
 
         <com.google.android.material.card.MaterialCardView
@@ -32,6 +33,7 @@
                 android:layout_width="56dp"
                 android:layout_height="56dp"
                 android:id="@+id/Icon"
+                style="@style/iconTintColor"
                 android:contentDescription="Expense icon"
                 android:padding="8dp"
                 android:src="@drawable/home" />
@@ -46,6 +48,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
             android:text="Group name"
+            style="@style/billWordColor"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@color/material_on_surface_emphasis_high_type"

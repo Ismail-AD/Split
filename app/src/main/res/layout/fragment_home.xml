@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F2F3F5"
+    style="@style/Background"
     android:orientation="vertical"
     android:padding="16dp"
     tools:context=".UI.Fragment.HomeFragment">
@@ -137,14 +137,6 @@
                 android:text="Recent bills"
                 android:textSize="18sp" />
 
-            <TextView
-                android:id="@+id/see_all"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:text="See all"
-                android:textColor="#8A56AC"
-                android:textSize="14sp" />
         </LinearLayout>
 
         <LinearLayout

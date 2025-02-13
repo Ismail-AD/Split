@@ -18,6 +18,7 @@
     <TextView
         android:id="@+id/nameText"
         android:layout_width="0dp"
+        style="@style/billWordColor"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:layout_marginStart="16dp"

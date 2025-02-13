@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    style="@style/Background"
     tools:context=".UI.Fragment.FriendsAllExpenses">
 
     <com.facebook.shimmer.ShimmerFrameLayout
@@ -24,7 +24,7 @@
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:background="@color/white"
+        style="@style/Background"
         android:layout_height="wrap_content">
 
         <LinearLayout
@@ -40,7 +40,7 @@
                 android:layout_height="35dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/back"
-                app:tint="@color/black" />
+                style="@style/iconTintColor"/>
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/ImageOfExpense"
@@ -60,6 +60,7 @@
                 android:layout_gravity="center_vertical"
                 android:maxLines="1"
                 android:ellipsize="end"
+                style="@style/billWordColor"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -132,7 +133,7 @@
         android:layout_alignParentEnd="true"
         android:text="Add expense"
         android:textColor="@color/white"
-        app:backgroundTint="@color/green"
+        style="@style/FloatButtonBackground"
         app:icon="@drawable/history_day"
         app:iconTint="@color/white" />
 

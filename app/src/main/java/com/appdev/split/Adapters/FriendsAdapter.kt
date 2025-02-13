@@ -55,10 +55,10 @@ class FriendsAdapter(
                     .into(binding.profileImage)
 
                 // Apply green background for existing members
-                friendName.setTextColor(
-                    if (isMember) Color.parseColor("#4CAF50") // Material Green
-                    else Color.parseColor("#1C1B1F")
-                )
+//                friendName.setTextColor(
+//                    if (isMember) Color.parseColor("#4CAF50") // Material Green
+//                    else Color.parseColor("#1C1B1F")
+//                )
 
                 if (enableSelection) {
                     selected.visibility = if (isSelected) View.VISIBLE else View.GONE

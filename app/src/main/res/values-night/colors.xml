@@ -12,6 +12,7 @@
     <color name="chip_unselected_border">#404040</color>
     <color name="tabtext">#FFFFFF</color>
     <color name="error_red">#FF5252</color>
+    <color name="myback">#E0E0E0</color>
 
 
     <color name="color_grey_soft">#BCBEC1</color>

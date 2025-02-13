@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     style="@style/Background"
+
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center_horizontal"
@@ -35,6 +36,7 @@
             android:textCursorDrawable="@drawable/day_cursor"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            style="@style/CustomTextInputEditText"
             android:hint="@string/your_email_address"
             android:inputType="textEmailAddress" />
 

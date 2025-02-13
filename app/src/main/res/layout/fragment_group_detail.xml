@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    style="@style/Background"
     tools:context=".UI.Fragment.GroupDetailFragment">
 
     <com.facebook.shimmer.ShimmerFrameLayout
@@ -25,7 +25,7 @@
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:background="@color/white"
+        style="@style/Background"
         android:layout_height="wrap_content">
 
         <LinearLayout
@@ -41,7 +41,7 @@
                 android:layout_height="35dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/back"
-                app:tint="@color/black" />
+                style="@style/iconTintColor" />
 
 
             <com.google.android.material.imageview.ShapeableImageView
@@ -62,6 +62,7 @@
                 android:paddingEnd="@dimen/_30sdp"
                 android:layout_gravity="center_vertical"
                 android:maxLines="1"
+                style="@style/billWordColor"
                 android:ellipsize="end"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -122,6 +123,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:layout_gravity="start"
+                style="@style/billWordColor"
                 android:text="Group Expenses"
                 android:textSize="24sp"
                 android:textStyle="bold" />
@@ -136,6 +138,7 @@
                    android:layout_width="wrap_content"
                    android:layout_height="wrap_content"
                    android:layout_marginTop="@dimen/_14sdp"
+                   style="@style/billWordColor"
                    android:text="no Expenses added yet!"
                    android:textSize="@dimen/_14ssp" />
 
@@ -167,7 +170,7 @@
         android:textColor="@color/white"
         android:layout_marginEnd="@dimen/_10sdp"
         android:layout_marginBottom="@dimen/_20sdp"
-        app:backgroundTint="@color/green"
+        style="@style/FloatButtonBackground"
         app:icon="@drawable/history_day"
         app:iconTint="@color/white" />
 

@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    style="@style/Background"
     android:padding="16dp"
     tools:context=".UI.Fragment.BillDetails">
 
@@ -39,7 +40,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/_20sdp"
-            android:background="@drawable/rounded_card_background"
+            style="@style/BillDetailBackground"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:padding="16dp">
@@ -152,7 +153,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Total Amount: "
-                android:textColor="@color/black"
+                style="@style/billWordColor"
                 android:textSize="20sp" />
 
             <TextView
@@ -160,7 +161,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="200$"
-                android:textColor="@color/black"
+                style="@style/billWordColor"
                 android:textSize="20sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -193,7 +194,7 @@
             android:layout_marginTop="@dimen/_20sdp"
             android:background="@drawable/textview_border"
             android:text=""
-            android:textColor="@color/black"
+            style="@style/billWordColor"
             android:textSize="16sp" />
 
         <Button
