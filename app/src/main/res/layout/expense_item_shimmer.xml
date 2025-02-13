@@ -5,8 +5,7 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
     android:orientation="horizontal"
-    android:padding="12dp"
-    android:background="@color/white">
+    android:padding="12dp">
 
     <!-- Icon Shimmer -->
     <androidx.cardview.widget.CardView

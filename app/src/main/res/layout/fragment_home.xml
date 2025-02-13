@@ -95,6 +95,7 @@
             android:layout_marginBottom="16dp">
 
             <LinearLayout
+                android:id="@+id/card"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@drawable/home_back_four"
@@ -114,7 +115,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/_7sdp"
                     app:cornerRadius="7dp"
-                    android:backgroundTint="#1C1C1E"
+                    style="@style/FloatButtonBackground"
                     android:text="Start Your Split"
                     android:textColor="#FFFFFF" />
             </LinearLayout>

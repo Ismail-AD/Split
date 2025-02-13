@@ -28,6 +28,7 @@ import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.UI.Activity.EntryActivity
+import com.appdev.split.Utils.ThemeUtils
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentHomeBinding
 import com.bumptech.glide.Glide
@@ -77,6 +78,11 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         dialog = Dialog(requireContext())
+        if(ThemeUtils.isDarkMode(requireContext())){
+            binding.card.background = requireContext().resources.getDrawable(R.drawable.blue_maybe)
+        } else{
+            binding.card.background = requireContext().resources.getDrawable(R.drawable.home_back_four)
+        }
         setupShimmer()
 
         binding.addExpense.setOnClickListener {

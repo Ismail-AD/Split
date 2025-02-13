@@ -40,7 +40,10 @@
     <style name="WordColor">
         <item name="android:textColor">@color/white</item>
     </style>
-
+    <style name="descWordColor">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:background">@drawable/text_border_night</item>
+    </style>
     <style name="BillDetailBackground">
         <item name="android:background">@drawable/bill_detail_back</item>
     </style>
