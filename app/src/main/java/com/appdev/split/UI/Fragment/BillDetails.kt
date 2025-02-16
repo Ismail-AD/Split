@@ -78,8 +78,8 @@ class BillDetails : Fragment() {
         setupRecyclerView()
         setupClickListeners()
         args.friendId?.let { friendId ->
-            observeFriendData()
             mainViewModel.getFriendNameById(friendId)
+            observeFriendData()
         }
 
 
@@ -132,6 +132,7 @@ class BillDetails : Fragment() {
 
     private fun hideShimmer() {
         binding.shimmerViewTop.stopShimmer()
+        binding.shimmerViewTop.visibility = View.GONE
         binding.main.visibility = View.VISIBLE
     }
 

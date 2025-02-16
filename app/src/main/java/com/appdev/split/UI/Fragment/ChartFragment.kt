@@ -3,12 +3,15 @@ package com.appdev.split.UI.Fragment
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.viewModels
 import com.appdev.split.Graph.CustomBarGraph
+import com.appdev.split.Model.ViewModel.BarGraphViewModel
 import com.appdev.split.R
 import com.appdev.split.databinding.FragmentChartBinding
 import com.github.mikephil.charting.data.BarData
@@ -18,9 +21,10 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
+import dagger.hilt.android.AndroidEntryPoint
 import java.util.Calendar
 
-
+@AndroidEntryPoint
 class ChartFragment : Fragment() {
     private var _binding: FragmentChartBinding? = null
     private val binding get() = _binding!!
@@ -30,12 +34,11 @@ class ChartFragment : Fragment() {
     private var onMonthSelectedListener: ((String) -> Unit)? = null
     private var pendingChartUpdate: List<Float>? = null
     private var firstSelectionDone = false
-
+    private val viewModel: BarGraphViewModel by viewModels()
     private val currentMonthIndex = Calendar.getInstance().get(Calendar.MONTH)
-    private val currentMonthYear =
-        "${Calendar.getInstance().get(Calendar.YEAR)}-${currentMonthIndex + 1}"
+    private var currentMonthYear = "${Calendar.getInstance().get(Calendar.YEAR)}-${Calendar.getInstance().get(Calendar.MONTH) + 1}"
 
-
+    private var skipInitialCallback = true
     companion object {
         fun newInstance(
             months: List<String>,
@@ -52,9 +55,13 @@ class ChartFragment : Fragment() {
 
     fun setOnMonthSelectedListener(listener: (String) -> Unit) {
         onMonthSelectedListener = { monthYear ->
-            if ((!firstSelectionDone && !HistoryFragment.hasInitialLoadOccurred) || monthYear != currentMonthYear) {
+            Log.d("ClickDebug", "Month selected in ChartFragment: $monthYear")
+            Log.d("ClickDebug", "First selection done: $firstSelectionDone")
+            Log.d("ClickDebug", "Current month year: $currentMonthYear")
+
+            if (monthYear != currentMonthYear) {
+                currentMonthYear = monthYear
                 listener(monthYear)
-                firstSelectionDone = true
             }
         }
     }
@@ -92,6 +99,7 @@ class ChartFragment : Fragment() {
         if (!isAdded) return
 
         val customBars = values.mapIndexed { index, value ->
+            Log.d("ClickDebug", "Setting up bar for ${months[index]} with value $value")
             CustomBarGraph.BarData(
                 value = value,
                 label = months[index]
@@ -108,7 +116,9 @@ class ChartFragment : Fragment() {
 
 
                 override fun onBarClick(barData: CustomBarGraph.BarData, position: Int) {
-                    if (position in monthsWithYears.indices && barData.value > 0f) {
+                    Log.d("ClickDebug", "Bar clicked: ${barData.label} at position $position")
+                    if (position in monthsWithYears.indices) {
+                        Log.d("ClickDebug", "Invoking listener with ${monthsWithYears[position]}")
                         onMonthSelectedListener?.invoke(monthsWithYears[position])
                     }
                 }

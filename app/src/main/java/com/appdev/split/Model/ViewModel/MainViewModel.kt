@@ -110,6 +110,11 @@ class MainViewModel @Inject constructor(
         _operationState.value = UiState.Stable
     }
 
+    fun updateFriendStateToStable() {
+        _individualFriendState.value = UiState.Stable
+    }
+
+
     fun updateExpRec(expenseRecord: ExpenseRecord) {
         _expenseToPush.value = expenseRecord
     }
@@ -754,6 +759,7 @@ class MainViewModel @Inject constructor(
     fun setDefault() {
         _expenseToPush.value = ExpenseRecord()
     }
+
     fun setFriendDefault() {
         _friendExpenseToPush.value = FriendExpenseRecord()
     }

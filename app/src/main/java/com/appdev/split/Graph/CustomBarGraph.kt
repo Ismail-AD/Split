@@ -7,10 +7,14 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
+import kotlinx.parcelize.Parcelize
+
 
 class CustomBarGraph @JvmOverloads constructor(
     context: Context,
@@ -59,6 +63,89 @@ class CustomBarGraph @JvmOverloads constructor(
     private val valueRect = RectF()
     private val cornerRadii = FloatArray(8)
     private val textBounds = android.graphics.Rect()
+    var currentBarData: List<BarData> = emptyList()
+    private var isStateRestored = false
+
+    @Parcelize
+    private data class BarDataParcelable(
+        val value: Float,
+        val label: String,
+        val isRaised: Boolean
+    ) : Parcelable {
+        fun toBarData(): BarData = BarData(
+            value = value,
+            label = label,
+            isRaised = isRaised
+        )
+
+        companion object {
+            fun fromBarData(barData: BarData): BarDataParcelable =
+                BarDataParcelable(
+                    value = barData.value,
+                    label = barData.label,
+                    isRaised = barData.isRaised
+                )
+        }
+    }
+
+    // Then define SavedState
+    private class SavedState : BaseSavedState {
+        var barDataList: ArrayList<BarDataParcelable> = ArrayList()
+        var selectedPosition: Int = -1
+        var animationProgress: Float = 1f
+
+        constructor(superState: Parcelable?) : super(superState)
+
+        constructor(parcel: Parcel) : super(parcel) {
+            selectedPosition = parcel.readInt()
+            animationProgress = parcel.readFloat()
+            parcel.readList(barDataList, BarDataParcelable::class.java.classLoader)
+        }
+
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            super.writeToParcel(parcel, flags)
+            parcel.writeInt(selectedPosition)
+            parcel.writeFloat(animationProgress)
+            parcel.writeList(barDataList)
+        }
+
+        companion object CREATOR : Parcelable.Creator<SavedState> {
+            override fun createFromParcel(parcel: Parcel): SavedState {
+                return SavedState(parcel)
+            }
+
+            override fun newArray(size: Int): Array<SavedState?> {
+                return arrayOfNulls(size)
+            }
+        }
+    }
+
+    override fun onSaveInstanceState(): Parcelable {
+        val superState = super.onSaveInstanceState()
+        val savedState = SavedState(superState)
+        savedState.selectedPosition = selectedPosition
+        savedState.animationProgress = animationProgress
+        savedState.barDataList = ArrayList(currentBarData.map { BarDataParcelable.fromBarData(it) })
+        return savedState
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        if (state !is SavedState) {
+            super.onRestoreInstanceState(state)
+            return
+        }
+
+        super.onRestoreInstanceState(state.superState)
+
+        selectedPosition = state.selectedPosition
+        animationProgress = state.animationProgress
+        currentBarData = state.barDataList.map { it.toBarData() }
+        bars = currentBarData.toMutableList()
+
+        isStateRestored = true
+        invalidate()
+    }
+
 
     init {
         for (i in cornerRadii.indices) {
@@ -128,10 +215,10 @@ class CustomBarGraph @JvmOverloads constructor(
 
 
     fun setData(data: List<BarData>, animate: Boolean = true) {
+        currentBarData = data.toMutableList()
         bars = data.toMutableList()
-        shouldAnimate = animate
+        shouldAnimate = animate && !isStateRestored
 
-        // Only animate if explicitly requested
         if (shouldAnimate) {
             animationProgress = 0f
             animator?.cancel()
@@ -141,28 +228,17 @@ class CustomBarGraph @JvmOverloads constructor(
                 addUpdateListener { animation ->
                     animationProgress = animation.animatedValue as Float
                     invalidate()
-
-                    // Apply highlight after animation completes
-                    if (animation.animatedValue as Float >= 1f) {
-                        initialHighlight?.let { highlight ->
-                            highlightValue(highlight, 0)
-                            initialHighlight = null
-                        }
-                    }
                 }
                 start()
             }
         } else {
-            // Skip animation and draw immediately
             animationProgress = 1f
             invalidate()
-            // Apply any pending highlight
-            initialHighlight?.let { highlight ->
-                highlightValue(highlight, 0)
-                initialHighlight = null
-            }
         }
+
+        isStateRestored = false
     }
+
 
     fun highlightValue(x: Float, dataSetIndex: Int) {
         val position = x.toInt()
