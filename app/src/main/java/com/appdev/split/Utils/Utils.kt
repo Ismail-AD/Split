@@ -1,5 +1,7 @@
 package com.appdev.split.Utils
 
+import android.content.Context
+import android.content.SharedPreferences
 import com.appdev.split.Adapters.EQUAL_SPLIT_POSITION
 import com.appdev.split.Adapters.PERCENTAGE_SPLIT_POSITION
 import com.appdev.split.Adapters.UNEQUAL_SPLIT_POSITION
@@ -19,6 +21,8 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 object Utils {
+    private const val KEY_ONBOARDING_PASSED = "onboarding_passed"
+    private const val PREFS_NAME = "app_prefs"
     suspend fun isInternetAvailable(): Boolean = withContext(Dispatchers.IO) {
         try {
             val command = "ping -c 1 google.com"
@@ -26,6 +30,18 @@ object Utils {
         } catch (e: Exception) {
             false
         }
+    }
+
+    private fun getPrefs(context: Context): SharedPreferences {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
+
+    fun setOnboardingPassed(context: Context, passed: Boolean) {
+        getPrefs(context).edit().putBoolean(KEY_ONBOARDING_PASSED, passed).apply()
+    }
+
+    fun isOnboardingPassed(context: Context): Boolean {
+        return getPrefs(context).getBoolean(KEY_ONBOARDING_PASSED, false)
     }
 
     fun parseDate(dateString: String): Calendar {

@@ -11,12 +11,12 @@ plugins {
 
 android {
     namespace = "com.appdev.split"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.appdev.split"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -55,6 +55,7 @@ dependencies {
     implementation("com.google.firebase:firebase-database:21.0.0")
     implementation("com.google.android.gms:play-services-base:18.0.1")
     implementation("com.google.firebase:firebase-firestore:25.1.1")
+    implementation("androidx.activity:activity-ktx:1.10.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
@@ -63,7 +64,8 @@ dependencies {
     implementation("com.intuit.ssp:ssp-android:1.1.0")
     implementation("com.intuit.sdp:sdp-android:1.1.0")
     implementation("com.github.ismaeldivita:chip-navigation-bar:1.4.0")
-
+    implementation("androidx.viewpager2:viewpager2:1.1.0")
+    implementation("com.tbuonomo:dotsindicator:4.3")
 
     implementation("androidx.navigation:navigation-fragment:2.5.3")
     implementation("androidx.navigation:navigation-fragment:2.5.0")
@@ -77,6 +79,7 @@ dependencies {
 
 
     implementation("com.google.code.gson:gson:2.11.0")
+    implementation("com.github.ErrorxCode:ModernOnboarding:v1.5")
 
     //hilt
     implementation("com.google.dagger:hilt-android:2.49")

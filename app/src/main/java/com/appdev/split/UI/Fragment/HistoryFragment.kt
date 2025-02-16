@@ -164,9 +164,14 @@ class HistoryFragment : Fragment() {
                                     val params =
                                         binding.recyclerViewRecentBills.layoutParams as RelativeLayout.LayoutParams
                                     params.addRule(RelativeLayout.BELOW, R.id.shimmer_view_top)
-                                    params.setMargins(0, 65, 0, 50)
+                                    params.setMargins(0, 0, 0, 50)
                                     binding.recyclerViewRecentBills.layoutParams = params
 
+                                } else if (binding.noBill.visibility == View.VISIBLE) {
+                                    val params =
+                                        binding.noBill.layoutParams as RelativeLayout.LayoutParams
+                                    params.addRule(RelativeLayout.BELOW, R.id.shimmer_view_top)
+                                    binding.noBill.layoutParams = params
                                 }
                             }
                         }
@@ -257,6 +262,24 @@ class HistoryFragment : Fragment() {
         safeBinding.recyclerViewRecentBills.layoutParams = params
 
         if (expenses.isEmpty()) {
+            val monthNumber = selectedMonth.split("-").lastOrNull()?.toIntOrNull() ?: 1
+            val monthName = when (monthNumber) {
+                1 -> "January"
+                2 -> "February"
+                3 -> "March"
+                4 -> "April"
+                5 -> "May"
+                6 -> "June"
+                7 -> "July"
+                8 -> "August"
+                9 -> "September"
+                10 -> "October"
+                11 -> "November"
+                12 -> "December"
+                else -> "Unknown"
+            }
+
+            safeBinding.noBill.text = "No expenses recorded for $monthName"
             safeBinding.noBill.visibility = View.VISIBLE
             safeBinding.recyclerViewRecentBills.visibility = View.GONE
         } else {
@@ -352,6 +375,12 @@ class HistoryFragment : Fragment() {
         binding.shimmerViewBar.visibility = View.INVISIBLE
         binding.shimmerViewTop.stopShimmer()
         binding.topLayer.visibility = View.VISIBLE
+        if (binding.noBill.visibility == View.VISIBLE) {
+            val params =
+                binding.noBill.layoutParams as RelativeLayout.LayoutParams
+            params.addRule(RelativeLayout.BELOW, R.id.topLayer)
+            binding.noBill.layoutParams = params
+        }
 
     }
 

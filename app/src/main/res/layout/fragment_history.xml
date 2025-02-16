@@ -101,21 +101,18 @@
 
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/noBill"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/topLayer"
-        android:gravity="center"
-        android:visibility="gone">
 
-        <TextView
-            style="@style/billWordColor"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="No bills created yet!"
-            android:textSize="18sp" />
-    </LinearLayout>
+    <TextView
+        android:id="@+id/noBill"
+        style="@style/billWordColor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/topLayer"
+        android:text="No bills created yet!"
+        android:textAlignment="center"
+        android:textSize="18sp"
+        android:visibility="gone" />
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view_recent_bills"

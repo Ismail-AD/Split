@@ -20,7 +20,7 @@
         android:layout_height="250dp"
         android:layout_below="@id/shimmerTitle"
         android:layout_marginTop="10dp"
-        android:layout_marginBottom="26dp"
+        android:layout_marginBottom="47dp"
         android:layout_marginHorizontal="15dp"
         android:background="@drawable/bg_shimmer"
         android:orientation="vertical" />

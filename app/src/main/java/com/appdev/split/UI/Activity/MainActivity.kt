@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.appdev.split.R
 import com.appdev.split.Utils.ThemeUtils
+import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
@@ -21,9 +22,14 @@ class MainActivity : AppCompatActivity() {
         } else {
             ThemeUtils.setStatusBarLight(this, R.color.screenBack)
         }
-        var firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
 
-        if (firebaseAuth.currentUser != null) {
+        val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
+
+//        if (!Utils.isOnboardingPassed(this)) {
+//            startActivity(Intent(this, OnBoardingActivity::class.java))
+//        } else
+
+         if (firebaseAuth.currentUser != null) {
             val intent = Intent(this, EntryActivity::class.java)
             startActivity(intent)
             finish()

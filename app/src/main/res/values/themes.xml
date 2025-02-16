@@ -25,6 +25,9 @@
     <style name="Background">
         <item name="android:background">@color/screenBack</item>
     </style>
+    <style name="DotColor">
+        <item name="selectedDotColor">@color/black</item>
+    </style>
 
     <style name="CommonBackground">
         <item name="android:background">@color/white</item>

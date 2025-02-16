@@ -61,7 +61,9 @@
         <item name="thumbTint">@drawable/thumb_night</item>
     </style>
 
-
+    <style name="DotColor">
+        <item name="selectedDotColor">@color/ClickedState</item>
+    </style>
     <style name="CircularImageStyle" parent="ShapeAppearance.MaterialComponents.SmallComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
