@@ -9,17 +9,12 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.SplitDetailsAdapter
-import com.appdev.split.Adapters.TransactionItemAdapter
-import com.appdev.split.Model.Data.Bill
 import com.appdev.split.Model.Data.ExpenseRecord
-import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.FriendExpenseRecord
 import com.appdev.split.Model.Data.UiState
@@ -29,11 +24,6 @@ import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentBillDetailsBinding
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import dagger.hilt.android.AndroidEntryPoint
@@ -203,10 +193,12 @@ class BillDetails : Fragment() {
                     }
 
                     args.friendData != null -> {
-                        friendExpense?.let { it2 ->
-                            mainViewModel.deleteFriendExpenseDetail(
-                                it2.id
-                            )
+                        firebaseAuth.currentUser?.uid.let { myId ->
+                            friendExpense?.let { it2 ->
+                                mainViewModel.deleteFriendExpenseDetail(
+                                    it2.id, it2.splits.find { it.userId == myId }?.amount ?: 0.0,it2.startDate
+                                )
+                            }
                         }
                     }
                 }

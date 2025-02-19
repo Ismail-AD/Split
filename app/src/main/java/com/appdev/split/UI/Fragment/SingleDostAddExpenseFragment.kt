@@ -1,6 +1,5 @@
 package com.appdev.split.UI.Fragment
 
-import android.app.DatePickerDialog
 import android.app.Dialog
 import android.content.res.Configuration
 import android.os.Bundle
@@ -21,7 +20,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.MyFriendSelectionAdapter
-import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.FriendExpenseRecord
 import com.appdev.split.Model.Data.NameId
@@ -37,7 +35,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.ozcanalasalvar.datepicker.view.datepicker.DatePicker
 import com.ozcanalasalvar.datepicker.view.popup.DatePickerPopup
 import com.skydoves.powerspinner.OnSpinnerItemSelectedListener
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -189,7 +186,8 @@ class SingleDostAddExpenseFragment : Fragment() {
                                 .toFloat(),
                             selectedFriend,
                             binding.splitTypeText.text.toString(),
-                            Utils.extractCurrencyCode(binding.currencySpinner.text.toString()),false
+                            Utils.extractCurrencyCode(binding.currencySpinner.text.toString()),
+                            false
                         )
 
                     }
@@ -319,31 +317,39 @@ class SingleDostAddExpenseFragment : Fragment() {
 
                     args.expenseRecord != null && SplitType.EQUAL.name == binding.splitTypeText.text.toString() &&
                             amount.toDouble() != mainViewModel.friendExpensePush.value.totalAmount -> {
-                        handleUpdateSplit(amount.toDouble(), mainViewModel.friendExpensePush.value.splits)
+                        handleUpdateSplit(
+                            amount.toDouble(),
+                            mainViewModel.friendExpensePush.value.splits
+                        )
                     }
 
                     else -> mainViewModel.friendExpensePush.value.splits
                 }
                 if (validateAmount(computedSplits)) {
                     if (args.expenseRecord != null) {
-                        mainViewModel.updateFriendExpenseDetail(
-                            FriendExpenseRecord(
-                                friendId = args.friendData!!.friendId,
-                                startDate = mainViewModel.friendExpensePush.value.startDate,
-                                endDate = mainViewModel.friendExpensePush.value.endDate,
-                                title = title,
-                                description = description,
-                                totalAmount = amount.toDouble(),
-                                currency = binding.currencySpinner.text.toString(),
-                                expenseCategory = binding.categorySpinner.text.toString(),
-                                splits = computedSplits,
-                                paidBy = mainViewModel.friendExpensePush.value.paidBy,
-                                id = mainViewModel.friendExpensePush.value.id,
-                                splitType = binding.splitTypeText.text.toString(),
-                                timeStamp = System.currentTimeMillis()
-                            ),
-                            args.expenseRecord!!.id
-                        )
+                        val currentUserId = mainViewModel.getCurrentUserId()
+                        if (currentUserId.trim().isNotEmpty()) {
+                            mainViewModel.updateFriendExpenseDetail(
+                                FriendExpenseRecord(
+                                    friendId = args.friendData!!.friendId,
+                                    startDate = mainViewModel.friendExpensePush.value.startDate,
+                                    endDate = mainViewModel.friendExpensePush.value.endDate,
+                                    title = title,
+                                    description = description,
+                                    totalAmount = amount.toDouble(),
+                                    currency = binding.currencySpinner.text.toString(),
+                                    expenseCategory = binding.categorySpinner.text.toString(),
+                                    splits = computedSplits,
+                                    paidBy = mainViewModel.friendExpensePush.value.paidBy,
+                                    id = mainViewModel.friendExpensePush.value.id,
+                                    splitType = binding.splitTypeText.text.toString(),
+                                    timeStamp = System.currentTimeMillis()
+                                ),
+                                args.expenseRecord!!.id,
+                                args.expenseRecord!!.splits.find { it.userId == currentUserId }?.amount
+                                    ?: 0.0
+                            )
+                        }
                     } else {
                         if (selectedFriend != null && FirebaseAuth.getInstance().currentUser?.uid != null && selectedFriend != null) {
                             // Add this right after creating the ExpenseRecord

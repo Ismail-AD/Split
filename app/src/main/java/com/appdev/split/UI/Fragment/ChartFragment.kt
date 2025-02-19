@@ -9,9 +9,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.appdev.split.Graph.CustomBarGraph
 import com.appdev.split.Model.ViewModel.BarGraphViewModel
+import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.databinding.FragmentChartBinding
 import com.github.mikephil.charting.data.BarData
@@ -22,6 +27,7 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 @AndroidEntryPoint
@@ -34,11 +40,11 @@ class ChartFragment : Fragment() {
     private var onMonthSelectedListener: ((String) -> Unit)? = null
     private var pendingChartUpdate: List<Float>? = null
     private var firstSelectionDone = false
-    private val viewModel: BarGraphViewModel by viewModels()
-    private val currentMonthIndex = Calendar.getInstance().get(Calendar.MONTH)
-    private var currentMonthYear = "${Calendar.getInstance().get(Calendar.YEAR)}-${Calendar.getInstance().get(Calendar.MONTH) + 1}"
+    private var currentMonthYear = "${Calendar.getInstance().get(Calendar.YEAR)}-${
+        Calendar.getInstance().get(Calendar.MONTH) + 1
+    }"
+    private val mainViewModel by activityViewModels<MainViewModel>()
 
-    private var skipInitialCallback = true
     companion object {
         fun newInstance(
             months: List<String>,
@@ -82,17 +88,28 @@ class ChartFragment : Fragment() {
         monthsWithYears = arguments?.getStringArrayList("monthsWithYears") ?: emptyList()
 
         setupBarChart()
-        val initialSelection = monthsWithYears.indexOf(currentMonthYear)
-        if (initialSelection != -1) {
-            binding.barChart.highlightValue(initialSelection.toFloat(), 0)
-            onMonthSelectedListener?.invoke(currentMonthYear)
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                mainViewModel.selectedMonthYears.collect { selectedMonthYear ->
+                    updateChartSelection(selectedMonthYear)
+                }
+            }
         }
+
         pendingChartUpdate?.let {
             updateChartData(it)
             pendingChartUpdate = null
         }
     }
 
+    private fun updateChartSelection(selectedMonthYear: String) {
+        val selectedIndex = monthsWithYears.indexOf(selectedMonthYear)
+        if (selectedIndex != -1) {
+            binding.barChart.highlightValue(selectedIndex.toFloat(), 0)
+        } else {
+            binding.barChart.clearHighlight()
+        }
+    }
 
     // In ChartFragment
     private fun setupBarChart() {
@@ -107,8 +124,7 @@ class ChartFragment : Fragment() {
         }
 
         binding.barChart.apply {
-            // Set maximum value with 20% padding
-            val maxValue = 1000f
+            val maxValue = 10000f
             setMaxValue(maxValue)
             setYAxisConfig(0f, maxValue * 1.2f, 3)
             // Set data and animate
@@ -116,10 +132,10 @@ class ChartFragment : Fragment() {
 
 
                 override fun onBarClick(barData: CustomBarGraph.BarData, position: Int) {
-                    Log.d("ClickDebug", "Bar clicked: ${barData.label} at position $position")
                     if (position in monthsWithYears.indices) {
-                        Log.d("ClickDebug", "Invoking listener with ${monthsWithYears[position]}")
-                        onMonthSelectedListener?.invoke(monthsWithYears[position])
+                        val selectedMonthYear = monthsWithYears[position]
+                        mainViewModel.updateSelectedMonth(selectedMonthYear)
+                        onMonthSelectedListener?.invoke(selectedMonthYear)
                     }
                 }
             })
@@ -136,10 +152,21 @@ class ChartFragment : Fragment() {
             return
         }
 
+        // Create new bar data with the updated values
+        val customBars = months.mapIndexed { index, month ->
+            CustomBarGraph.BarData(
+                value = if (index < newValues.size) newValues[index] else 0f,
+                label = month
+            )
+        }
 
-        values = newValues
-        setupBarChart()
+        // Set data WITHOUT animation for updates
+        binding.barChart.setData(customBars, animate = false)
+
+        // Make sure the current selection is maintained
+        mainViewModel.selectedMonthYear.value?.let { updateChartSelection(it) }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

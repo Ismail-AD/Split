@@ -5,14 +5,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:paddingVertical="16dp"
     style="@style/Background"
     tools:context=".UI.Fragment.HistoryFragment">
 
-
+    <!-- Previous shimmer layouts remain unchanged -->
     <com.facebook.shimmer.ShimmerFrameLayout
         android:id="@+id/shimmer_view_top"
         android:layout_width="match_parent"
+        android:paddingHorizontal="16dp"
         android:layout_height="wrap_content"
         app:shimmer_duration="1000">
 
@@ -25,6 +26,7 @@
     <com.facebook.shimmer.ShimmerFrameLayout
         android:id="@+id/shimmer_view_container"
         android:layout_width="match_parent"
+        android:paddingHorizontal="16dp"
         android:layout_height="match_parent"
         android:layout_below="@id/shimmer_view_top"
         app:shimmer_duration="1000">
@@ -38,6 +40,7 @@
     <LinearLayout
         android:id="@+id/noData"
         android:layout_width="match_parent"
+        android:paddingHorizontal="16dp"
         android:layout_height="match_parent"
         android:gravity="center"
         android:visibility="gone">
@@ -65,7 +68,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginTop="10dp"
-            android:text="Rs.3400"
+            android:text="0.0"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -76,13 +79,21 @@
             android:gravity="center"
             android:orientation="horizontal">
 
-            <ImageButton
-                android:id="@+id/btnPrevious"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Previous"
-                android:src="@drawable/back" />
+            <!-- Updated navigation buttons with proper spacing -->
+            <FrameLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="8dp">
+
+                <ImageButton
+                    android:id="@+id/btnPrevious"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Previous"
+                    android:src="@drawable/back" />
+            </FrameLayout>
 
             <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/chartViewPager"
@@ -90,22 +101,29 @@
                 android:layout_height="300dp"
                 android:layout_weight="1" />
 
-            <ImageButton
-                android:id="@+id/btnNext"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Next"
-                android:rotation="180"
-                android:src="@drawable/back" />
+            <FrameLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp">
+
+                <ImageButton
+                    android:id="@+id/btnNext"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Next"
+                    android:rotation="180"
+                    android:src="@drawable/back" />
+            </FrameLayout>
         </LinearLayout>
 
     </LinearLayout>
 
-
     <TextView
         android:id="@+id/noBill"
         style="@style/billWordColor"
+        android:paddingHorizontal="16dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/topLayer"
@@ -114,9 +132,9 @@
         android:textSize="18sp"
         android:visibility="gone" />
 
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view_recent_bills"
+        android:paddingHorizontal="16dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/noBill"

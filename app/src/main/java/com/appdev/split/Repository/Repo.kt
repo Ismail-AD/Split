@@ -41,6 +41,9 @@ class Repo @Inject constructor(
     private val profileBucketId = "profileImages"
     private val profileFolderPath = "public/1cp17k1_1"
 
+    fun getCurrentUserId(): String {
+        return firebaseAuth.currentUser?.uid ?: ""
+    }
     //----------------------MANGE GROUP EXPENSE------------------
 
     suspend fun saveGroupExpense(
@@ -776,6 +779,52 @@ class Repo @Inject constructor(
         }
     }
 
+    private suspend fun removeAndUpdateTotalExpense(
+        amount: Double,
+        oldAmount: Double,
+        startDateString: String,
+        userId: String
+    ) {
+        try {
+            val parts = startDateString.split("-")
+            if (parts.size > 1) {
+                val year = parts[0]
+                val month = parts[1]
+                val collectionRef = firestore.collection("mySpending")
+                    .document(userId)
+                    .collection(year + month)
+
+                // Try to fetch existing spending document for this month
+                val dataFetched = collectionRef.get().await()
+
+                if (dataFetched.isEmpty) {
+                    // No existing spending record for this month - create new one
+                    val newSpending = MySpending(
+                        id = collectionRef.document().id,
+                        year = year, month = month,
+                        totalAmountSpend = amount
+                    )
+                    collectionRef.document(newSpending.id).set(newSpending).await()
+                } else {
+                    // Update existing spending record
+                    val existingSpending = dataFetched.documents[0].toObject(MySpending::class.java)
+                    existingSpending?.let { spending ->
+                        val newTotalAmount = spending.totalAmountSpend - oldAmount + amount
+                        val updatedSpending = spending.copy(
+                            totalAmountSpend = newTotalAmount
+                        )
+                        collectionRef.document(spending.id).set(updatedSpending).await()
+                    }
+                }
+
+
+            }
+        } catch (e: Exception) {
+            // Handle the error appropriately
+            throw e
+        }
+    }
+
 
     private suspend fun updateTotalExpense(
         amount: Double,
@@ -819,10 +868,40 @@ class Repo @Inject constructor(
         }
     }
 
+    private suspend fun removeFromTotalExpense(
+        amount: Double,
+        startDateString: String,
+        userId: String
+    ) {
+        try {
+            val parts = startDateString.split("-")
+            if (parts.size > 1) {
+                val year = parts[0]
+                val month = parts[1]
+                val collectionRef = firestore.collection("mySpending")
+                    .document(userId)
+                    .collection(year + month)
+
+                val dataFetched = collectionRef.get().await()
+
+                if (!dataFetched.isEmpty) {
+                    val existingSpending = dataFetched.documents[0].toObject(MySpending::class.java)
+                    existingSpending?.let { spending ->
+                        val updatedAmount = (spending.totalAmountSpend - amount).coerceAtLeast(0.0)
+                        val updatedSpending = spending.copy(totalAmountSpend = updatedAmount)
+                        collectionRef.document(spending.id).set(updatedSpending).await()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
 
     suspend fun updateFriendExpense(
         myUserId: String,
-        expenseId: String,
+        expenseId: String, oldAmount: Double,
         updatedExpense: FriendExpenseRecord,
         onResult: (success: Boolean, message: String) -> Unit
     ) {
@@ -833,6 +912,11 @@ class Repo @Inject constructor(
                 .document(expenseId)
                 .set(updatedExpense)
                 .await()
+            val newAmount = updatedExpense.splits.find { it.userId == myUserId }?.amount ?: 0.0
+
+
+            removeAndUpdateTotalExpense(newAmount,oldAmount, updatedExpense.startDate, myUserId)
+
             onResult(true, "Expense updated successfully!")
         } catch (e: Exception) {
             Log.e("Repo", "Failed to update expense: ${e.message}")
@@ -842,6 +926,7 @@ class Repo @Inject constructor(
 
     suspend fun deleteFriendExpense(
         myUserId: String,
+        paidAmountByMe: Double, startDate: String,
         expenseId: String,
         onResult: (success: Boolean, message: String) -> Unit
     ) {
@@ -853,6 +938,8 @@ class Repo @Inject constructor(
                 .document(expenseId)
                 .delete()
                 .await()
+
+            removeFromTotalExpense(paidAmountByMe, startDate, myUserId)
 
             onResult(true, "Expense deleted successfully!")
         } catch (e: Exception) {

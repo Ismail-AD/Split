@@ -2,6 +2,7 @@ package com.appdev.split.Model.ViewModel
 
 import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.appdev.split.Model.Data.Contact
@@ -16,7 +17,6 @@ import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Repository.Repo
 import com.appdev.split.Utils.Utils
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,7 +24,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
@@ -89,12 +89,21 @@ class MainViewModel @Inject constructor(
     val selectedFriendIds: StateFlow<Set<String>> = _selectedFriendIds
 
 
-    var _newSelectedId = -1
+    var selectedMonthYear = MutableLiveData<String>()
+
     private var cachedFriend: FriendContact? = null // Cache variable for storing friend data
 
 
     var monthsWithYears: List<String> = emptyList()
 
+    private val _selectedMonthYears = MutableStateFlow(Utils.getYearMonth())
+    val selectedMonthYears = _selectedMonthYears.asStateFlow()
+
+    fun updateSelectedMonth(monthYear: String) {
+        viewModelScope.launch {
+            _selectedMonthYears.emit(monthYear)
+        }
+    }
 
     private val _loadingState = MutableStateFlow(false)
     val loadingState: StateFlow<Boolean> = _loadingState
@@ -130,6 +139,7 @@ class MainViewModel @Inject constructor(
     fun clearSelectedFriends() {
         _selectedFriendIds.value = emptySet()
     }
+
 
     //---------------------EXPENSE LISTENER------------------
 
@@ -446,9 +456,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun getCurrentUserId() = repo.getCurrentUserId()
+
     fun updateFriendExpenseDetail(
         expenseRecord: FriendExpenseRecord,
-        expenseId: String
+        expenseId: String,
+        amount: Double
     ) {
         _operationState.value = UiState.Loading
         viewModelScope.launch {
@@ -456,7 +469,7 @@ class MainViewModel @Inject constructor(
                 firebaseAuth.currentUser?.uid?.let { uid ->
                     repo.updateFriendExpense(
                         uid,
-                        expenseId,
+                        expenseId, oldAmount = amount,
                         expenseRecord
                     ) { success, message ->
                         if (success) {
@@ -475,14 +488,16 @@ class MainViewModel @Inject constructor(
 
 
     fun deleteFriendExpenseDetail(
-        expenseId: String
+        expenseId: String,
+        paidAmountByMe: Double,
+        startDate: String
     ) {
         _operationState.value = UiState.Loading
         viewModelScope.launch {
             try {
                 firebaseAuth.currentUser?.uid?.let { uid ->
                     repo.deleteFriendExpense(
-                        uid,
+                        uid, paidAmountByMe, startDate,
                         expenseId
                     ) { success, message ->
                         if (success) {

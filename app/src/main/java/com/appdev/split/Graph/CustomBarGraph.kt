@@ -185,6 +185,13 @@ class CustomBarGraph @JvmOverloads constructor(
         }
     }
 
+    // Add this method to your CustomBarGraph class
+    fun clearHighlight() {
+        selectedPosition = -1
+        invalidate()
+    }
+
+
     private fun calculateLeftPadding(): Float {
         // Get the widest possible label in k-format
         val maxLabel = formatNumber(yAxisMaximum)
@@ -245,11 +252,9 @@ class CustomBarGraph @JvmOverloads constructor(
         if (position in bars.indices) {
             initialHighlight = x
             setSelectedBar(position)
-            // Ensure the bar is fully drawn when highlighted
-            if (animationProgress < 1f) {
-                animationProgress = 1f
-                invalidate()
-            }
+            // Don't force full animation for selection
+            // Just keep current animation state
+            invalidate()
         }
     }
 
@@ -300,16 +305,16 @@ class CustomBarGraph @JvmOverloads constructor(
             }
 
             if (bar.value > 0) {
-                val minHeight = barWidth / 2
-
-                // Use full height immediately if not animating
+//                val minHeight = barWidth / 2
+//
+//                // Use full height immediately if not animating
                 val effectiveHeight = if (shouldAnimate) {
                     fullHeight * animationProgress
                 } else {
                     fullHeight
                 }
 
-                val adjustedTop = if (effectiveHeight < minHeight) bottom - minHeight else bottom - effectiveHeight
+                val adjustedTop = bottom - effectiveHeight
 
                 // Only apply top corners during animation when the bar is tall enough
                 val animatedCornerRadii = cornerRadii.clone()

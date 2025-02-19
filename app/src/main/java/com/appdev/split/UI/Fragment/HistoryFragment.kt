@@ -26,16 +26,7 @@ import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.Utils.Utils
-import com.appdev.split.databinding.FragmentAddGroupBinding
 import com.appdev.split.databinding.FragmentHistoryBinding
-import com.appdev.split.databinding.FragmentHomeBinding
-import com.github.mikephil.charting.data.BarData
-import com.github.mikephil.charting.data.BarDataSet
-import com.github.mikephil.charting.data.BarEntry
-import com.github.mikephil.charting.data.Entry
-import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
-import com.github.mikephil.charting.highlight.Highlight
-import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import kotlin.math.min
@@ -58,7 +49,10 @@ class HistoryFragment : Fragment() {
     var spendingList: List<MySpending> = listOf()
     val mainViewModel by activityViewModels<MainViewModel>()
     var selectedMonth: String = (Calendar.getInstance().get(Calendar.MONTH) + 1).toString()
-    private var selectedMonthYears: String = "${Calendar.getInstance().get(Calendar.YEAR)}-${Calendar.getInstance().get(Calendar.MONTH) + 1}"
+    private var selectedMonthYears: String = "${Calendar.getInstance().get(Calendar.YEAR)}-${
+        Calendar.getInstance().get(Calendar.MONTH) + 1
+    }"
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -84,7 +78,10 @@ class HistoryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         if (!hasInitialLoadOccurred) {
-            Log.d("ClickDebug", "Initial load - getting monthly expense for ${Utils.getYearMonth()}")
+            Log.d(
+                "ClickDebug",
+                "Initial load - getting monthly expense for ${Utils.getYearMonth()}"
+            )
             mainViewModel.getMonthlyExpense(Utils.getYearMonth())
             hasInitialLoadOccurred = true
         }
@@ -111,7 +108,15 @@ class HistoryFragment : Fragment() {
             ).apply {
 
                 setOnMonthSelectedListener { selectedMonthYear ->
+                    selectedMonth = selectedMonthYear.split("-")[1]
+
+                    val selectedMonthSpending = spendingList.firstOrNull {
+                        it.month == selectedMonth
+                    }?.totalAmountSpend ?: 0.0
+
+                    binding.totalSpent.text = String.format("%.2f", selectedMonthSpending)
                     if (selectedMonthYears != selectedMonthYear) {
+                        mainViewModel.updateSelectedMonth(selectedMonthYear)
                         selectedMonthYears = selectedMonthYear
                         mainViewModel.getMonthlyExpense(selectedMonthYear)
                     }
@@ -242,11 +247,11 @@ class HistoryFragment : Fragment() {
     private fun checkAndUpdateUI() {
         if (isTopDataReady && isMainDataReady) {
             hideShimmers()
-            Log.d("ClickDebug", "Updating UI with spending list: $spendingList")
-            Log.d("ClickDebug", "Selected month: $selectedMonth")
             val selectedMonthSpending =
                 spendingList.firstOrNull { it.month == selectedMonth }?.totalAmountSpend ?: 0.0
-            binding.totalSpent.text = String.format("%.2f", selectedMonthSpending)
+            if (binding.totalSpent.text.toString().toDoubleOrNull() != selectedMonthSpending) {
+                binding.totalSpent.text = String.format("%.2f", selectedMonthSpending)
+            }
             updateRecyclerView(expenses)
             updateChartData(spendingList)
         }
@@ -267,8 +272,7 @@ class HistoryFragment : Fragment() {
         safeBinding.recyclerViewRecentBills.layoutParams = params
 
         if (expenses.isEmpty()) {
-            val monthNumber = selectedMonth.split("-").lastOrNull()?.toIntOrNull() ?: 1
-            val monthName = when (monthNumber) {
+            val monthName = when (selectedMonth.toInt()) {
                 1 -> "January"
                 2 -> "February"
                 3 -> "March"
@@ -311,7 +315,8 @@ class HistoryFragment : Fragment() {
     private fun updateChartData(spendingList: List<MySpending>) {
         val chartData = spendingList.map {
             Log.d("ClickDebug", "Mapping spending data: ${it.month} = ${it.totalAmountSpend}")
-            it.totalAmountSpend.toFloat() }
+            it.totalAmountSpend.toFloat()
+        }
 
         chartPagerAdapter.fragments.forEachIndexed { i, fragment ->
             (fragment as? ChartFragment)?.let { chartFragment ->
