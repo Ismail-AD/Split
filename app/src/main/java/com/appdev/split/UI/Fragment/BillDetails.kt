@@ -67,35 +67,40 @@ class BillDetails : Fragment() {
         setupDialog()
         setupRecyclerView()
         setupClickListeners()
-        args.friendId?.let { friendId ->
-            mainViewModel.getFriendNameById(friendId)
-            observeFriendData()
-        }
-
-
         when {
             args.groupId != null -> {
+                // Group expense flow
                 mainViewModel.updateGroupExpense(ExpenseRecord())
                 args.billData?.let { setupGroupExpenseListener(it.id, args.groupId!!) }
+
+                // Update UI immediately if data is available
+                if (args.billData != null) {
+                    updateUIWithExpenseRecord(args.billData, null)
+                }
+            }
+
+            args.friendId != null -> {
+                // Friend ID only flow - setup friend data observer first
+                mainViewModel.getFriendNameById(args.friendId!!)
+                observeFriendData()
+                // Listener setup will happen in the observer callback once friend data is loaded
             }
 
             args.friendData != null -> {
+                // Direct friend data flow
                 mainViewModel.updateFriendExpense(FriendExpenseRecord())
-
                 args.friendsExpense?.let {
-                    setupSingleExpenseListener(
-                        it.id,
-                        args.friendData!!.friendId
-                    )
+                    setupSingleExpenseListener(it.id, args.friendData!!.friendId)
+                }
+
+                // Update UI immediately if data is available
+                if (args.friendsExpense != null) {
+                    updateUIWithExpenseRecord(null, args.friendsExpense)
                 }
             }
         }
 
-        if (args.billData != null) {
-            updateUIWithExpenseRecord(args.billData, null)
-        } else {
-            updateUIWithExpenseRecord(null, args.friendsExpense)
-        }
+
     }
 
     private fun setupDialog() {
@@ -137,7 +142,11 @@ class BillDetails : Fragment() {
                     is UiState.Success -> {
                         friendData = state.data
                         hideShimmer()
-                        updateUIWithExpenseRecord(null, args.friendsExpense)
+                        mainViewModel.updateFriendExpense(FriendExpenseRecord())
+                        args.friendsExpense?.let { expenseRecord ->
+                            setupSingleExpenseListener(expenseRecord.id, friendData!!.friendId)
+                            updateUIWithExpenseRecord(null, expenseRecord)
+                        }
                     }
 
                     is UiState.Error -> {
@@ -159,6 +168,7 @@ class BillDetails : Fragment() {
                 findNavController().navigateUp()
             }
 
+
             edit.setOnClickListener {
                 when {
                     args.groupId != null -> {
@@ -169,11 +179,13 @@ class BillDetails : Fragment() {
                         findNavController().navigate(action)
                     }
 
-                    args.friendData != null -> {
+                    args.friendData != null || friendData != null -> {
+                        val friendDataObject = args.friendData ?: friendData
+
                         val action =
                             BillDetailsDirections.actionBillDetailsToPersonalExpenseFragment(
                                 friendExpense,
-                                args.friendData
+                                friendDataObject
                             )
                         findNavController().navigate(action)
                     }
@@ -192,11 +204,13 @@ class BillDetails : Fragment() {
                         }
                     }
 
-                    args.friendData != null -> {
+                    args.friendData != null || friendData != null -> {
                         firebaseAuth.currentUser?.uid.let { myId ->
                             friendExpense?.let { it2 ->
                                 mainViewModel.deleteFriendExpenseDetail(
-                                    it2.id, it2.splits.find { it.userId == myId }?.amount ?: 0.0,it2.startDate
+                                    it2.id,
+                                    it2.splits.find { it.userId == myId }?.amount ?: 0.0,
+                                    it2.startDate
                                 )
                             }
                         }

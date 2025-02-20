@@ -15,6 +15,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.appdev.split.Graph.CustomBarGraph
+import com.appdev.split.Model.Data.FriendExpenseRecord
+import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.BarGraphViewModel
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
@@ -65,10 +67,9 @@ class ChartFragment : Fragment() {
             Log.d("ClickDebug", "First selection done: $firstSelectionDone")
             Log.d("ClickDebug", "Current month year: $currentMonthYear")
 
-            if (monthYear != currentMonthYear) {
-                currentMonthYear = monthYear
-                listener(monthYear)
-            }
+            currentMonthYear = monthYear
+            listener(monthYear)
+
         }
     }
 
@@ -88,6 +89,9 @@ class ChartFragment : Fragment() {
         monthsWithYears = arguments?.getStringArrayList("monthsWithYears") ?: emptyList()
 
         setupBarChart()
+
+
+
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 mainViewModel.selectedMonthYears.collect { selectedMonthYear ->
@@ -96,9 +100,45 @@ class ChartFragment : Fragment() {
             }
         }
 
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                mainViewModel.monthsTotalSpentState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            updateChartData(state.data.map { it.totalAmountSpend.toFloat() })
+                        }
+                        // Handle other states if necessary
+                        else -> {}
+                    }
+                }
+            }
+        }
+
         pendingChartUpdate?.let {
             updateChartData(it)
             pendingChartUpdate = null
+        }
+    }
+
+    private fun updateValuesFromExpenses(expenses: List<FriendExpenseRecord>) {
+        // Extract the month-year for the current expenses
+        if (expenses.isEmpty()) return
+
+        val expenseMonthYear = expenses.firstOrNull()?.startDate ?: return
+        val currentIndex = monthsWithYears.indexOf(expenseMonthYear)
+
+        if (currentIndex != -1) {
+            // Sum up the expenses for this month
+            val totalAmount = expenses.sumOf { it.totalAmount }
+
+            // Create a new list of values with the updated value at the current index
+            val newValues = values.toMutableList()
+            if (currentIndex < newValues.size) {
+                newValues[currentIndex] = totalAmount.toFloat()
+
+                // Update the chart with new values
+                updateChartData(newValues)
+            }
         }
     }
 
@@ -145,26 +185,26 @@ class ChartFragment : Fragment() {
         }
     }
 
-    fun updateChartData(newValues: List<Float>) {
+    fun updateChartData(newValues: List<Float>, animate: Boolean = true) {
         if (!isAdded || _binding == null) {
-            // Store the update for later if the fragment isn't ready
             pendingChartUpdate = newValues
             return
         }
 
-        // Create new bar data with the updated values
+        Log.d("ChartDebug", "Updating chart data: $newValues")
         val customBars = months.mapIndexed { index, month ->
             CustomBarGraph.BarData(
                 value = if (index < newValues.size) newValues[index] else 0f,
                 label = month
             )
         }
+        binding.barChart.setData(customBars, animate)
+        binding.barChart.invalidate()
+        values = newValues.toList()
 
-        // Set data WITHOUT animation for updates
-        binding.barChart.setData(customBars, animate = false)
+        // Re-apply the current selection
+        mainViewModel.selectedMonthYears.value.let { updateChartSelection(it) }
 
-        // Make sure the current selection is maintained
-        mainViewModel.selectedMonthYear.value?.let { updateChartSelection(it) }
     }
 
 

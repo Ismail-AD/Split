@@ -19,6 +19,7 @@ import com.appdev.split.Utils.Utils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -110,6 +111,7 @@ class MainViewModel @Inject constructor(
 
     private var expensesListener: ListenerRegistration? = null
     private val friendExpenseListeners = mutableMapOf<String, ListenerRegistration>()
+    private val monthSpendingListeners = mutableMapOf<String, ListenerRegistration>()
 
     init {
         fetchAllContacts()
@@ -138,6 +140,97 @@ class MainViewModel @Inject constructor(
 
     fun clearSelectedFriends() {
         _selectedFriendIds.value = emptySet()
+    }
+
+    //--------------------LISTNERS-------------------
+
+    fun setupRealTimeExpensesListener(targetDate: String) {
+        val currentUser = firebaseAuth.currentUser ?: return
+        val userId = currentUser.uid
+        _monthBaseExpensesState.value = UiState.Loading
+
+        cleanupListeners()
+
+        expensesListener = firestore.collection("expenses")
+            .document(userId)
+            .collection("friendsExpenses")
+            .whereEqualTo("startDate", targetDate)
+            .orderBy("timeStamp", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    _monthBaseExpensesState.value = UiState.Error(error.message ?: "Unknown error")
+                    return@addSnapshotListener
+                }
+
+                val expenses = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(FriendExpenseRecord::class.java)
+                } ?: emptyList()
+
+                _monthBaseExpensesState.value = UiState.Success(expenses)
+            }
+    }
+
+
+    fun setupRealTimeMonthlySpendingListener(monthYearList: List<String>) {
+        val currentUser = firebaseAuth.currentUser ?: return
+        val userId = currentUser.uid
+        _monthsTotalSpentState.value = UiState.Loading
+
+        cleanupMonthlySpendingListeners()
+
+        viewModelScope.launch {
+            val results = mutableListOf<MySpending>()
+            val deferredResults = monthYearList.map { monthYear ->
+                async {
+                    val parts = monthYear.split("-")
+                    val year = parts[0]
+                    val month = parts[1]
+
+                    suspendCancellableCoroutine { continuation ->
+                        val listener = firestore.collection("mySpending")
+                            .document(userId)
+                            .collection(year + month)
+                            .addSnapshotListener { snapshot, error ->
+                                if (error != null) {
+                                    continuation.resume(
+                                        MySpending(
+                                            month = month,
+                                            year = year,
+                                            totalAmountSpend = 0.0
+                                        )
+                                    )
+                                    return@addSnapshotListener
+                                }
+
+                                val spending = snapshot?.documents?.firstOrNull()
+                                    ?.toObject(MySpending::class.java)
+                                    ?: MySpending(
+                                        month = month,
+                                        year = year,
+                                        totalAmountSpend = 0.0
+                                    )
+
+                                if (!continuation.isCompleted) {
+                                    continuation.resume(spending)
+                                }
+                            }
+
+                        monthSpendingListeners[monthYear] = listener
+
+                        continuation.invokeOnCancellation {
+                            listener.remove()
+                            monthSpendingListeners.remove(monthYear)
+                        }
+                    }
+                }
+            }
+
+            // Wait for all results before updating state
+            val spendingData = deferredResults.awaitAll()
+            results.addAll(spendingData)
+
+            _monthsTotalSpentState.value = UiState.Success(results)
+        }
     }
 
 
@@ -227,14 +320,21 @@ class MainViewModel @Inject constructor(
         cleanupListeners()
     }
 
+
+    fun cleanupListeners() {
+        expensesListener?.remove()
+        expensesListener = null
+        cleanupFriendListeners()
+    }
+
     private fun cleanupFriendListeners() {
         friendExpenseListeners.values.forEach { it.remove() }
         friendExpenseListeners.clear()
     }
 
-    private fun cleanupListeners() {
-        expensesListener?.remove()
-        cleanupFriendListeners()
+    fun cleanupMonthlySpendingListeners() {
+        monthSpendingListeners.values.forEach { it.remove() }
+        monthSpendingListeners.clear()
     }
 
     //---------------------MANAGE MEMBERS--------------------
@@ -513,6 +613,7 @@ class MainViewModel @Inject constructor(
             }
         }
     }
+
 
     fun getMonthlyExpense(
         targetDate: String

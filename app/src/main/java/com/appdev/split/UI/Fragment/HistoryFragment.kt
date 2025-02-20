@@ -27,11 +27,10 @@ import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentHistoryBinding
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import kotlin.math.min
-
-
 class HistoryFragment : Fragment() {
 
     private var _binding: FragmentHistoryBinding? = null
@@ -42,8 +41,7 @@ class HistoryFragment : Fragment() {
     private var isMainDataReady = false
 
     private var currentYear = Calendar.getInstance().get(Calendar.YEAR)
-    private val allMonthsWithYears = generateMonthYearList() // Add this property
-    var monthySpendings: Double = 0.0
+    private val allMonthsWithYears = generateMonthYearList()
 
     var expenses: List<FriendExpenseRecord> = listOf()
     var spendingList: List<MySpending> = listOf()
@@ -52,6 +50,7 @@ class HistoryFragment : Fragment() {
     private var selectedMonthYears: String = "${Calendar.getInstance().get(Calendar.YEAR)}-${
         Calendar.getInstance().get(Calendar.MONTH) + 1
     }"
+    var hasInitialLoadOccurred = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -70,24 +69,19 @@ class HistoryFragment : Fragment() {
         }
     }
 
-    companion object {
-        var hasInitialLoadOccurred = false
-    }
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         if (!hasInitialLoadOccurred) {
-            Log.d(
-                "ClickDebug",
-                "Initial load - getting monthly expense for ${Utils.getYearMonth()}"
-            )
-            mainViewModel.getMonthlyExpense(Utils.getYearMonth())
+            mainViewModel.setupRealTimeExpensesListener(Utils.getYearMonth())
             hasInitialLoadOccurred = true
         }
 
 
-        mainViewModel.getMonthsTotalSpent(getCurrentlyVisibleMonths())
+        mainViewModel.setupRealTimeMonthlySpendingListener(getCurrentlyVisibleMonths())
+
         val months = listOf(
             "Jan", "Feb", "Mar", "Apr",
             "May", "Jun", "Jul", "Aug",
@@ -118,7 +112,10 @@ class HistoryFragment : Fragment() {
                     if (selectedMonthYears != selectedMonthYear) {
                         mainViewModel.updateSelectedMonth(selectedMonthYear)
                         selectedMonthYears = selectedMonthYear
-                        mainViewModel.getMonthlyExpense(selectedMonthYear)
+                        Log.d("CALLZX","${selectedMonthYear} is new selected month")
+                        mainViewModel.setupRealTimeExpensesListener(selectedMonthYear)
+
+//                        mainViewModel.getMonthlyExpense(selectedMonthYear)
                     }
                 }
             }
@@ -261,6 +258,9 @@ class HistoryFragment : Fragment() {
         hideTopShimmer()
         hideBottomShimmer()
     }
+
+
+
 
     private fun updateRecyclerView(expenses: List<FriendExpenseRecord>) {
         // Check if binding is null before accessing
@@ -410,6 +410,12 @@ class HistoryFragment : Fragment() {
     }
 
 
+    override fun onDestroy() {
+        super.onDestroy()
+        mainViewModel.cleanupListeners()
+        mainViewModel.cleanupMonthlySpendingListeners()
+        _binding = null
+    }
 }
 
 class ChartPagerAdapter(fragment: Fragment, val fragments: List<Fragment>) :

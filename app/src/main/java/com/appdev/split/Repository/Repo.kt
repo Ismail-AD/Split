@@ -15,6 +15,7 @@ import com.appdev.split.Room.DaoClasses.ContactDao
 import com.appdev.split.Utils.Utils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage
@@ -44,6 +45,13 @@ class Repo @Inject constructor(
     fun getCurrentUserId(): String {
         return firebaseAuth.currentUser?.uid ?: ""
     }
+
+
+
+
+
+
+
     //----------------------MANGE GROUP EXPENSE------------------
 
     suspend fun saveGroupExpense(
@@ -810,6 +818,8 @@ class Repo @Inject constructor(
                     val existingSpending = dataFetched.documents[0].toObject(MySpending::class.java)
                     existingSpending?.let { spending ->
                         val newTotalAmount = spending.totalAmountSpend - oldAmount + amount
+                        Log.d("CHKSPEND", "NEW TOTAL: " + newTotalAmount.toString())
+                        Log.d("CHKSPEND", "OLD SPENDING: " + spending)
                         val updatedSpending = spending.copy(
                             totalAmountSpend = newTotalAmount
                         )
@@ -915,7 +925,7 @@ class Repo @Inject constructor(
             val newAmount = updatedExpense.splits.find { it.userId == myUserId }?.amount ?: 0.0
 
 
-            removeAndUpdateTotalExpense(newAmount,oldAmount, updatedExpense.startDate, myUserId)
+            removeAndUpdateTotalExpense(newAmount, oldAmount, updatedExpense.startDate, myUserId)
 
             onResult(true, "Expense updated successfully!")
         } catch (e: Exception) {
