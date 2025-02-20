@@ -191,19 +191,19 @@ class ChartFragment : Fragment() {
             return
         }
 
-        Log.d("ChartDebug", "Updating chart data: $newValues")
-        val customBars = months.mapIndexed { index, month ->
-            CustomBarGraph.BarData(
-                value = if (index < newValues.size) newValues[index] else 0f,
-                label = month
-            )
+        if (values != newValues) {  // Only update if there's a change
+            Log.d("ChartDebug", "Updating chart data: $newValues")
+            val customBars = months.mapIndexed { index, month ->
+                CustomBarGraph.BarData(
+                    value = if (index < newValues.size) newValues[index] else 0f,
+                    label = month
+                )
+            }
+            binding.barChart.setData(customBars, animate)
+            binding.barChart.invalidate()
+            values = newValues.toList()
+            mainViewModel.selectedMonthYears.value.let { updateChartSelection(it) }
         }
-        binding.barChart.setData(customBars, animate)
-        binding.barChart.invalidate()
-        values = newValues.toList()
-
-        // Re-apply the current selection
-        mainViewModel.selectedMonthYears.value.let { updateChartSelection(it) }
 
     }
 
