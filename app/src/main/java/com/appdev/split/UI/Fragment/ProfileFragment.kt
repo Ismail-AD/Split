@@ -24,6 +24,7 @@ import com.appdev.split.databinding.FragmentProfileBinding
 import com.appdev.split.databinding.LogoutdialogBinding
 import com.appdev.split.databinding.ReauthdialogBinding
 import com.appdev.split.databinding.ThemedialogBinding
+import com.appdev.split.databinding.UpdatenamedialogBinding
 import com.bumptech.glide.Glide
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.EmailAuthProvider
@@ -88,6 +89,68 @@ class ProfileFragment : Fragment() {
         }
     }
 
+    private fun showChangeNameDialog() {
+        val dialogBinding = UpdatenamedialogBinding.inflate(layoutInflater)
+
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogBinding.root)
+            .setCancelable(false)
+            .create()
+
+        // Pre-fill with current name
+        mainViewModel.userData.value?.let { user ->
+            dialogBinding.nameInput.setText(user.name)
+        }
+
+        dialogBinding.cancelButton.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialogBinding.updateButton.setOnClickListener {
+            val newName = dialogBinding.nameInput.text.toString().trim()
+
+            if (newName.isEmpty()) {
+                dialogBinding.nameInput.error = "Name cannot be empty"
+                return@setOnClickListener
+            }
+
+            // Show loading state
+            dialogBinding.loadingOverlay.visibility = View.VISIBLE
+            dialogBinding.dialogContent.alpha = 0.5f
+
+            // Get current user ID
+            firebaseAuth.currentUser?.uid?.let { userId ->
+                lifecycleScope.launch {
+                    mainViewModel.updateUserName(newName) { message, success ->
+                        // Update UI on main thread
+                        requireActivity().runOnUiThread {
+                            if (success) {
+                                // Update the TextView immediately
+                                binding.name.text = newName
+
+                                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                                dialog.dismiss()
+
+                                // Update the ViewModel's userData
+                                mainViewModel.userData.value?.let { currentUser ->
+                                    val updatedUser = currentUser.copy(name = newName)
+                                    mainViewModel.updateUserDataLocally(updatedUser)
+                                }
+                            } else {
+                                Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+                            }
+                            // Hide loading state
+                            dialogBinding.loadingOverlay.visibility = View.GONE
+                            dialogBinding.dialogContent.alpha = 1.0f
+                        }
+                    }
+                }
+            }
+        }
+
+        dialog.show()
+    }
+
 
     private fun setupListeners() {
         binding.switchTheme.setOnClickListener {
@@ -98,6 +161,9 @@ class ProfileFragment : Fragment() {
         }
         binding.accountDelete.setOnClickListener {
             showDeleteAccountDialog()
+        }
+        binding.changeName.setOnClickListener {
+            showChangeNameDialog()
         }
     }
 

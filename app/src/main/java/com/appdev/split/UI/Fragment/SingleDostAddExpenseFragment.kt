@@ -214,7 +214,7 @@ class SingleDostAddExpenseFragment : Fragment() {
         // Parse existing selected date if available
         if (selectedYearMonth.trim().isNotEmpty() && selectedDay.trim().isNotEmpty()) {
             val parts = selectedYearMonth.split("-")
-            if (parts.size == 3) {
+            if (parts.size == 2) {
                 year = parts[0].toInt()
                 month = parts[1].toInt() - 1 // Convert to 0-based month
                 day = selectedDay.toInt()
@@ -260,14 +260,15 @@ class SingleDostAddExpenseFragment : Fragment() {
         var month: Int
         var day: Int
 
-        val initialString = startDateString ?: mainViewModel.friendExpensePush.value.startDate
-        val finalString = startDateString ?: mainViewModel.friendExpensePush.value.startDate
-        if (finalString.trim().isNotEmpty() && initialString.trim().isNotEmpty()) {
-            val parts = finalString.split("-")
-            if (parts.size == 3) {
+        val dateString = startDateString ?: mainViewModel.friendExpensePush.value.startDate
+        val dayString = endDateString ?: mainViewModel.friendExpensePush.value.endDate
+
+        if (dateString.trim().isNotEmpty() && dayString.trim().isNotEmpty()) {
+            val parts = dateString.split("-")
+            if (parts.size >= 2) {
                 year = parts[0].toInt()
                 month = parts[1].toInt() - 1
-                day = endDateString?.toInt() ?: 0
+                day = dayString.toInt()
                 calendar.set(year, month, day)
             }
         }
@@ -347,7 +348,8 @@ class SingleDostAddExpenseFragment : Fragment() {
                                 ),
                                 args.expenseRecord!!.id,
                                 args.expenseRecord!!.splits.find { it.userId == currentUserId }?.amount
-                                    ?: 0.0
+                                    ?: 0.0,
+                                args.expenseRecord!!.startDate
                             )
                         }
                     } else {

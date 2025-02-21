@@ -1,212 +1,310 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
-    style="@style/Background"
     tools:context=".UI.Fragment.ProfileFragment">
 
-    <com.google.android.material.imageview.ShapeableImageView
-        android:id="@+id/imageprofile"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="@dimen/dp_25"
-        android:scaleType="centerCrop"
-        android:src="@drawable/profile_imaage"
-        app:shapeAppearanceOverlay="@style/CircleImageView" />
-
-    <TextView
-        android:id="@+id/name"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/dp_10"
-        android:text=""
-        style="@style/billWordColor"
-        android:textAlignment="center"
-        android:textSize="@dimen/_13ssp" />
-
-
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_20sdp"
-        android:id="@+id/push_notifications"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="@dimen/_12sdp"
-        android:paddingEnd="@dimen/_2sdp"
-        android:paddingVertical="@dimen/_6sdp">
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        android:orientation="vertical">
 
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginEnd="12dp"
-            android:src="@drawable/notification"
-            style="@style/iconTintColor" />
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/imageprofile"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="@dimen/dp_25"
+            android:scaleType="centerCrop"
+            android:src="@drawable/profile_imaage"
+            app:shapeAppearanceOverlay="@style/CircleImageView" />
 
         <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="Push Notifications"
-            android:id="@+id/enable_push_notifications"
+            android:id="@+id/name"
             style="@style/billWordColor"
-            android:textSize="@dimen/_14ssp" />
-
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:layout_width="wrap_content"
-            style="@style/switchTheme"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:id="@+id/switchTheme"
-        android:orientation="horizontal"
-        android:paddingHorizontal="@dimen/_12sdp"
-        android:paddingVertical="@dimen/_14sdp">
-
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginEnd="12dp"
-            android:src="@drawable/night_mode"
-            style="@style/iconTintColor" />
+            android:layout_marginTop="@dimen/dp_10"
+            android:text=""
+            android:textAlignment="center"
+            android:textSize="@dimen/_13ssp" />
 
         <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="Switch Theme"
             style="@style/billWordColor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:layout_marginTop="@dimen/_20sdp"
+            android:maxLines="1"
+            android:paddingHorizontal="@dimen/_12sdp"
+            android:text="Account"
             android:textSize="@dimen/_14ssp" />
 
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="12dp"
-            android:src="@drawable/right"
-            style="@style/iconTintColor" />
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/_12sdp"
+            android:layout_marginTop="@dimen/_5sdp" />
 
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="@dimen/_12sdp"
-        android:paddingVertical="@dimen/_14sdp">
+        <LinearLayout
+            android:id="@+id/changeName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_5sdp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/_12sdp"
+            android:paddingVertical="@dimen/_14sdp">
 
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginEnd="12dp"
-            android:src="@drawable/support_us"
-            style="@style/iconTintColor" />
+            <ImageView
+                style="@style/iconTintColor"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/useroutline" />
+
+            <TextView
+                android:id="@+id/enable_push_notifications"
+                style="@style/billWordColor"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Change Account Name"
+                android:textSize="@dimen/_14ssp" />
+
+            <ImageView
+                style="@style/iconTintColor"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="12dp"
+                android:src="@drawable/right" />
+
+        </LinearLayout>
+        <!--    <LinearLayout-->
+        <!--        android:layout_width="match_parent"-->
+        <!--        android:layout_height="wrap_content"-->
+        <!--        android:layout_marginTop="@dimen/_20sdp"-->
+        <!--        android:id="@+id/push_notifications"-->
+        <!--        android:background="?attr/selectableItemBackground"-->
+        <!--        android:clickable="true"-->
+        <!--        android:focusable="true"-->
+        <!--        android:gravity="center_vertical"-->
+        <!--        android:orientation="horizontal"-->
+        <!--        android:paddingStart="@dimen/_12sdp"-->
+        <!--        android:paddingEnd="@dimen/_2sdp"-->
+        <!--        android:paddingVertical="@dimen/_6sdp">-->
+
+        <!--        <ImageView-->
+        <!--            android:layout_width="24dp"-->
+        <!--            android:layout_height="24dp"-->
+        <!--            android:layout_marginEnd="12dp"-->
+        <!--            android:src="@drawable/notification"-->
+        <!--            style="@style/iconTintColor" />-->
+
+        <!--        <TextView-->
+        <!--            android:layout_width="0dp"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:layout_weight="1"-->
+        <!--            android:ellipsize="end"-->
+        <!--            android:maxLines="1"-->
+        <!--            android:text="Push Notifications"-->
+        <!--            android:id="@+id/enable_push_notifications"-->
+        <!--            style="@style/billWordColor"-->
+        <!--            android:textSize="@dimen/_14ssp" />-->
+
+        <!--        <com.google.android.material.switchmaterial.SwitchMaterial-->
+        <!--            android:layout_width="wrap_content"-->
+        <!--            style="@style/switchTheme"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:layout_marginStart="12dp"/>-->
+
+        <!--    </LinearLayout>-->
 
         <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="Support Us"
             style="@style/billWordColor"
-            android:textSize="@dimen/_14ssp" />
-
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="12dp"
-            android:src="@drawable/right"
-            style="@style/iconTintColor" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_13sdp"
-        android:id="@+id/logout"
-
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="@dimen/_12sdp"
-        android:paddingVertical="@dimen/_14sdp">
-
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginEnd="12dp"
-            android:src="@drawable/logout"
-            app:tint="@color/red" />
-
-        <TextView
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_marginTop="@dimen/_10sdp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Logout"
-            android:textColor="@color/red"
+            android:paddingHorizontal="@dimen/_12sdp"
+            android:text="Settings"
             android:textSize="@dimen/_14ssp" />
 
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/_12sdp"
+            android:layout_marginTop="@dimen/_5sdp" />
 
-    </LinearLayout>
+        <LinearLayout
+            android:id="@+id/switchTheme"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_5sdp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/_12sdp"
+            android:paddingVertical="@dimen/_14sdp">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:id="@+id/accountDelete"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="@dimen/_12sdp"
-        android:paddingVertical="@dimen/_14sdp">
+            <ImageView
+                style="@style/iconTintColor"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/night_mode" />
 
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginEnd="12dp"
-            android:src="@drawable/delete"
-            app:tint="@color/red" />
+            <TextView
+                style="@style/billWordColor"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Switch Theme"
+                android:textSize="@dimen/_14ssp" />
+
+            <ImageView
+                style="@style/iconTintColor"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="12dp"
+                android:src="@drawable/right" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/_12sdp"
+            android:paddingVertical="@dimen/_14sdp">
+
+            <ImageView
+                style="@style/iconTintColor"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/support_us" />
+
+            <TextView
+                style="@style/billWordColor"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Support Us"
+                android:textSize="@dimen/_14ssp" />
+
+            <ImageView
+                style="@style/iconTintColor"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="12dp"
+                android:src="@drawable/right" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/logout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/_12sdp"
+            android:paddingVertical="@dimen/_14sdp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/logout"
+                app:tint="@color/red" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Logout"
+                android:textColor="@color/red"
+                android:textSize="@dimen/_14ssp" />
+
+
+        </LinearLayout>
 
         <TextView
-            android:layout_width="0dp"
+            style="@style/billWordColor"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_marginTop="@dimen/_10sdp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:text="Delete Account"
-            android:textColor="@color/red"
+            android:paddingHorizontal="@dimen/_12sdp"
+            android:text="Account Deletion"
             android:textSize="@dimen/_14ssp" />
 
+        <com.google.android.material.divider.MaterialDivider
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/_12sdp"
+            android:layout_marginTop="@dimen/_5sdp" />
+
+        <LinearLayout
+            android:id="@+id/accountDelete"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_5sdp"
+            android:background="?attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="@dimen/_12sdp"
+            android:paddingVertical="@dimen/_14sdp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/delete"
+                app:tint="@color/red" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Delete Account"
+                android:textColor="@color/red"
+                android:textSize="@dimen/_14ssp" />
+
+
+        </LinearLayout>
 
     </LinearLayout>
-</LinearLayout>
+
+</RelativeLayout>

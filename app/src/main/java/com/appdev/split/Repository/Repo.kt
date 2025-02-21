@@ -357,6 +357,29 @@ class Repo @Inject constructor(
         }
     }
 
+    suspend fun updateUserName(
+        userId: String,
+        newName: String,
+        result: (message: String, success: Boolean) -> Unit
+    ) {
+        try {
+            // Update only the name field in Firestore
+            firestore.collection("profiles")
+                .document(userId)
+                .update("name", newName)
+                .addOnSuccessListener {
+                    result("Name updated successfully", true)
+                }
+                .addOnFailureListener { e ->
+                    Log.e("CHKAZ", "Failed to update name: ${e.message}")
+                    result("Failed to update name", false)
+                }
+        } catch (e: Exception) {
+            Log.e("CHKAZ", "Exception while updating name: ${e.message}")
+            result("Failed to update name: ${e.message}", false)
+        }
+    }
+
     suspend fun signUp(
         userEntity: UserEntity,
         imageUri: Uri?,
@@ -788,46 +811,62 @@ class Repo @Inject constructor(
     }
 
     private suspend fun removeAndUpdateTotalExpense(
-        amount: Double,
+        oldStartDate: String,
+        newAmount: Double,
         oldAmount: Double,
-        startDateString: String,
+        newStartDate: String,
         userId: String
     ) {
         try {
-            val parts = startDateString.split("-")
-            if (parts.size > 1) {
-                val year = parts[0]
-                val month = parts[1]
-                val collectionRef = firestore.collection("mySpending")
+            // Handle old date - remove amount
+            val oldParts = oldStartDate.split("-")
+            if (oldParts.size > 1) {
+                val oldYear = oldParts[0]
+                val oldMonth = oldParts[1]
+                val oldCollectionRef = firestore.collection("mySpending")
                     .document(userId)
-                    .collection(year + month)
+                    .collection(oldYear + oldMonth)
 
-                // Try to fetch existing spending document for this month
-                val dataFetched = collectionRef.get().await()
-
-                if (dataFetched.isEmpty) {
-                    // No existing spending record for this month - create new one
-                    val newSpending = MySpending(
-                        id = collectionRef.document().id,
-                        year = year, month = month,
-                        totalAmountSpend = amount
-                    )
-                    collectionRef.document(newSpending.id).set(newSpending).await()
-                } else {
-                    // Update existing spending record
-                    val existingSpending = dataFetched.documents[0].toObject(MySpending::class.java)
-                    existingSpending?.let { spending ->
-                        val newTotalAmount = spending.totalAmountSpend - oldAmount + amount
-                        Log.d("CHKSPEND", "NEW TOTAL: " + newTotalAmount.toString())
-                        Log.d("CHKSPEND", "OLD SPENDING: " + spending)
-                        val updatedSpending = spending.copy(
-                            totalAmountSpend = newTotalAmount
-                        )
-                        collectionRef.document(spending.id).set(updatedSpending).await()
+                val oldDataFetched = oldCollectionRef.get().await()
+                if (!oldDataFetched.isEmpty) {
+                    val oldSpending = oldDataFetched.documents[0].toObject(MySpending::class.java)
+                    oldSpending?.let { spending ->
+                        val updatedOldAmount = (spending.totalAmountSpend - oldAmount).coerceAtLeast(0.0)
+                        val updatedOldSpending = spending.copy(totalAmountSpend = updatedOldAmount)
+                        oldCollectionRef.document(spending.id).set(updatedOldSpending).await()
                     }
                 }
+            }
 
+            // Handle new date - add amount
+            val newParts = newStartDate.split("-")
+            if (newParts.size > 1) {
+                val newYear = newParts[0]
+                val newMonth = newParts[1]
+                val newCollectionRef = firestore.collection("mySpending")
+                    .document(userId)
+                    .collection(newYear + newMonth)
 
+                val newDataFetched = newCollectionRef.get().await()
+                if (newDataFetched.isEmpty) {
+                    // Create new spending record for the new month
+                    val newSpending = MySpending(
+                        id = newCollectionRef.document().id,
+                        year = newYear,
+                        month = newMonth,
+                        totalAmountSpend = newAmount
+                    )
+                    newCollectionRef.document(newSpending.id).set(newSpending).await()
+                } else {
+                    // Update existing spending record for the new month
+                    val existingSpending = newDataFetched.documents[0].toObject(MySpending::class.java)
+                    existingSpending?.let { spending ->
+                        val updatedNewSpending = spending.copy(
+                            totalAmountSpend = spending.totalAmountSpend + newAmount
+                        )
+                        newCollectionRef.document(spending.id).set(updatedNewSpending).await()
+                    }
+                }
             }
         } catch (e: Exception) {
             // Handle the error appropriately
@@ -910,6 +949,7 @@ class Repo @Inject constructor(
 
 
     suspend fun updateFriendExpense(
+        oldStartDate: String,
         myUserId: String,
         expenseId: String, oldAmount: Double,
         updatedExpense: FriendExpenseRecord,
@@ -925,7 +965,7 @@ class Repo @Inject constructor(
             val newAmount = updatedExpense.splits.find { it.userId == myUserId }?.amount ?: 0.0
 
 
-            removeAndUpdateTotalExpense(newAmount, oldAmount, updatedExpense.startDate, myUserId)
+            removeAndUpdateTotalExpense(oldStartDate,newAmount, oldAmount, updatedExpense.startDate, myUserId)
 
             onResult(true, "Expense updated successfully!")
         } catch (e: Exception) {

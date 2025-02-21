@@ -561,13 +561,15 @@ class MainViewModel @Inject constructor(
     fun updateFriendExpenseDetail(
         expenseRecord: FriendExpenseRecord,
         expenseId: String,
-        amount: Double
+        amount: Double,
+        oldStartDate: String
     ) {
         _operationState.value = UiState.Loading
         viewModelScope.launch {
             try {
                 firebaseAuth.currentUser?.uid?.let { uid ->
                     repo.updateFriendExpense(
+                        oldStartDate = oldStartDate,
                         uid,
                         expenseId, oldAmount = amount,
                         expenseRecord
@@ -999,6 +1001,23 @@ class MainViewModel @Inject constructor(
         }
     }
 
+
+    fun updateUserDataLocally(updatedUser: UserEntity) {
+        _userData.value = updatedUser
+    }
+
+    fun updateUserName(
+        newName: String,
+        result: (message: String, success: Boolean) -> Unit
+    ) {
+        viewModelScope.launch {
+            firebaseAuth.currentUser?.uid?.let { uid ->
+                repo.updateUserName(userId = uid, newName = newName) { message, success ->
+                    result(message, success)
+                }
+            }
+        }
+    }
 
     fun startSignUp(
         uri: Uri? = null,
