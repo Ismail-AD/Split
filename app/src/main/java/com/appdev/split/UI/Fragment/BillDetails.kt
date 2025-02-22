@@ -208,6 +208,7 @@ class BillDetails : Fragment() {
                         firebaseAuth.currentUser?.uid.let { myId ->
                             friendExpense?.let { it2 ->
                                 mainViewModel.deleteFriendExpenseDetail(
+                                    it2.friendId,
                                     it2.id,
                                     it2.splits.find { it.userId == myId }?.amount ?: 0.0,
                                     it2.startDate
@@ -280,15 +281,26 @@ class BillDetails : Fragment() {
         friendExpenseRecord: FriendExpenseRecord?
     ) {
         _binding?.let { binding ->
+            // Get current user ID
+            val currentUserId = firebaseAuth.currentUser?.uid
+
+            // Hide edit and delete buttons by default
+            binding.edit.visibility = View.GONE
+            binding.delete.visibility = View.GONE
+
             when {
                 record != null -> {
                     expenseRecord = record
                     binding.title.text = record.title
-                    binding.date.text =
-                        "Added on ${record.startDate + "-" + record.endDate}"
-                    binding.totalAmount.text =
-                        "${Utils.extractCurrencyCode(record.currency)}${record.totalAmount}"
+                    binding.date.text = "Added on ${record.startDate + "-" + record.endDate}"
+                    binding.totalAmount.text = "${Utils.extractCurrencyCode(record.currency)}${record.totalAmount}"
                     binding.description.text = record.description
+
+                    // Show edit and delete only if current user is the one who paid
+                    if (currentUserId == record.paidBy) {
+                        binding.edit.visibility = View.VISIBLE
+                        binding.delete.visibility = View.VISIBLE
+                    }
 
                     splitDetailsAdapter.updateData(
                         record.splits,
@@ -311,11 +323,15 @@ class BillDetails : Fragment() {
                 friendExpenseRecord != null -> {
                     friendExpense = friendExpenseRecord
                     binding.title.text = friendExpenseRecord.title
-                    binding.date.text =
-                        "Added on ${friendExpenseRecord.startDate + "-" + friendExpenseRecord.endDate}"
-                    binding.totalAmount.text =
-                        "${Utils.extractCurrencyCode(friendExpenseRecord.currency)}${friendExpenseRecord.totalAmount}"
+                    binding.date.text = "Added on ${friendExpenseRecord.startDate + "-" + friendExpenseRecord.endDate}"
+                    binding.totalAmount.text = "${Utils.extractCurrencyCode(friendExpenseRecord.currency)}${friendExpenseRecord.totalAmount}"
                     binding.description.text = friendExpenseRecord.description
+
+                    // Show edit and delete only if current user is the one who paid
+                    if (currentUserId == friendExpenseRecord.paidBy) {
+                        binding.edit.visibility = View.VISIBLE
+                        binding.delete.visibility = View.VISIBLE
+                    }
 
                     splitDetailsAdapter.updateData(
                         friendExpenseRecord.splits,
@@ -344,8 +360,6 @@ class BillDetails : Fragment() {
 
                 else -> {}
             }
-
-
         }
     }
 

@@ -8,7 +8,10 @@ data class GroupMetaData(
     val groupId: String? = "",
     val image: String? = "",
     val title: String,
-    val groupType: String
+    val groupType: String,
+    val createdBy:String,
+    val members: List<FriendContact> = emptyList(),
+    val memberIds: List<String> = emptyList(),
 ): Parcelable {
-    constructor() : this("","","","")
+    constructor() : this("","","","","", emptyList(), emptyList())
 }

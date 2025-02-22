@@ -16,12 +16,16 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.UI.Activity.EntryActivity
 import com.appdev.split.databinding.FragmentAddGroupBinding
+import com.google.firebase.auth.FirebaseAuth
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class AddGroupFragment : Fragment() {
 
@@ -31,6 +35,7 @@ class AddGroupFragment : Fragment() {
     val mainViewModel by activityViewModels<MainViewModel>()
     var imageUri: Uri? = null
     lateinit var dialog: Dialog
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -112,22 +117,34 @@ class AddGroupFragment : Fragment() {
                             null
                         }
                     }
-                    mainViewModel.saveNewGroup(
-                        imageUri = imageUri,
-                        imagebytes = imageBytes,
-                        title = groupName,
-                        groupType = selectedChip.text.toString()
-                    )
+                    if (mainViewModel.getCurrentUserId().trim().isNotEmpty()) {
+                        mainViewModel.userData.value?.let {
+                            val friendContact = FriendContact(
+                                friendId = mainViewModel.getCurrentUserId(),
+                                contact = it.email,
+                                name = it.name,
+                                profileImageUrl = it.imageUrl
+                            )
+                            mainViewModel.saveNewGroup(
+                                friendContact,
+                                imageUri = imageUri,
+                                imagebytes = imageBytes,
+                                title = groupName,
+                                groupType = selectedChip.text.toString()
+                            )
+                        }
+                    }
+
                 }
             }
 
 
             // Validation passed, proceed with saving the group
-            Toast.makeText(
-                requireContext(),
-                "Group saved: $groupName (${selectedChip.text})",
-                Toast.LENGTH_SHORT
-            ).show()
+//            Toast.makeText(
+//                requireContext(),
+//                "Group saved: $groupName (${selectedChip.text})",
+//                Toast.LENGTH_SHORT
+//            ).show()
             // Add your logic to save the group here
         }
         binding.closeIcon.setOnClickListener {

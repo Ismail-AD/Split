@@ -15,7 +15,6 @@ import com.appdev.split.Room.DaoClasses.ContactDao
 import com.appdev.split.Utils.Utils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.storage.storage
@@ -179,25 +178,23 @@ class Repo @Inject constructor(
         onError: (String) -> Unit
     ) {
         try {
-            val groupRef = firestore.collection("groupMembers")
-                .document(groupId)
+            val groupRef = firestore.collection("groups").document(groupId)
 
-            // Get existing members
-            val existingMembersDoc = groupRef.get().await()
+            firestore.runTransaction { transaction ->
+                val snapshot = transaction.get(groupRef)
 
-            // Get current members or empty list if none exist
-            val existingMembers = if (existingMembersDoc.exists()) {
-                existingMembersDoc.toObject(GroupMembersWrapper::class.java)?.members
-                    ?: emptyList()
-            } else {
-                emptyList()
-            }
+                if (!snapshot.exists()) {
+                    throw Exception("Group not found")
+                }
 
-            // Combine existing and new members, removing duplicates
-            val updatedMembers = (existingMembers + newMembers).distinctBy { it.contact }
+                val group = snapshot.toObject(GroupMetaData::class.java) ?: throw Exception("Invalid group data")
 
-            // Update Firestore with combined list
-            groupRef.set(GroupMembersWrapper(updatedMembers)).await()
+                val updatedMembers = (group.members + newMembers).distinctBy { it.friendId }
+                val updatedMemberIds = (group.memberIds + newMembers.map { it.friendId }).distinct()
+
+                transaction.update(groupRef, "members", updatedMembers)
+                transaction.update(groupRef, "memberIds", updatedMemberIds)
+            }.await()
 
             onSuccess("Members added successfully")
         } catch (e: Exception) {
@@ -206,26 +203,20 @@ class Repo @Inject constructor(
         }
     }
 
+
+
     suspend fun getGroupMembers(
         groupId: String,
         onSuccess: (List<FriendContact>) -> Unit,
         onError: (String) -> Unit
     ) {
         try {
-            val groupRef = firestore.collection("groupMembers")
-                .document(groupId)
+            val groupSnapshot = firestore.collection("groups").document(groupId).get().await()
 
-            // Fetch the group members document
-            val groupMembersDoc = groupRef.get().await()
-
-            if (groupMembersDoc.exists()) {
-                // Convert document to GroupMembersWrapper and extract members list
-                val membersWrapper = groupMembersDoc.toObject(GroupMembersWrapper::class.java)
-                val members = membersWrapper?.members ?: emptyList()
-
+            if (groupSnapshot.exists()) {
+                val members = groupSnapshot.toObject(GroupMetaData::class.java)?.members ?: emptyList()
                 onSuccess(members)
             } else {
-                // If document doesn't exist, return empty list
                 onSuccess(emptyList())
             }
         } catch (e: Exception) {
@@ -236,6 +227,7 @@ class Repo @Inject constructor(
 
 
     suspend fun uploadImageAndSaveGroup(
+        myData: FriendContact,
         userid: String,
         imageUri: Uri?,
         imageBytes: ByteArray?,
@@ -251,7 +243,7 @@ class Repo @Inject constructor(
                 ""
             }
 
-            val groupId = saveGroupToFirestore(publicUrl, title, groupType, userid)
+            val groupId = saveGroupToFirestore(myData,publicUrl, title, groupType, userid)
             onSuccess("Group created successfully", groupId)
         } catch (e: Exception) {
             Log.d("CHKJM", "${e.message}")
@@ -302,6 +294,7 @@ class Repo @Inject constructor(
     }
 
     private suspend fun saveGroupToFirestore(
+        myData: FriendContact,
         imageUrl: String,
         title: String,
         groupType: String,
@@ -311,8 +304,7 @@ class Repo @Inject constructor(
             try {
 //                val sanitizedMail = Utils.sanitizeEmailForFirebase(mail)
                 val groupsCollection = firestore.collection("groups")
-                    .document(userid)
-                    .collection("userGroups")
+
 
                 val groupRef = groupsCollection.document()
                 val groupId = groupRef.id
@@ -321,7 +313,10 @@ class Repo @Inject constructor(
                     groupId = groupId,
                     image = imageUrl,
                     title = title,
-                    groupType = groupType
+                    groupType = groupType,
+                    createdBy = userid,
+                    members = listOf(myData),
+                    memberIds = listOf(userid)
                 )
 
                 groupRef.set(groupData).await()
@@ -334,28 +329,30 @@ class Repo @Inject constructor(
 
 
     suspend fun getAllGroups(
-        userid: String,
+        userId: String,
         onSuccess: (List<GroupMetaData>) -> Unit,
         onError: (String) -> Unit
     ) {
         try {
-//            val sanitizedMail = Utils.sanitizeEmailForFirebase(mail)
             val groupsSnapshot = firestore.collection("groups")
-                .document(userid)
-                .collection("userGroups")
+                .whereArrayContains("memberIds", userId)
                 .get()
                 .await()
 
-            val groups = groupsSnapshot.documents.mapNotNull { doc ->
-                doc.toObject(GroupMetaData::class.java)
-            }
+            val groups = groupsSnapshot.documents.mapNotNull { it.toObject(GroupMetaData::class.java) }
 
             onSuccess(groups)
         } catch (e: Exception) {
-            Log.d("CJKA", "${e.message}")
+            Log.d("CJKA", "Error fetching groups: ${e.message}")
             onError("Failed to fetch groups: ${e.message}")
         }
     }
+
+
+
+
+
+
 
     suspend fun updateUserName(
         userId: String,
@@ -713,33 +710,44 @@ class Repo @Inject constructor(
     suspend fun saveFriendExpense(
         myUserId: String,
         expense: FriendExpenseRecord,
-        onResult: (success: Boolean, message: String) -> Unit
+        onResult: (Boolean, String) -> Unit
     ) {
         val myContribution = expense.splits.find { it.userId == myUserId }?.amount ?: 0.0
+        val expenseDocId = firestore.collection("expenses")
+            .document(myUserId)
+            .collection("friendsExpenses")
+            .document().id
+
+        val expenseWithId = expense.copy(id = expenseDocId, timeStamp = System.currentTimeMillis())
+
         try {
-            val expenseDoc = firestore.collection("expenses")
+            val batch = firestore.batch()
+
+            val myExpenseRef = firestore.collection("expenses")
                 .document(myUserId)
                 .collection("friendsExpenses")
-                .document()
+                .document(expenseDocId)
 
-            val expenseWithId = expense.copy(
-                id = expenseDoc.id,
-                timeStamp = System.currentTimeMillis()
-            )
+            val friendExpenseRef = firestore.collection("expenses")
+                .document(expense.friendId)
+                .collection("friendsExpenses")
+                .document(expenseDocId)
 
+            batch.set(myExpenseRef, expenseWithId)
+            batch.set(friendExpenseRef, expenseWithId)
 
-            expenseDoc.set(expenseWithId).await()
-            updateTotalExpense(
-                myContribution,
-                expense.startDate,
-                myUserId
-            )
+            batch.commit().await()
+
+            updateTotalExpense(myContribution, expense.startDate, myUserId)
+            updateTotalExpense(myContribution, expense.startDate, expense.friendId)
+
             onResult(true, "Expense saved successfully!")
         } catch (e: Exception) {
             Log.e("Repo", "Failed to save expense: ${e.message}")
             onResult(false, "Failed to save expense: ${e.message}")
         }
     }
+
 
     suspend fun getExpensesByDate(
         myUserId: String,
@@ -951,21 +959,33 @@ class Repo @Inject constructor(
     suspend fun updateFriendExpense(
         oldStartDate: String,
         myUserId: String,
-        expenseId: String, oldAmount: Double,
+        expenseId: String,
+        oldAmount: Double,
         updatedExpense: FriendExpenseRecord,
-        onResult: (success: Boolean, message: String) -> Unit
+        onResult: (Boolean, String) -> Unit
     ) {
         try {
-            firestore.collection("expenses")
+            val batch = firestore.batch()
+
+            val myExpenseRef = firestore.collection("expenses")
                 .document(myUserId)
                 .collection("friendsExpenses")
                 .document(expenseId)
-                .set(updatedExpense)
-                .await()
+
+            val friendExpenseRef = firestore.collection("expenses")
+                .document(updatedExpense.friendId)
+                .collection("friendsExpenses")
+                .document(expenseId)
+
+            batch.set(myExpenseRef, updatedExpense)
+            batch.set(friendExpenseRef, updatedExpense)
+
+            batch.commit().await()
+
             val newAmount = updatedExpense.splits.find { it.userId == myUserId }?.amount ?: 0.0
 
-
-            removeAndUpdateTotalExpense(oldStartDate,newAmount, oldAmount, updatedExpense.startDate, myUserId)
+            removeAndUpdateTotalExpense(oldStartDate, newAmount, oldAmount, updatedExpense.startDate, myUserId)
+            removeAndUpdateTotalExpense(oldStartDate, newAmount, oldAmount, updatedExpense.startDate, updatedExpense.friendId)
 
             onResult(true, "Expense updated successfully!")
         } catch (e: Exception) {
@@ -974,22 +994,35 @@ class Repo @Inject constructor(
         }
     }
 
+
     suspend fun deleteFriendExpense(
         myUserId: String,
-        paidAmountByMe: Double, startDate: String,
+        friendId: String,
+        paidAmountByMe: Double,
+        startDate: String,
         expenseId: String,
-        onResult: (success: Boolean, message: String) -> Unit
+        onResult: (Boolean, String) -> Unit
     ) {
         try {
+            val batch = firestore.batch()
 
-            firestore.collection("expenses")
+            val myExpenseRef = firestore.collection("expenses")
                 .document(myUserId)
                 .collection("friendsExpenses")
                 .document(expenseId)
-                .delete()
-                .await()
+
+            val friendExpenseRef = firestore.collection("expenses")
+                .document(friendId)
+                .collection("friendsExpenses")
+                .document(expenseId)
+
+            batch.delete(myExpenseRef)
+            batch.delete(friendExpenseRef)
+
+            batch.commit().await()
 
             removeFromTotalExpense(paidAmountByMe, startDate, myUserId)
+            removeFromTotalExpense(paidAmountByMe, startDate, friendId)
 
             onResult(true, "Expense deleted successfully!")
         } catch (e: Exception) {
@@ -997,6 +1030,7 @@ class Repo @Inject constructor(
             onResult(false, "Failed to delete expense: ${e.message}")
         }
     }
+
 
     suspend fun getIndividualFriendExpenses(
         myEmail: String,

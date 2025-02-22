@@ -240,79 +240,53 @@ class MainViewModel @Inject constructor(
         val currentUser = firebaseAuth.currentUser ?: return
         val userId = currentUser.uid
 
-        // Cancel any existing listeners
         cleanupListeners()
 
-        expensesListener = firestore.collection("users")
+        expensesListener = firestore.collection("expenses")
             .document(userId)
-            .collection("friends")
-            .addSnapshotListener { friendsSnapshot, friendsError ->
-                if (friendsError != null || friendsSnapshot == null) {
-                    _allExpensesState.value =
-                        UiState.Error(friendsError?.message ?: "Unknown error")
+            .collection("friendsExpenses")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    _allExpensesState.value = UiState.Error(error.message ?: "Unknown error")
                     return@addSnapshotListener
                 }
 
-                // Clear existing friend expense listeners
-                cleanupFriendListeners()
+                val allExpenses = mutableMapOf<String, MutableList<FriendExpenseRecord>>()
 
-                // Create a new scope for managing concurrent listeners
-                viewModelScope.launch {
-                    val allExpenses = mutableMapOf<String, List<FriendExpenseRecord>>()
-                    val deferredResults = friendsSnapshot.documents.map { friendDoc ->
-                        async {
-                            val friendContact = friendDoc.id
-                            val expenses =
-                                suspendCancellableCoroutine<List<FriendExpenseRecord>> { continuation ->
-                                    val listener = firestore.collection("expenses")
-                                        .document(userId)
-                                        .collection("friendsExpenses")
-                                        .whereEqualTo("friendId", friendContact)
-                                        .addSnapshotListener { expensesSnapshot, expensesError ->
-                                            if (expensesError != null) {
-                                                Log.e(
-                                                    "MainViewModel",
-                                                    "Error fetching expenses",
-                                                    expensesError
-                                                )
-                                                continuation.resume(emptyList())
-                                                return@addSnapshotListener
-                                            }
-
-                                            val friendExpenses =
-                                                expensesSnapshot?.documents?.mapNotNull { document ->
-                                                    document.toObject(FriendExpenseRecord::class.java)
-                                                } ?: emptyList()
-
-                                            if (!continuation.isCompleted) {
-                                                continuation.resume(friendExpenses)
-                                            }
-                                        }
-
-                                    // Store the listener for cleanup
-                                    friendExpenseListeners[friendContact] = listener
-
-                                    continuation.invokeOnCancellation {
-                                        listener.remove()
-                                        friendExpenseListeners.remove(friendContact)
-                                    }
-                                }
-                            friendDoc.id to expenses
-                        }
+                snapshot?.documents?.forEach { doc ->
+                    val expense = doc.toObject(FriendExpenseRecord::class.java)
+                    if (expense != null) {
+                        val friendId = expense.friendId
+                        allExpenses.getOrPut(friendId) { mutableListOf() }.add(expense)
                     }
-
-                    // Wait for all expenses to be collected
-                    deferredResults.awaitAll().forEach { (friendId, expenses) ->
-                        if (expenses.isNotEmpty()) {
-                            allExpenses[friendId] = expenses
-                        }
-                    }
-
-                    // Update the state with all collected expenses
-                    _allExpensesState.value = UiState.Success(allExpenses)
                 }
+
+                // Attach listeners to each friend's expenses for real-time updates
+                allExpenses.keys.forEach { friendId ->
+                    val listener = firestore.collection("expenses")
+                        .document(friendId)
+                        .collection("friendsExpenses")
+                        .whereEqualTo("friendId", userId)
+                        .addSnapshotListener { friendSnapshot, friendError ->
+                            if (friendError != null) {
+                                Log.e("ExpenseListener", "Error listening to friend's expenses", friendError)
+                                return@addSnapshotListener
+                            }
+
+                            friendSnapshot?.documents?.mapNotNull { it.toObject(FriendExpenseRecord::class.java) }?.let { friendExpenses ->
+                                allExpenses[friendId] = friendExpenses.toMutableList()
+                                _allExpensesState.value = UiState.Success(allExpenses)
+                            }
+                        }
+
+                    // Store for cleanup
+                    friendExpenseListeners[friendId] = listener
+                }
+
+                _allExpensesState.value = UiState.Success(allExpenses)
             }
     }
+
 
     // Call this in onCleared to prevent memory leaks
     override fun onCleared() {
@@ -387,7 +361,7 @@ class MainViewModel @Inject constructor(
             try {
                 firebaseAuth.currentUser?.uid?.let { uid ->
                     repo.getAllGroups(
-                        userid = uid, onSuccess = { list ->
+                        userId = uid, onSuccess = { list ->
                             _groupsState.value = UiState.Success(list)
                         }
                     ) { error ->
@@ -402,6 +376,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun saveNewGroup(
+        myData:FriendContact,
         imageUri: Uri?,
         imagebytes: ByteArray?,
         title: String,
@@ -411,7 +386,9 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 firebaseAuth.currentUser?.uid?.let { uid ->
+
                     repo.uploadImageAndSaveGroup(
+                        myData,
                         uid,
                         imageUri,
                         imagebytes,
@@ -590,6 +567,7 @@ class MainViewModel @Inject constructor(
 
 
     fun deleteFriendExpenseDetail(
+        friendId:String,
         expenseId: String,
         paidAmountByMe: Double,
         startDate: String
@@ -598,7 +576,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 firebaseAuth.currentUser?.uid?.let { uid ->
-                    repo.deleteFriendExpense(
+                    repo.deleteFriendExpense(friendId,
                         uid, paidAmountByMe, startDate,
                         expenseId
                     ) { success, message ->
