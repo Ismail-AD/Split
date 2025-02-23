@@ -89,6 +89,7 @@ class SingleDostAddExpenseFragment : Fragment() {
             selectedDay = args.expenseRecord!!.endDate
             expObjectReceived = args.expenseRecord
             mainViewModel.updateFriendExpRec(args.expenseRecord!!)
+            mainViewModel.updateExpenseCategory(args.expenseRecord!!.expenseCategory)
             setupEditExpenseMode(args.expenseRecord!!)
         } else if (args.expenseRecord == null && mainViewModel.friendExpensePush.value.id.trim()
                 .isEmpty()

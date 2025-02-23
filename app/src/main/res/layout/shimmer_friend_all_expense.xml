@@ -8,6 +8,7 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:id="@+id/topBar"
+        android:background="@android:color/transparent"
         android:layout_height="wrap_content">
 
         <LinearLayout
