@@ -241,32 +241,23 @@ class MainViewModel @Inject constructor(
         val userId = currentUser.uid
 
         cleanupListeners()
+        val allExpenses = mutableMapOf<String, MutableList<FriendExpenseRecord>>()
 
-        expensesListener = firestore.collection("expenses")
+        firestore.collection("expenses")
             .document(userId)
             .collection("friendsExpenses")
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    _allExpensesState.value = UiState.Error(error.message ?: "Unknown error")
-                    return@addSnapshotListener
-                }
-
-                val allExpenses = mutableMapOf<String, MutableList<FriendExpenseRecord>>()
-
-                snapshot?.documents?.forEach { doc ->
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val friendIds = snapshot.documents.mapNotNull { doc ->
                     val expense = doc.toObject(FriendExpenseRecord::class.java)
-                    if (expense != null) {
-                        val friendId = expense.friendId
-                        allExpenses.getOrPut(friendId) { mutableListOf() }.add(expense)
-                    }
-                }
+                    expense?.participantIds?.firstOrNull { it != userId }
+                }.toSet()
 
-                // Attach listeners to each friend's expenses for real-time updates
-                allExpenses.keys.forEach { friendId ->
+                friendIds.forEach { friendId ->
                     val listener = firestore.collection("expenses")
                         .document(friendId)
                         .collection("friendsExpenses")
-                        .whereEqualTo("friendId", userId)
+                        .whereArrayContains("participantIds", userId)
                         .addSnapshotListener { friendSnapshot, friendError ->
                             if (friendError != null) {
                                 Log.e("ExpenseListener", "Error listening to friend's expenses", friendError)
@@ -279,13 +270,11 @@ class MainViewModel @Inject constructor(
                             }
                         }
 
-                    // Store for cleanup
                     friendExpenseListeners[friendId] = listener
                 }
-
-                _allExpensesState.value = UiState.Success(allExpenses)
             }
     }
+
 
 
     // Call this in onCleared to prevent memory leaks

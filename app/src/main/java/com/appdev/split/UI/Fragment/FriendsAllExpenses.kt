@@ -63,6 +63,7 @@ class FriendsAllExpenses : Fragment() {
         binding.backButton.setOnClickListener {
             findNavController().navigateUp()
         }
+        Log.d("CJKAZMX","friendId: ${args.friendUserId}")
 
         if (args.bilList.isNotEmpty()) {
             firebaseAuth.currentUser?.uid?.let { myId ->
@@ -73,7 +74,7 @@ class FriendsAllExpenses : Fragment() {
                 // Use Firestore instead of Realtime Database
                 val expensesRef = firestore.collection("expenses")
                     .document(myId)
-                    .collection("friendsExpenses").whereEqualTo("friendId",args.friendUserId)
+                    .collection("friendsExpenses").whereArrayContains("participantIds",args.friendUserId)
 
                 // Create a snapshot listener
                 expensesRef.addSnapshotListener { snapshot, error ->

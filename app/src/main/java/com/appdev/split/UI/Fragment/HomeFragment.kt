@@ -213,8 +213,6 @@ class HomeFragment : Fragment() {
 
 
     private fun updateRecyclerView(expenses: Map<String, List<FriendExpenseRecord>>) {
-
-
         if (expenses.isEmpty()) {
             binding.noBill.visibility = View.VISIBLE
             binding.recyclerViewRecentBills.visibility = View.GONE

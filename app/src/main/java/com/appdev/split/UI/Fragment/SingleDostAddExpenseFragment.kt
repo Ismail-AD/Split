@@ -344,7 +344,8 @@ class SingleDostAddExpenseFragment : Fragment() {
                                     paidBy = mainViewModel.friendExpensePush.value.paidBy,
                                     id = mainViewModel.friendExpensePush.value.id,
                                     splitType = binding.splitTypeText.text.toString(),
-                                    timeStamp = System.currentTimeMillis()
+                                    timeStamp = System.currentTimeMillis(),
+                                    participantIds = mainViewModel.friendExpensePush.value.participantIds
                                 ),
                                 args.expenseRecord!!.id,
                                 args.expenseRecord!!.splits.find { it.userId == currentUserId }?.amount
@@ -367,7 +368,8 @@ class SingleDostAddExpenseFragment : Fragment() {
                                     expenseCategory = binding.categorySpinner.text.toString(),
                                     paidBy = FirebaseAuth.getInstance().currentUser!!.uid,
                                     splitType = binding.splitTypeText.text.toString(),
-                                    splits = computedSplits
+                                    splits = computedSplits,
+                                    participantIds = Utils.getParticipantIds(computedSplits)
                                 )
 
                             mainViewModel.saveFriendExpense(

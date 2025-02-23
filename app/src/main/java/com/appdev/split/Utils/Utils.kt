@@ -157,6 +157,10 @@ object Utils {
         }
     }
 
+    fun getParticipantIds(splits: List<Split>): List<String> {
+        return splits.map { it.userId }.distinct()
+    }
+
     fun createPercentageSplitsFromPayments(
         selectedPayments: List<Percentage>,
         totalAmount: Double

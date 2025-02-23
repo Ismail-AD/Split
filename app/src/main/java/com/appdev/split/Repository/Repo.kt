@@ -695,17 +695,28 @@ class Repo @Inject constructor(
                 .get()
                 .await()
 
-            doc.toObject(FriendContact::class.java)
+            val friend = doc.toObject(FriendContact::class.java)
+            friend ?: getProfileById(friendId)
         } catch (e: Exception) {
             Log.e("Repo", "Failed to fetch friend: ${e.message}")
             null
         }
-//        if (Utils.isInternetAvailable()) {
-
-//        } else {
-//            contactDao.getContactById(friendId)
-//        }
     }
+
+    private suspend fun getProfileById(userId: String): FriendContact? {
+        return try {
+            val doc = firestore.collection("profiles")
+                .document(userId)
+                .get()
+                .await()
+
+            doc.toObject(FriendContact::class.java)
+        } catch (e: Exception) {
+            Log.e("Repo", "Failed to fetch profile: ${e.message}")
+            null
+        }
+    }
+
 
     suspend fun saveFriendExpense(
         myUserId: String,
