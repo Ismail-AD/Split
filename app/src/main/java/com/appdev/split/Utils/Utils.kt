@@ -23,6 +23,7 @@ import kotlin.math.roundToInt
 object Utils {
     private const val KEY_ONBOARDING_PASSED = "onboarding_passed"
     private const val PREFS_NAME = "app_prefs"
+    private const val KEY_CURRENCY = "selected_currency"
     suspend fun isInternetAvailable(): Boolean = withContext(Dispatchers.IO) {
         try {
             val command = "ping -c 1 google.com"
@@ -31,6 +32,7 @@ object Utils {
             false
         }
     }
+
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

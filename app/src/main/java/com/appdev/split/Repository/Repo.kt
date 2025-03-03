@@ -46,11 +46,6 @@ class Repo @Inject constructor(
     }
 
 
-
-
-
-
-
     //----------------------MANGE GROUP EXPENSE------------------
 
     suspend fun saveGroupExpense(
@@ -187,7 +182,8 @@ class Repo @Inject constructor(
                     throw Exception("Group not found")
                 }
 
-                val group = snapshot.toObject(GroupMetaData::class.java) ?: throw Exception("Invalid group data")
+                val group = snapshot.toObject(GroupMetaData::class.java)
+                    ?: throw Exception("Invalid group data")
 
                 val updatedMembers = (group.members + newMembers).distinctBy { it.friendId }
                 val updatedMemberIds = (group.memberIds + newMembers.map { it.friendId }).distinct()
@@ -204,7 +200,6 @@ class Repo @Inject constructor(
     }
 
 
-
     suspend fun getGroupMembers(
         groupId: String,
         onSuccess: (List<FriendContact>) -> Unit,
@@ -214,7 +209,8 @@ class Repo @Inject constructor(
             val groupSnapshot = firestore.collection("groups").document(groupId).get().await()
 
             if (groupSnapshot.exists()) {
-                val members = groupSnapshot.toObject(GroupMetaData::class.java)?.members ?: emptyList()
+                val members =
+                    groupSnapshot.toObject(GroupMetaData::class.java)?.members ?: emptyList()
                 onSuccess(members)
             } else {
                 onSuccess(emptyList())
@@ -243,7 +239,7 @@ class Repo @Inject constructor(
                 ""
             }
 
-            val groupId = saveGroupToFirestore(myData,publicUrl, title, groupType, userid)
+            val groupId = saveGroupToFirestore(myData, publicUrl, title, groupType, userid)
             onSuccess("Group created successfully", groupId)
         } catch (e: Exception) {
             Log.d("CHKJM", "${e.message}")
@@ -339,7 +335,8 @@ class Repo @Inject constructor(
                 .get()
                 .await()
 
-            val groups = groupsSnapshot.documents.mapNotNull { it.toObject(GroupMetaData::class.java) }
+            val groups =
+                groupsSnapshot.documents.mapNotNull { it.toObject(GroupMetaData::class.java) }
 
             onSuccess(groups)
         } catch (e: Exception) {
@@ -347,11 +344,6 @@ class Repo @Inject constructor(
             onError("Failed to fetch groups: ${e.message}")
         }
     }
-
-
-
-
-
 
 
     suspend fun updateUserName(
@@ -850,7 +842,8 @@ class Repo @Inject constructor(
                 if (!oldDataFetched.isEmpty) {
                     val oldSpending = oldDataFetched.documents[0].toObject(MySpending::class.java)
                     oldSpending?.let { spending ->
-                        val updatedOldAmount = (spending.totalAmountSpend - oldAmount).coerceAtLeast(0.0)
+                        val updatedOldAmount =
+                            (spending.totalAmountSpend - oldAmount).coerceAtLeast(0.0)
                         val updatedOldSpending = spending.copy(totalAmountSpend = updatedOldAmount)
                         oldCollectionRef.document(spending.id).set(updatedOldSpending).await()
                     }
@@ -878,7 +871,8 @@ class Repo @Inject constructor(
                     newCollectionRef.document(newSpending.id).set(newSpending).await()
                 } else {
                     // Update existing spending record for the new month
-                    val existingSpending = newDataFetched.documents[0].toObject(MySpending::class.java)
+                    val existingSpending =
+                        newDataFetched.documents[0].toObject(MySpending::class.java)
                     existingSpending?.let { spending ->
                         val updatedNewSpending = spending.copy(
                             totalAmountSpend = spending.totalAmountSpend + newAmount
@@ -995,8 +989,20 @@ class Repo @Inject constructor(
 
             val newAmount = updatedExpense.splits.find { it.userId == myUserId }?.amount ?: 0.0
 
-            removeAndUpdateTotalExpense(oldStartDate, newAmount, oldAmount, updatedExpense.startDate, myUserId)
-            removeAndUpdateTotalExpense(oldStartDate, newAmount, oldAmount, updatedExpense.startDate, updatedExpense.friendId)
+            removeAndUpdateTotalExpense(
+                oldStartDate,
+                newAmount,
+                oldAmount,
+                updatedExpense.startDate,
+                myUserId
+            )
+            removeAndUpdateTotalExpense(
+                oldStartDate,
+                newAmount,
+                oldAmount,
+                updatedExpense.startDate,
+                updatedExpense.friendId
+            )
 
             onResult(true, "Expense updated successfully!")
         } catch (e: Exception) {

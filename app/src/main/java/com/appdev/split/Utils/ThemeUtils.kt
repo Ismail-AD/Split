@@ -23,6 +23,14 @@ object ThemeUtils {
         DARK(THEME_MODE_DARK)
     }
 
+    fun applyTheme(context: Context) {
+        when (getCurrentThemeMode(context)) {
+            ThemeMode.LIGHT -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            ThemeMode.DARK -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            ThemeMode.SYSTEM -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        }
+    }
+
     fun setStatusBarLight(activity: Activity, @ColorRes color: Int) {
         activity.window.apply {
             addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
@@ -50,7 +58,11 @@ object ThemeUtils {
             .putString(PREF_THEME_MODE, themeMode.value)
             .apply()
 
-        applyTheme(context, themeMode)
+        when (themeMode) {
+            ThemeMode.LIGHT -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            ThemeMode.DARK -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            ThemeMode.SYSTEM -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        }
     }
 
     fun getCurrentThemeMode(context: Context): ThemeMode {
@@ -72,6 +84,7 @@ object ThemeUtils {
                     Configuration.UI_MODE_NIGHT_NO -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
                     else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
                 }
+
             }
         }
     }

@@ -16,6 +16,7 @@ class EntryActivity : AppCompatActivity() {
     lateinit var binding: ActivityEntryBinding
     lateinit var navController: NavController
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeUtils.applyTheme(this)
         super.onCreate(savedInstanceState)
         binding = ActivityEntryBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -29,10 +30,14 @@ class EntryActivity : AppCompatActivity() {
 
         if (hostFragment != null) {
             navController = hostFragment.navController
-            binding.bottomBar.setItemSelected(R.id.home_page, true)
+            if(  savedInstanceState?.getBundle("nav_state")!=null){
+                savedInstanceState?.getBundle("nav_state")?.let { navController.restoreState(it) }
+            } else{
+                binding.bottomBar.setItemSelected(R.id.home_page, true)
 
-            // Navigate to the home page initially
-            navController.navigate(R.id.home_page)
+                // Navigate to the home page initially
+                navController.navigate(R.id.home_page)
+            }
 
             binding.bottomBar.setOnItemSelectedListener { id ->
                 when (id) {
@@ -81,6 +86,11 @@ class EntryActivity : AppCompatActivity() {
             }
         }
     }
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBundle("nav_state", navController.saveState())
+    }
+
 
     private fun isNightModeEnabled(): Boolean {
         val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK

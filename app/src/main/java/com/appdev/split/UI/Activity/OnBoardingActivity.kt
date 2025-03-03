@@ -47,7 +47,7 @@ class OnBoardingActivity : AppCompatActivity() {
             if (currentItem < adapter.itemCount - 1) {
                 binding.viewPagerOnboarding.currentItem = currentItem + 1
             } else {
-                startActivity(Intent(this@OnBoardingActivity, CurrencyType::class.java))
+                startActivity(Intent(this@OnBoardingActivity,MainActivity::class.java))
                 finish()
             }
         }

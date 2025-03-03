@@ -339,7 +339,7 @@ class SingleDostAddExpenseFragment : Fragment() {
                                     title = title,
                                     description = description,
                                     totalAmount = amount.toDouble(),
-                                    currency = binding.currencySpinner.text.toString(),
+                                    currency = mainViewModel.friendExpensePush.value.currency,
                                     expenseCategory = binding.categorySpinner.text.toString(),
                                     splits = computedSplits,
                                     paidBy = mainViewModel.friendExpensePush.value.paidBy,
@@ -356,7 +356,7 @@ class SingleDostAddExpenseFragment : Fragment() {
                         }
                     } else {
                         if (selectedFriend != null && FirebaseAuth.getInstance().currentUser?.uid != null && selectedFriend != null) {
-                            // Add this right after creating the ExpenseRecord
+
                             val newExpense =
                                 FriendExpenseRecord(
                                     friendId = selectedFriend!!.friendId,
@@ -423,7 +423,6 @@ class SingleDostAddExpenseFragment : Fragment() {
 
     private fun setupEditExpenseMode(expenseRecord: FriendExpenseRecord) {
         binding.apply {
-            currencySpinner.selectItemByIndex(getCurrencyIndex(expenseRecord.currency))
             categorySpinner.selectItemByIndex(getCategoryIndex(expenseRecord.expenseCategory))
             title.editText?.setText(expenseRecord.title)
             description.editText?.setText(expenseRecord.description)
@@ -433,7 +432,6 @@ class SingleDostAddExpenseFragment : Fragment() {
 
     private fun setupNewExpenseMode() {
         binding.apply {
-            currencySpinner.selectItemByIndex(0)
             categorySpinner.selectItemByIndex(0)
         }
         binding.titleTextView.text = "Add expense"
@@ -504,9 +502,6 @@ class SingleDostAddExpenseFragment : Fragment() {
                     }
                     if (amount.editText?.text.isNullOrEmpty() && expenseInput.totalAmount != 0.0) {
                         amount.editText?.setText(expenseInput.totalAmount.toString())
-                    }
-                    if (expenseInput.currency.trim().isNotEmpty()) {
-                        currencySpinner.selectItemByIndex(getCurrencyIndex(expenseInput.currency))
                     }
                 }
             }

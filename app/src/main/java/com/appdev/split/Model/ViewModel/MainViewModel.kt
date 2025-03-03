@@ -739,7 +739,7 @@ class MainViewModel @Inject constructor(
         title: String,
         description: String,
         amount: String,
-        currency: String
+        currency:String
     ) {
         _friendExpenseToPush.value = _friendExpenseToPush.value.copy(
             title = title,
