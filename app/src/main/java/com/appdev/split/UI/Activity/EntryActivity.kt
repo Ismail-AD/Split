@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.appdev.split.R
@@ -38,6 +39,7 @@ class EntryActivity : AppCompatActivity() {
                 // Navigate to the home page initially
                 navController.navigate(R.id.home_page)
             }
+//            showRatingDialogIfEligible()
 
             binding.bottomBar.setOnItemSelectedListener { id ->
                 when (id) {
@@ -91,6 +93,18 @@ class EntryActivity : AppCompatActivity() {
         outState.putBundle("nav_state", navController.saveState())
     }
 
+//    private fun showRatingDialogIfEligible() {
+//        val icon = AppCompatResources.getDrawable(this, R.drawable.spliticonmain)
+//        AppRating.Builder(this)
+//            .setMinimumDays(5)
+//            .setMinimumLaunchTimes(1)
+//            .setMinimumDaysToShowAgain(10)
+//            .setCustomTheme(ThemeUtils.getTheme(this))
+//            .setMinimumLaunchTimesToShowAgain(8)
+//            .setRatingThreshold(RatingThreshold.FOUR)
+//            .setIconDrawable(icon)
+//            .showNow()
+//    }
 
     private fun isNightModeEnabled(): Boolean {
         val currentNightMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK

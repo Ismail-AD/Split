@@ -160,7 +160,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:backgroundTint="@color/green"
+                style="@style/FloatButtonBackground"
                 android:contentDescription="Floating Button"
                 android:elevation="1dp"
                 android:visibility="gone"

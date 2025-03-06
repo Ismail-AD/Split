@@ -25,11 +25,10 @@ class MainActivity : AppCompatActivity() {
 
         val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
 
-//        if (!Utils.isOnboardingPassed(this)) {
-//            startActivity(Intent(this, OnBoardingActivity::class.java))
-//        } else
-
-         if (firebaseAuth.currentUser != null) {
+        if (!Utils.isOnboardingPassed(this)) {
+            startActivity(Intent(this, OnBoardingActivity::class.java))
+            finish()
+        } else if (firebaseAuth.currentUser != null) {
             val intent = Intent(this, EntryActivity::class.java)
             startActivity(intent)
             finish()

@@ -173,7 +173,7 @@
         android:contentDescription="Add Members"
         android:src="@drawable/savecontact"
         android:visibility="gone"
-        app:backgroundTint="@color/green"
+        style="@style/FloatButtonBackground"
         app:tint="@android:color/white" />
 
 </RelativeLayout>

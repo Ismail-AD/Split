@@ -9,13 +9,30 @@
 
     <ImageView
         android:id="@+id/splitWiseIcon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/ic_icon_splitwise"
-        app:layout_constraintBottom_toTopOf="@+id/btnLogin"
+        android:layout_width="160dp"
+        android:layout_height="160dp"
+        android:src="@drawable/spliticos"
+        app:layout_constraintBottom_toTopOf="@+id/heyMessage"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <TextView
+        android:id="@+id/heyMessage"
+        style="@style/billWordColor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="16dp"
+        android:text="Split"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@+id/splitWiseIcon"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btnLogin" />
+
+
 
     <Button
         android:id="@+id/btnLogin"

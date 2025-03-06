@@ -11,19 +11,14 @@ class OnboardingAdapter : RecyclerView.Adapter<OnboardingAdapter.OnboardingViewH
 
     private val onboardingItems = listOf(
         OnboardingItem(
-            imageRes = R.drawable.split_the_amount,
-            title = "Who Pays What?",
-            description = "Easily share expenses with friends individually or in groups using three different ways to split."
+            imageRes = R.drawable.firston,
+            title = "Overwhelmed with bills? We’ve got you!",
+            description = "Easily split expenses with friends and say goodbye to the hassle of tracking who owes what."
         ),
         OnboardingItem(
-            R.drawable.history_check,
-            "Where Did My Money Go?",
-            "Track your monthly expenses with easy-to-read graphs and stay in control of your expenses."
-        ),
-        OnboardingItem(
-            R.drawable.addfriends,
-            "Add Friends, Split Fast!",
-            "Add and manage friends for stress-free expense sharing."
+            R.drawable.secondon,
+            "Fair & Simple Bill Splitting!",
+            "Effortlessly divide expenses, track payments, and keep friendships stress-free."
         )
     )
 

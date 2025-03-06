@@ -30,6 +30,14 @@ object ThemeUtils {
             ThemeMode.SYSTEM -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         }
     }
+    fun getTheme(context: Context): Int {
+        return when (getCurrentThemeMode(context)) {
+            ThemeMode.LIGHT -> AppCompatDelegate.MODE_NIGHT_NO
+            ThemeMode.DARK -> AppCompatDelegate.MODE_NIGHT_YES
+            ThemeMode.SYSTEM -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        }
+    }
+
 
     fun setStatusBarLight(activity: Activity, @ColorRes color: Int) {
         activity.window.apply {

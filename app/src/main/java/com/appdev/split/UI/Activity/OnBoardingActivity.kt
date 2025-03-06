@@ -7,6 +7,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.appdev.split.Adapters.OnboardingAdapter
 import com.appdev.split.R
 import com.appdev.split.Utils.ThemeUtils
+import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.ActivityOnBoardingBinding
 import com.xcode.onboarding.MaterialOnBoarding
 import com.xcode.onboarding.OnBoardingPage
@@ -47,7 +48,8 @@ class OnBoardingActivity : AppCompatActivity() {
             if (currentItem < adapter.itemCount - 1) {
                 binding.viewPagerOnboarding.currentItem = currentItem + 1
             } else {
-                startActivity(Intent(this@OnBoardingActivity,MainActivity::class.java))
+                Utils.setOnboardingPassed(this, true)
+                startActivity(Intent(this@OnBoardingActivity, MainActivity::class.java))
                 finish()
             }
         }

@@ -19,7 +19,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
+        vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -99,7 +99,7 @@ dependencies {
 
     implementation("com.github.ozcanalasalvar.picker:datepicker:2.0.7")
     implementation("com.github.ozcanalasalvar.picker:wheelview:2.0.7")
-
+//    implementation("com.suddenh4x.ratingdialog:awesome-app-rating:2.8.0")
     //For view based UI's
     implementation("androidx.compose.material3:material3:1.3.1")
 

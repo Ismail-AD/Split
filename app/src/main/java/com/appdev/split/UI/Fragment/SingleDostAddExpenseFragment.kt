@@ -424,6 +424,7 @@ class SingleDostAddExpenseFragment : Fragment() {
     private fun setupEditExpenseMode(expenseRecord: FriendExpenseRecord) {
         binding.apply {
             categorySpinner.selectItemByIndex(getCategoryIndex(expenseRecord.expenseCategory))
+            currencySpinner.selectItemByIndex(getCategoryIndex(expenseRecord.currency))
             title.editText?.setText(expenseRecord.title)
             description.editText?.setText(expenseRecord.description)
             amount.editText?.setText(expenseRecord.totalAmount.toString())

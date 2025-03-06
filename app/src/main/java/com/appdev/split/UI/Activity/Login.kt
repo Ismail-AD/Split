@@ -26,8 +26,9 @@ class Login : AppCompatActivity() {
         if (ThemeUtils.isDarkMode(this)) {
             ThemeUtils.setStatusBarDark(this, R.color.darkBackground)
         } else {
-            ThemeUtils.setStatusBarLight(this, R.color.white)
+            ThemeUtils.setStatusBarLight(this, R.color.screenBack)
         }
+
         if (intent.getStringExtra("email").toString() != "null")
             binding.etEmail.editText?.setText(intent.getStringExtra("email").toString())
 
