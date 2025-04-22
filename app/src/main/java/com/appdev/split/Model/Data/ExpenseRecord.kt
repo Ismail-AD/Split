@@ -16,9 +16,10 @@ data class ExpenseRecord(
     val splits: List<Split> = listOf(),
     val timeStamp: Long = 0L,
     val title: String = "",
-    val totalAmount: Double = 0.0
+    val totalAmount: Double = 0.0,
+    val settledBy: List<String> = emptyList() // ✅ New field: list of user IDs who settled
 ) : Parcelable {
-    constructor() : this("", "", "", "", "", "", "", "", listOf(), 0L, "", 0.0)
+    constructor() : this("", "", "", "", "", "", "", "", listOf(), 0L, "", 0.0, emptyList())
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -34,8 +35,7 @@ data class ExpenseRecord(
                 startDate == other.startDate &&
                 endDate == other.endDate &&
                 splits == other.splits &&
-                splitType == other.splitType
+                splitType == other.splitType &&
+                settledBy == other.settledBy // ✅ Include in equality check
     }
-
 }
-

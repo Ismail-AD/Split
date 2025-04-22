@@ -536,13 +536,19 @@ class AddGrpExpenseFragment : Fragment() {
         friendsList = friends.toMutableList()
         originalMembersList = friends.toMutableList()
 
-        if (friendsList.isNotEmpty()) {
+        // Filter out current user if needed
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+        val otherMembers = friends.filter { it.friendId != currentUserId }
+
+        if (otherMembers.isNotEmpty()) {
+            // There are other members besides the current user
             binding.addAfterFriends.visibility = View.VISIBLE
             binding.selectedFrisRecyclerView.visibility = View.VISIBLE
             binding.noFriends.visibility = View.GONE
             binding.searchField.visibility = View.VISIBLE
 
-            adapter = MyFriendSelectionAdapter(friendsList, true) { selectedFriends ->
+            val groupMates = friendsList.filter { it.friendId != currentUserId }
+            adapter = MyFriendSelectionAdapter(groupMates, true) { selectedFriends ->
                 this.selectedFriends.clear()
                 this.selectedFriends.addAll(selectedFriends)
                 mainViewModel.updateSelectedFriends(selectedFriends)
@@ -557,6 +563,7 @@ class AddGrpExpenseFragment : Fragment() {
             }
             adapter.notifyDataSetChanged()
         } else {
+            // Only current user or empty list
             binding.selectedFrisRecyclerView.visibility = View.GONE
             binding.noFriends.visibility = View.VISIBLE
             binding.addAfterFriends.visibility = View.GONE

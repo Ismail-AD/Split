@@ -127,6 +127,17 @@
             </LinearLayout>
         </LinearLayout>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/settleUpButton"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/_45sdp"
+            android:layout_marginTop="@dimen/_7sdp"
+            app:cornerRadius="7dp"
+            android:visibility="gone"
+            style="@style/FloatButtonBackground"
+            android:text="Settle Up"
+            android:textColor="#FFFFFF" />
+
         <TextView
             style="@style/billWordColor"
             android:layout_width="match_parent"

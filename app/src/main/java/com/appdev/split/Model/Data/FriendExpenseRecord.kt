@@ -18,7 +18,9 @@ data class FriendExpenseRecord(
     val participantIds: List<String> = listOf(),
     val timeStamp: Long = 0L,
     val title: String = "",
-    val totalAmount: Double = 0.0
+    val totalAmount: Double = 0.0,
+    val settledBy: List<String> = emptyList() // ✅ New field: list of user IDs who settled
+
 ) : Parcelable {
     constructor() : this("", "", "", "", "", "","", "", "", listOf(), listOf(), 0L, "", 0.0)
 
@@ -37,7 +39,8 @@ data class FriendExpenseRecord(
                 endDate == other.endDate &&
                 splits == other.splits &&
                 splitType == other.splitType &&
-                participantIds == other.participantIds
+                participantIds == other.participantIds &&
+                settledBy == other.settledBy // ✅ Include in equality check
     }
 
     override fun hashCode(): Int {

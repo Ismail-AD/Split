@@ -2,6 +2,7 @@ package com.appdev.split.Graph
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -13,6 +14,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
+import com.appdev.split.R
 import kotlinx.parcelize.Parcelize
 
 
@@ -21,6 +23,28 @@ class CustomBarGraph @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
+
+    private object ColorScheme {
+        // Light mode colors
+        object Light {
+            val BAR_COLOR = Color.parseColor("#333333")
+            val SELECTED_COLOR = Color.parseColor("#6750A4")
+            val BACKGROUND_BAR_COLOR = Color.parseColor("#EEEEEE")
+            val TEXT_COLOR = Color.parseColor("#333333")
+            val GRID_COLOR = Color.LTGRAY
+            val LABEL_COLOR = Color.GRAY
+        }
+
+        // Dark mode colors
+        object Dark {
+            val BAR_COLOR = Color.parseColor("#B3B6D0")
+            val SELECTED_COLOR = Color.parseColor("#A08EE8")
+            val BACKGROUND_BAR_COLOR = Color.parseColor("#3A3B43")
+            val TEXT_COLOR = Color.parseColor("#E0E0E5")
+            val GRID_COLOR = Color.parseColor("#4A4B55")
+            val LABEL_COLOR = Color.parseColor("#B3B6D0")
+        }
+    }
 
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val backgroundBarPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -65,6 +89,105 @@ class CustomBarGraph @JvmOverloads constructor(
     private val textBounds = android.graphics.Rect()
     var currentBarData: List<BarData> = emptyList()
     private var isStateRestored = false
+
+    private var textColor: Int = 0
+    private val selectedTextColor: Int = Color.WHITE // Selected label color remains white
+
+
+    init {
+        // Initialize corner radii
+        for (i in cornerRadii.indices) {
+            cornerRadii[i] = 0f
+        }
+
+        // Get the text color from the billWordColor style attribute
+        val typedArray = context.obtainStyledAttributes(
+            R.style.billWordColor,
+            intArrayOf(android.R.attr.textColor)
+        )
+        textColor = typedArray.getColor(0, Color.parseColor("#333333"))
+        typedArray.recycle()
+
+        // Apply the appropriate color scheme based on the current UI mode
+        applyColorScheme()
+    }
+
+    /**
+     * Applies the appropriate color scheme based on the current UI mode (light/dark)
+     */
+    private fun applyColorScheme() {
+        val isDarkMode = (context.resources.configuration.uiMode and
+                Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
+        if (isDarkMode) {
+            // Apply dark mode colors
+            barPaint.color = ColorScheme.Dark.BAR_COLOR
+            selectedPaint.color = ColorScheme.Dark.SELECTED_COLOR
+            backgroundBarPaint.color = ColorScheme.Dark.BACKGROUND_BAR_COLOR
+
+            labelBackgroundPaint.apply {
+                color = ColorScheme.Dark.SELECTED_COLOR
+                style = Paint.Style.FILL
+            }
+
+            textPaint.apply {
+                color = ColorScheme.Dark.TEXT_COLOR
+                textSize = 36f
+                textAlign = Paint.Align.CENTER
+            }
+
+            gridPaint.apply {
+                color = ColorScheme.Dark.GRID_COLOR
+                style = Paint.Style.STROKE
+                strokeWidth = 1f
+            }
+
+            labelPaint.apply {
+                color = ColorScheme.Dark.LABEL_COLOR
+                textSize = 30f
+                textAlign = Paint.Align.RIGHT
+            }
+
+            textColor = ColorScheme.Dark.TEXT_COLOR
+        } else {
+            // Apply light mode colors
+            barPaint.color = ColorScheme.Light.BAR_COLOR
+            selectedPaint.color = ColorScheme.Light.SELECTED_COLOR
+            backgroundBarPaint.color = ColorScheme.Light.BACKGROUND_BAR_COLOR
+
+            labelBackgroundPaint.apply {
+                color = ColorScheme.Light.SELECTED_COLOR
+                style = Paint.Style.FILL
+            }
+
+            textPaint.apply {
+                color = textColor // Use the themed color
+                textSize = 36f
+                textAlign = Paint.Align.CENTER
+            }
+
+            gridPaint.apply {
+                color = ColorScheme.Light.GRID_COLOR
+                style = Paint.Style.STROKE
+                strokeWidth = 1f
+            }
+
+            labelPaint.apply {
+                color = ColorScheme.Light.LABEL_COLOR
+                textSize = 30f
+                textAlign = Paint.Align.RIGHT
+            }
+        }
+    }
+
+    /**
+     * Call this method when the configuration changes (like switching between light/dark mode)
+     */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        applyColorScheme()
+        invalidate()
+    }
 
     @Parcelize
     private data class BarDataParcelable(
@@ -146,44 +269,44 @@ class CustomBarGraph @JvmOverloads constructor(
         invalidate()
     }
 
-
-    init {
-        for (i in cornerRadii.indices) {
-            cornerRadii[i] = 0f
-        }
-
-        barPaint.color = Color.parseColor("#333333")
-        selectedPaint.color = Color.parseColor("#6750A4")
-        backgroundBarPaint.color = Color.parseColor("#EEEEEE")
-        labelBackgroundPaint.apply {
-            color = Color.parseColor("#6750A4")
-            style = Paint.Style.FILL
-        }
-
-        textPaint.apply {
-            color = Color.parseColor("#333333")
-            textSize = 36f
-            textAlign = Paint.Align.CENTER
-        }
-
-        textPaint.apply {
-            color = Color.parseColor("#333333")
-            textSize = 36f
-            textAlign = Paint.Align.CENTER
-        }
-
-        gridPaint.apply {
-            color = Color.LTGRAY
-            style = Paint.Style.STROKE
-            strokeWidth = 1f
-        }
-
-        labelPaint.apply {
-            color = Color.GRAY
-            textSize = 30f
-            textAlign = Paint.Align.RIGHT
-        }
-    }
+//
+//    init {
+//        for (i in cornerRadii.indices) {
+//            cornerRadii[i] = 0f
+//        }
+//
+//        barPaint.color = Color.parseColor("#333333")
+//        selectedPaint.color = Color.parseColor("#6750A4")
+//        backgroundBarPaint.color = Color.parseColor("#EEEEEE")
+//        labelBackgroundPaint.apply {
+//            color = Color.parseColor("#6750A4")
+//            style = Paint.Style.FILL
+//        }
+//
+//        textPaint.apply {
+//            color = Color.parseColor("#333333")
+//            textSize = 36f
+//            textAlign = Paint.Align.CENTER
+//        }
+//
+//        textPaint.apply {
+//            color = Color.parseColor("#333333")
+//            textSize = 36f
+//            textAlign = Paint.Align.CENTER
+//        }
+//
+//        gridPaint.apply {
+//            color = Color.LTGRAY
+//            style = Paint.Style.STROKE
+//            strokeWidth = 1f
+//        }
+//
+//        labelPaint.apply {
+//            color = Color.GRAY
+//            textSize = 30f
+//            textAlign = Paint.Align.RIGHT
+//        }
+//    }
 
     // Add this method to your CustomBarGraph class
     fun clearHighlight() {
@@ -335,7 +458,7 @@ class CustomBarGraph @JvmOverloads constructor(
                 if (!shouldAnimate || animationProgress > 0.5f || index == selectedPosition) {
                     val valueText = formatNumber(bar.value)
                     textPaint.apply {
-                        color = Color.parseColor("#333333")
+                        color = textColor // Use themed color instead of hardcoded
                         alpha = if (shouldAnimate) {
                             ((animationProgress - 0.5f) * 2 * 255).toInt().coerceIn(0, 255)
                         } else {
@@ -359,7 +482,7 @@ class CustomBarGraph @JvmOverloads constructor(
                 drawSelectedLabel(canvas, bar.label, labelX, labelY)
             } else {
                 textPaint.apply {
-                    color = Color.parseColor("#333333")
+                    color = textColor // Use themed color instead of hardcoded
                     alpha = 255
                 }
                 canvas.drawText(bar.label, labelX, labelY, textPaint)
@@ -386,7 +509,7 @@ class CustomBarGraph @JvmOverloads constructor(
         )
 
         textPaint.apply {
-            color = Color.WHITE
+            color = selectedTextColor // Use white for selected labels
             alpha = 255
         }
         canvas.drawText(label, x, y, textPaint)

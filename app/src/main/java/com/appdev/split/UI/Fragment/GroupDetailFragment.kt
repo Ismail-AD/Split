@@ -1,6 +1,5 @@
 package com.appdev.split.UI.Fragment
 
-import android.app.AlertDialog
 import android.app.Dialog
 import android.os.Bundle
 import android.util.Log
@@ -8,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -17,7 +15,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.appdev.split.Adapters.AllFriendExpenseAdapter
 import com.appdev.split.Adapters.GroupDetailExpenseAdapter
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.GroupMetaData
@@ -74,11 +71,10 @@ class GroupDetailFragment : Fragment() {
 
     private fun setupBasicUI(groupData: GroupMetaData) {
         binding.nameOfGroup.text = groupData.title
-        if (!groupData.image.isNullOrEmpty()) {
-            binding.ImageOfExpense.visibility = View.VISIBLE
-            Glide.with(requireContext()).load(groupData.image).placeholder(R.drawable.group)
-                .error(R.drawable.group).into(binding.ImageOfExpense)
-        }
+        binding.ImageOfExpense.visibility = View.VISIBLE
+        Glide.with(requireContext()).load(groupData.image).placeholder(R.drawable.groups)
+            .error(R.drawable.groups).into(binding.ImageOfExpense)
+
     }
 
 
@@ -145,7 +141,7 @@ class GroupDetailFragment : Fragment() {
 
     fun goToDetails(expenseList: ExpenseRecord) {
         val action = GroupDetailFragmentDirections.actionGroupDetailFragmentToBillDetails(
-            expenseList, null, args.groupMetaData.groupId,null,args.groupMetaData.groupType,null
+            expenseList, null, args.groupMetaData.groupId, null, args.groupMetaData.groupType, null
         )
         findNavController().navigate(action)
 //        val action = GroupDetailFragmentDirections.actionGroupDetailFragmentToAddGrpExpenseFragment(

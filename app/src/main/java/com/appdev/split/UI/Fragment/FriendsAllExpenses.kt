@@ -16,6 +16,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.appdev.split.Adapters.AllFriendExpenseAdapter
+import com.appdev.split.Model.Data.Contact
 import com.appdev.split.Model.Data.ExpenseRecord
 import com.appdev.split.Model.Data.FriendContact
 import com.appdev.split.Model.Data.FriendExpenseRecord
@@ -23,6 +24,7 @@ import com.appdev.split.Model.Data.UiState
 import com.appdev.split.Model.ViewModel.MainViewModel
 import com.appdev.split.R
 import com.appdev.split.databinding.FragmentFriendsAllExpensesBinding
+import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,6 +41,7 @@ class FriendsAllExpenses : Fragment() {
     private val args: FriendsAllExpensesArgs by navArgs()
     lateinit var dialog: Dialog
     private var friendContact: FriendContact? = null
+
     @Inject
     lateinit var firestore: FirebaseFirestore
 
@@ -63,7 +66,7 @@ class FriendsAllExpenses : Fragment() {
         binding.backButton.setOnClickListener {
             findNavController().navigateUp()
         }
-        Log.d("CJKAZMX","friendId: ${args.friendUserId}")
+        Log.d("CJKAZMX", "friendId: ${args.friendUserId}")
 
         if (args.bilList.isNotEmpty()) {
             firebaseAuth.currentUser?.uid?.let { myId ->
@@ -74,7 +77,8 @@ class FriendsAllExpenses : Fragment() {
                 // Use Firestore instead of Realtime Database
                 val expensesRef = firestore.collection("expenses")
                     .document(myId)
-                    .collection("friendsExpenses").whereArrayContains("participantIds",args.friendUserId)
+                    .collection("friendsExpenses")
+                    .whereArrayContains("participantIds", args.friendUserId)
 
                 // Create a snapshot listener
                 expensesRef.addSnapshotListener { snapshot, error ->
@@ -114,6 +118,15 @@ class FriendsAllExpenses : Fragment() {
                         is UiState.Success -> {
                             hideShimmer()
                             binding.contact.text = state.data.name
+                            Log.d("CHJAZAZ", "DATA ${state.data}")
+                            Log.d("CHJAZAZ", "DATA ID: ${args.friendUserId}")
+
+                            Glide.with(requireContext())
+                                .load(state.data.profileImageUrl)
+                                .placeholder(R.drawable.profile_imaage) // optional placeholder
+                                .error(R.drawable.profile_imaage) // optional fallback
+                                .circleCrop()
+                                .into(binding.ImageProfile)
                             friendContact = state.data
                         }
 
@@ -121,6 +134,7 @@ class FriendsAllExpenses : Fragment() {
                             hideShimmer()
                             showError(state.message)
                         }
+
                         UiState.Stable -> {
                             hideShimmer()
                         }
@@ -130,11 +144,110 @@ class FriendsAllExpenses : Fragment() {
         }
 
         binding.addExp.setOnClickListener {
-            val action =
-                FriendsAllExpensesDirections.actionFriendsAllExpensesToPersonalExpenseFragment(null, friendContact)
-            findNavController().navigate(action)
+            friendContact?.let {
+                if (it.friendId.isEmpty()) {
+                    // Show dialog to add as friend first
+                    showAddFriendDialog(args.friendUserId)
+                } else {
+                    val action =
+                        FriendsAllExpensesDirections.actionFriendsAllExpensesToPersonalExpenseFragment(
+                            null,
+                            friendContact
+                        )
+                    findNavController().navigate(action)
+
+                }
+            }
         }
     }
+
+    private fun showAddFriendDialog(friendsId: String) {
+        val dialogBuilder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        dialogBuilder.setTitle("Add Friend First")
+        dialogBuilder.setMessage("You need to save this person as a friend first before creating an expense. Would you like to add them to your friends list?")
+
+        dialogBuilder.setPositiveButton("Yes, Add Friend") { dialog, _ ->
+            // Step 1: Fetch profile first
+            mainViewModel.fetchProfileById(friendsId)
+
+            // Step 2: Observe once when profile is fetched
+            lifecycleScope.launch {
+                mainViewModel.personInfoState.collect { state ->
+                    when (state) {
+                        is UiState.Success -> {
+                            val profile = state.data
+                            friendContact = state.data
+                            Log.d("CHKZMA","AT MAIN ${state.data}")
+                            val newContact = Contact(
+                                name = profile.name,
+                                number = profile.contact,
+                                imageUrl = profile.profileImageUrl ?: "",
+                                isFriend = false,
+                                friendId = profile.friendId // or profile.id
+                            )
+                            Log.d("CHKZMA","AT MAIN PARAM ${friendsId}")
+
+
+                            val contactsList = mutableListOf(newContact)
+                            mainViewModel.addContacts(contactsList)
+                            viewLifecycleOwner.lifecycleScope.launch {
+                                mainViewModel.operationState.collect { state ->
+                                    when (state) {
+                                        is UiState.Success -> {
+                                            hideLoadingIndicator()
+                                            Toast.makeText(
+                                                requireContext(),
+                                                "Friend added successfully!",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+
+                                        is UiState.Error -> {
+                                            hideLoadingIndicator()
+                                            Toast.makeText(
+                                                requireContext(),
+                                                "Failed to add friend: ${state.message}",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+
+                                        else -> { /* Handle other states if needed */
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        is UiState.Error -> {
+                            hideLoadingIndicator()
+                            Toast.makeText(
+                                requireContext(),
+                                "Failed to fetch profile: ${state.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        is UiState.Loading -> {
+                            // Ensure loading indicator is shown
+                            showLoadingIndicator()
+                        }
+
+                        else -> { /* Loading or Idle - optional to handle */
+                        }
+                    }
+                }
+            }
+
+            dialog.dismiss()
+        }
+
+        dialogBuilder.setNegativeButton("Cancel") { dialog, _ ->
+            dialog.dismiss()
+        }
+
+        val dialog = dialogBuilder.create()
+        dialog.show()
+    }
+
 
     private fun setupShimmer() {
         // Set the layout for the ViewStub
@@ -145,14 +258,13 @@ class FriendsAllExpenses : Fragment() {
     }
 
 
-
     private fun showShimmer() {
         binding.shimmerViewContainer.visibility = View.VISIBLE
         binding.shimmerViewContainer.startShimmer()
 
         // Hide actual content while shimmer is showing
         binding.topBar.visibility = View.GONE
-        binding.ImageOfExpense.visibility = View.GONE
+        binding.ImageProfile.visibility = View.GONE
         binding.BottomAllContent.visibility = View.GONE
     }
 
@@ -161,7 +273,7 @@ class FriendsAllExpenses : Fragment() {
         binding.shimmerViewContainer.visibility = View.GONE
         // Hide actual content while shimmer is showing
         binding.topBar.visibility = View.VISIBLE
-        binding.ImageOfExpense.visibility = View.VISIBLE
+        binding.ImageProfile.visibility = View.VISIBLE
         binding.BottomAllContent.visibility = View.VISIBLE
 
     }
@@ -204,10 +316,17 @@ class FriendsAllExpenses : Fragment() {
     fun goToDetails(expenseList: FriendExpenseRecord) {
         Log.d("CHKIAMG", "I am going in")
         friendContact?.let {
-            val action = FriendsAllExpensesDirections.actionFriendsAllExpensesToBillDetails(
-                null, it,null,expenseList,null,null
-            )
-            findNavController().navigate(action)
+            // Check if this is a friend (has a friendId) or just a contact
+            if (it.friendId.isEmpty()) {
+                // Show dialog to add as friend first
+                showAddFriendDialog(args.friendUserId)
+            } else {
+                // Proceed with existing navigation
+                val action = FriendsAllExpensesDirections.actionFriendsAllExpensesToBillDetails(
+                    null, it, null, expenseList, null, null
+                )
+                findNavController().navigate(action)
+            }
         }
     }
 

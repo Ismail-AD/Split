@@ -78,6 +78,10 @@ class MainViewModel @Inject constructor(
     private val _individualFriendState = MutableStateFlow<UiState<FriendContact>>(UiState.Loading)
     val FriendState: StateFlow<UiState<FriendContact>> get() = _individualFriendState
 
+    private val _individualState = MutableStateFlow<UiState<FriendContact>>(UiState.Loading)
+    val personInfoState: StateFlow<UiState<FriendContact>> get() = _individualState
+
+
     private val _friendExpenseToPush = MutableStateFlow(FriendExpenseRecord())
     val friendExpensePush: MutableStateFlow<FriendExpenseRecord> get() = _friendExpenseToPush
 
@@ -177,7 +181,7 @@ class MainViewModel @Inject constructor(
         _monthsTotalSpentState.value = UiState.Loading
 
         cleanupMonthlySpendingListeners()
-
+        Log.d("CHKOP","${monthYearList}")
         viewModelScope.launch {
             val results = mutableListOf<MySpending>()
             val deferredResults = monthYearList.map { monthYear ->
@@ -202,6 +206,8 @@ class MainViewModel @Inject constructor(
                                     return@addSnapshotListener
                                 }
 
+                                Log.d("CHKOP","${snapshot?.documents?.firstOrNull()
+                                    ?.toObject(MySpending::class.java)}")
                                 val spending = snapshot?.documents?.firstOrNull()
                                     ?.toObject(MySpending::class.java)
                                     ?: MySpending(
@@ -260,21 +266,25 @@ class MainViewModel @Inject constructor(
                         .whereArrayContains("participantIds", userId)
                         .addSnapshotListener { friendSnapshot, friendError ->
                             if (friendError != null) {
-                                Log.e("ExpenseListener", "Error listening to friend's expenses", friendError)
+                                Log.e(
+                                    "ExpenseListener",
+                                    "Error listening to friend's expenses",
+                                    friendError
+                                )
                                 return@addSnapshotListener
                             }
 
-                            friendSnapshot?.documents?.mapNotNull { it.toObject(FriendExpenseRecord::class.java) }?.let { friendExpenses ->
-                                allExpenses[friendId] = friendExpenses.toMutableList()
-                                _allExpensesState.value = UiState.Success(allExpenses)
-                            }
+                            friendSnapshot?.documents?.mapNotNull { it.toObject(FriendExpenseRecord::class.java) }
+                                ?.let { friendExpenses ->
+                                    allExpenses[friendId] = friendExpenses.toMutableList()
+                                    _allExpensesState.value = UiState.Success(allExpenses)
+                                }
                         }
 
                     friendExpenseListeners[friendId] = listener
                 }
             }
     }
-
 
 
     // Call this in onCleared to prevent memory leaks
@@ -365,7 +375,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun saveNewGroup(
-        myData:FriendContact,
+        myData: FriendContact,
         imageUri: Uri?,
         imagebytes: ByteArray?,
         title: String,
@@ -395,6 +405,88 @@ class MainViewModel @Inject constructor(
     }
 
     //---------------------GROUP Expense----------------------
+    fun settleGroupExpense(groupId: String,expense: ExpenseRecord) {
+        _operationState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                val currentUserId = firebaseAuth.currentUser?.uid ?: run {
+                    _operationState.value = UiState.Error("User not authenticated")
+                    return@launch
+                }
+
+
+                // Add the current user to the settled list if not already there
+                val updatedSettlers = expense.settledBy.toMutableList()
+                if (!updatedSettlers.contains(currentUserId)) {
+                    updatedSettlers.add(currentUserId)
+                }
+
+                // Create updated expense record
+                val updatedExpense = expense.copy(settledBy = updatedSettlers)
+
+                // Update the expense in Firestore
+                viewModelScope.launch {
+                    repo.settleGroupExpense(
+                        groupId,
+                        expense.id,
+                        updatedExpense
+                    ) { success, message ->
+                        _operationState.value = if (success) {
+                            UiState.Success(message)
+                        } else {
+                            UiState.Error(message)
+                        }
+                    }
+
+                }
+            } catch (e: Exception) {
+                _operationState.value = UiState.Error(e.message ?: "Failed to settle group expense")
+            }
+        }
+    }
+
+
+    fun settleFriendExpense(expense: FriendExpenseRecord) {
+        _operationState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                val currentUserId = firebaseAuth.currentUser?.uid ?: run {
+                    _operationState.value = UiState.Error("User not authenticated")
+                    return@launch
+                }
+
+
+                // Add the current user to the settled list if not already there
+                val updatedSettlers = expense.settledBy.toMutableList()
+                if (!updatedSettlers.contains(currentUserId)) {
+                    updatedSettlers.add(currentUserId)
+                }
+
+                // Create updated expense record
+                val updatedExpense = expense.copy(settledBy = updatedSettlers)
+
+                // Update the expense in Firestore
+                viewModelScope.launch {
+                    repo.settleFriendExpense(
+                        currentUserId,
+                        expense.id,
+                        updatedExpense
+                    ) { success, message ->
+                        _operationState.value = if (success) {
+                            UiState.Success(message)
+                        } else {
+                            UiState.Error(message)
+                        }
+                    }
+                }
+
+            } catch (e: Exception) {
+                _operationState.value = UiState.Error(e.message ?: "Failed to settle expense")
+            }
+        }
+    }
+
+
     fun saveGroupExpense(
         expenseRecord: ExpenseRecord,
         groupId: String
@@ -556,7 +648,7 @@ class MainViewModel @Inject constructor(
 
 
     fun deleteFriendExpenseDetail(
-        friendId:String,
+        friendId: String,
         expenseId: String,
         paidAmountByMe: Double,
         startDate: String
@@ -565,7 +657,8 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 firebaseAuth.currentUser?.uid?.let { uid ->
-                    repo.deleteFriendExpense(friendId,
+                    repo.deleteFriendExpense(
+                        friendId,
                         uid, paidAmountByMe, startDate,
                         expenseId
                     ) { success, message ->
@@ -700,7 +793,8 @@ class MainViewModel @Inject constructor(
                         cachedFriend = friend
                         _individualFriendState.value = UiState.Success(friend)
                     } else {
-                        _individualFriendState.value = UiState.Error("Something went wrong")
+                        _individualFriendState.value =
+                            UiState.Success(FriendContact()) //not a friend
                     }
                 }
             } catch (e: Exception) {
@@ -739,7 +833,7 @@ class MainViewModel @Inject constructor(
         title: String,
         description: String,
         amount: String,
-        currency:String
+        currency: String
     ) {
         _friendExpenseToPush.value = _friendExpenseToPush.value.copy(
             title = title,
@@ -850,6 +944,24 @@ class MainViewModel @Inject constructor(
     }
 
     //---------------------CONTACTS--------------------
+
+    fun fetchProfileById(userId: String) {
+        _individualState.value = UiState.Loading
+        viewModelScope.launch {
+            try {
+                val profile = repo.getProfileById(userId)
+                if (profile != null) {
+                    _individualState.value = UiState.Success(profile)
+                } else {
+                    _individualState.value = UiState.Error("Profile not found")
+                }
+            } catch (e: Exception) {
+                _individualState.value = UiState.Error(e.message ?: "Failed to fetch profile")
+            }
+        }
+    }
+
+
     fun fetchAllContacts() {
         _contactsState.value = UiState.Loading
         viewModelScope.launch {

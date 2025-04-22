@@ -259,7 +259,8 @@ class AddMembersFragment : Fragment() {
         val contact = Contact(
             name = friend.name,
             number = friend.contact,
-            isFriend = true, friendId = friend.friendId
+            isFriend = true, friendId = friend.friendId,
+            imageUrl = friend.profileImageUrl
         )
 
         if (isSelected) {
@@ -310,6 +311,8 @@ class AddMembersFragment : Fragment() {
         binding.selectedContactsRecyclerView.visibility =
             if (selectedContacts.isEmpty()) View.GONE else View.VISIBLE
         binding.curveCard.visibility = if (selectedContacts.isEmpty()) View.GONE else View.VISIBLE
+
+
     }
 
     private fun observeContacts() {

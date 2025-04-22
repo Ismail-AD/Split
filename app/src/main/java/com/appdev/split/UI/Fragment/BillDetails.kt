@@ -6,9 +6,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -27,6 +30,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -36,6 +40,7 @@ class BillDetails : Fragment() {
     private var _binding: FragmentBillDetailsBinding? = null
     private val binding get() = _binding!!
     private lateinit var dialog: Dialog
+    private lateinit var settleUpDialog: Dialog
     private val args: BillDetailsArgs by navArgs()
     private val mainViewModel by activityViewModels<MainViewModel>()
     private lateinit var splitDetailsAdapter: SplitDetailsAdapter
@@ -65,6 +70,7 @@ class BillDetails : Fragment() {
         mainViewModel.updateStateToStable()
 
         setupDialog()
+        setupSettleUpDialog()
         setupRecyclerView()
         setupClickListeners()
         when {
@@ -99,12 +105,17 @@ class BillDetails : Fragment() {
                 }
             }
         }
-
-
     }
 
     private fun setupDialog() {
         dialog = Dialog(requireContext())
+    }
+
+    private fun setupSettleUpDialog() {
+        settleUpDialog = Dialog(requireContext())
+        settleUpDialog.setContentView(R.layout.settle_up_dialog)
+        settleUpDialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        settleUpDialog.setCancelable(true)
     }
 
     private fun setupRecyclerView() {
@@ -168,6 +179,9 @@ class BillDetails : Fragment() {
                 findNavController().navigateUp()
             }
 
+            settleUpButton.setOnClickListener {
+                showSettleUpConfirmation()
+            }
 
             edit.setOnClickListener {
                 when {
@@ -220,6 +234,87 @@ class BillDetails : Fragment() {
             }
         }
     }
+
+    private fun showSettleUpConfirmation() {
+        val currentUserId = firebaseAuth.currentUser?.uid ?: return
+        val amountToSettle = when {
+            args.groupId != null && expenseRecord != null -> {
+                expenseRecord?.splits?.find { it.userId == currentUserId }?.amount ?: 0.0
+            }
+
+            friendExpense != null -> {
+                friendExpense?.splits?.find { it.userId == currentUserId }?.amount ?: 0.0
+            }
+
+            else -> 0.0
+        }
+
+        val currency = when {
+            args.groupId != null && expenseRecord != null -> expenseRecord?.currency
+            friendExpense != null -> friendExpense?.currency
+            else -> ""
+        } ?: ""
+
+        settleUpDialog.findViewById<TextView>(R.id.settleUpMessage)?.text =
+            "Are you sure you want to settle this bill and pay your amount of ${
+                Utils.extractCurrencyCode(
+                    currency
+                )
+            }$amountToSettle?"
+
+        settleUpDialog.findViewById<Button>(R.id.confirmButton)?.setOnClickListener {
+            settleUpDialog.dismiss()
+
+            if (args.groupId != null && expenseRecord != null) {
+                expenseRecord?.let { record ->
+                    observeOperationState()
+                    mainViewModel.settleGroupExpense(args.groupId!!, record)
+                }
+            } else if (friendExpense != null) {
+                friendExpense?.let { record ->
+                    observeOperationState()
+                    mainViewModel.settleFriendExpense(record)
+                }
+            }
+        }
+
+        settleUpDialog.findViewById<Button>(R.id.cancelButton)?.setOnClickListener {
+            settleUpDialog.dismiss()
+        }
+
+        settleUpDialog.show()
+    }
+
+    private fun observeOnceWithUiState(
+        flow: StateFlow<UiState<String>>,
+        lifecycleOwner: LifecycleOwner,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit,
+        onLoading: () -> Unit = {},
+        onIdle: () -> Unit = {}
+    ) {
+        lifecycleOwner.lifecycleScope.launch {
+            flow.collect { state ->
+                when (state) {
+                    is UiState.Success -> {
+                        hideLoadingIndicator()
+                        onSuccess(state.data)
+                    }
+                    is UiState.Error -> {
+                        hideLoadingIndicator()
+                        onError(state.message)
+                    }
+                    is UiState.Loading -> {
+                        onLoading()
+                    }
+                    else -> {
+                        onIdle()
+                    }
+                }
+            }
+        }
+    }
+
 
     private fun setupSingleExpenseListener(expenseId: String, friendId: String) {
         val currentUser = firebaseAuth.currentUser ?: return
@@ -275,25 +370,26 @@ class BillDetails : Fragment() {
             }
     }
 
-
     private fun updateUIWithExpenseRecord(
         record: ExpenseRecord?,
         friendExpenseRecord: FriendExpenseRecord?
     ) {
         _binding?.let { binding ->
             // Get current user ID
-            val currentUserId = firebaseAuth.currentUser?.uid
+            val currentUserId = firebaseAuth.currentUser?.uid ?: ""
 
-            // Hide edit and delete buttons by default
+            // Hide all buttons by default
             binding.edit.visibility = View.GONE
             binding.delete.visibility = View.GONE
+            binding.settleUpButton.visibility = View.GONE
 
             when {
                 record != null -> {
                     expenseRecord = record
                     binding.title.text = record.title
                     binding.date.text = "Added on ${record.startDate + "-" + record.endDate}"
-                    binding.totalAmount.text = "${Utils.extractCurrencyCode(record.currency)}${record.totalAmount}"
+                    binding.totalAmount.text =
+                        "${Utils.extractCurrencyCode(record.currency)}${record.totalAmount}"
                     binding.description.text = record.description
 
                     // Show edit and delete only if current user is the one who paid
@@ -302,12 +398,28 @@ class BillDetails : Fragment() {
                         binding.delete.visibility = View.VISIBLE
                     }
 
+                    // Show settle up button if:
+                    // 1. Current user is NOT the one who paid AND
+                    // 2. Current user is NOT in the settled list AND
+                    // 3. Current user has a split in this expense
+                    val isUserInSplits = record.splits.any { it.userId == currentUserId }
+                    if (currentUserId != record.paidBy &&
+                        !record.settledBy.contains(currentUserId) &&
+                        isUserInSplits
+                    ) {
+                        binding.settleUpButton.visibility = View.VISIBLE
+                    }
+
                     splitDetailsAdapter.updateData(
                         record.splits,
                         record.splitType,
                         record.totalAmount,
-                        record.currency
+                        record.currency,
+                        currentUserId,
+                        settledBy = record.settledBy,
+                        paidBy = record.paidBy
                     )
+
                     binding.circularImage.visibility = View.GONE
                     binding.groupIcon.visibility = View.VISIBLE
                     when (args.groupImageUrl) {
@@ -323,8 +435,10 @@ class BillDetails : Fragment() {
                 friendExpenseRecord != null -> {
                     friendExpense = friendExpenseRecord
                     binding.title.text = friendExpenseRecord.title
-                    binding.date.text = "Added on ${friendExpenseRecord.startDate + "-" + friendExpenseRecord.endDate}"
-                    binding.totalAmount.text = "${Utils.extractCurrencyCode(friendExpenseRecord.currency)}${friendExpenseRecord.totalAmount}"
+                    binding.date.text =
+                        "Added on ${friendExpenseRecord.startDate + "-" + friendExpenseRecord.endDate}"
+                    binding.totalAmount.text =
+                        "${Utils.extractCurrencyCode(friendExpenseRecord.currency)}${friendExpenseRecord.totalAmount}"
                     binding.description.text = friendExpenseRecord.description
 
                     // Show edit and delete only if current user is the one who paid
@@ -333,11 +447,31 @@ class BillDetails : Fragment() {
                         binding.delete.visibility = View.VISIBLE
                     }
 
+                    // For friend expense records, we would need to implement similar settle up logic
+                    // This would require adding the settledBy field to FriendExpenseRecord class
+                    // For now, let's assume FriendExpenseRecord doesn't have this field yet
+                    // Show settle up button if:
+                    // 1. Current user is NOT the one who paid AND
+                    // 2. Current user is NOT in the settled list AND
+                    // 3. Current user has a split in this expense
+                    val isUserInSplits =
+                        friendExpenseRecord.splits.any { it.userId == currentUserId }
+                    if (currentUserId != friendExpenseRecord.paidBy &&
+                        !friendExpenseRecord.settledBy.contains(currentUserId) &&
+                        isUserInSplits
+                    ) {
+                        binding.settleUpButton.visibility = View.VISIBLE
+                    }
+
+
                     splitDetailsAdapter.updateData(
                         friendExpenseRecord.splits,
                         friendExpenseRecord.splitType,
                         friendExpenseRecord.totalAmount,
-                        friendExpenseRecord.currency
+                        friendExpenseRecord.currency,
+                        userId = currentUserId,
+                        settledBy = friendExpenseRecord.settledBy,
+                        paidBy = friendExpenseRecord.paidBy
                     )
                     binding.groupIcon.visibility = View.GONE
                     binding.circularImage.visibility = View.VISIBLE
@@ -362,7 +496,6 @@ class BillDetails : Fragment() {
             }
         }
     }
-
 
     private fun showError(message: String) {
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
@@ -399,7 +532,6 @@ class BillDetails : Fragment() {
             }
         }
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()

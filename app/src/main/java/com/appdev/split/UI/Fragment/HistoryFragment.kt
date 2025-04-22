@@ -70,28 +70,20 @@ class HistoryFragment : Fragment() {
     }
 
 
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         if (!hasInitialLoadOccurred) {
+            Log.d("CHKOP","current month ${Utils.getYearMonth()}")
             mainViewModel.setupRealTimeExpensesListener(Utils.getYearMonth())
             hasInitialLoadOccurred = true
         }
-
-
-        mainViewModel.setupRealTimeMonthlySpendingListener(getCurrentlyVisibleMonths())
-
         val months = listOf(
             "Jan", "Feb", "Mar", "Apr",
             "May", "Jun", "Jul", "Aug",
             "Sep", "Oct", "Nov", "Dec"
         )
-
-
         val chartFragments = mutableListOf<Fragment>()
-
-
         for (i in months.indices step 3) {
             val monthSubset = months.subList(i, min(i + 3, months.size))
             val monthYearSubset = allMonthsWithYears.subList(i, min(i + 3, allMonthsWithYears.size))
@@ -112,7 +104,7 @@ class HistoryFragment : Fragment() {
                     if (selectedMonthYears != selectedMonthYear) {
                         mainViewModel.updateSelectedMonth(selectedMonthYear)
                         selectedMonthYears = selectedMonthYear
-                        Log.d("CALLZX","${selectedMonthYear} is new selected month")
+                        Log.d("CHKOP","from on month selected ${selectedMonthYear} is new selected month")
                         mainViewModel.setupRealTimeExpensesListener(selectedMonthYear)
 
 //                        mainViewModel.getMonthlyExpense(selectedMonthYear)
@@ -124,6 +116,12 @@ class HistoryFragment : Fragment() {
 
         chartPagerAdapter = ChartPagerAdapter(this, chartFragments)
         binding.chartViewPager.adapter = chartPagerAdapter
+
+        val currentMonthIndex = Calendar.getInstance().get(Calendar.MONTH)
+        val initialPage = currentMonthIndex / 3
+        binding.chartViewPager.setCurrentItem(initialPage, false)
+        updateNavigationButtons(initialPage)
+
 
         binding.chartViewPager.registerOnPageChangeCallback(object :
             ViewPager2.OnPageChangeCallback() {
@@ -138,6 +136,7 @@ class HistoryFragment : Fragment() {
                 }
             }
         })
+        mainViewModel.setupRealTimeMonthlySpendingListener(getCurrentlyVisibleMonths())
 
         binding.btnPrevious.setOnClickListener {
             val current = binding.chartViewPager.currentItem
@@ -152,7 +151,6 @@ class HistoryFragment : Fragment() {
                 binding.chartViewPager.currentItem = current + 1
             }
         }
-        updateNavigationButtons(0)
         setupStateObservers()
 
     }
@@ -313,19 +311,31 @@ class HistoryFragment : Fragment() {
     }
 
     private fun updateChartData(spendingList: List<MySpending>) {
-        val chartData = spendingList.map {
-            Log.d("ClickDebug", "Mapping spending data: ${it.month} = ${it.totalAmountSpend}")
-            it.totalAmountSpend.toFloat()
-        }
+        // Create a map of month to spending amount for easy lookup
+        val monthToSpendingMap = spendingList.associateBy({ it.month }, { it.totalAmountSpend.toFloat() })
+
+        Log.d("ChartDebug", "Spending map created: $monthToSpendingMap")
 
         chartPagerAdapter.fragments.forEachIndexed { i, fragment ->
             (fragment as? ChartFragment)?.let { chartFragment ->
                 val startIndex = i * 3
-                val endIndex = minOf(startIndex + 3, chartData.size)
+                val endIndex = minOf(startIndex + 3, allMonthsWithYears.size)
 
                 if (startIndex < endIndex) {
-                    val subsetData = chartData.subList(startIndex, endIndex)
-                    chartFragment.updateChartData(subsetData)
+                    // Get the month-year pairs for this fragment
+                    val monthYearSubset = allMonthsWithYears.subList(startIndex, endIndex)
+
+                    // For each month-year in this fragment, get the corresponding spending amount
+                    val chartData = monthYearSubset.map { monthYear ->
+                        val month = monthYear.split("-")[1]
+                        // Use the month to look up spending, default to 0f if not found
+                        monthToSpendingMap[month] ?: 0f
+                    }
+
+                    Log.d("ChartDebug", "Fragment $i data: $chartData for months: $monthYearSubset")
+
+                    // Update this fragment's chart with the correct data
+                    chartFragment.updateChartData(chartData)
                 }
             }
         }

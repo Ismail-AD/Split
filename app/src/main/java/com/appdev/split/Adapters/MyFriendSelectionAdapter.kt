@@ -6,7 +6,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.appdev.split.Model.Data.Friend
 import com.appdev.split.Model.Data.FriendContact
+import com.appdev.split.R
 import com.appdev.split.databinding.MyfriendsLayoutItemBinding
+import com.bumptech.glide.Glide
+
 class MyFriendSelectionAdapter(
     private val friendsList: List<FriendContact>,
     private val isMultiSelect: Boolean = false,
@@ -23,6 +26,12 @@ class MyFriendSelectionAdapter(
         fun bind(friend: FriendContact) {
             binding.apply {
                 friendName.text = friend.name
+                Glide.with(profileImage.context)
+                    .load(friend.profileImageUrl)
+                    .placeholder(R.drawable.profile_imaage) // optional placeholder
+                    .error(R.drawable.profile_imaage) // optional fallback
+                    .circleCrop()
+                    .into(profileImage)
                 selected.visibility = when {
                     isMultiSelect -> if (selectedFriends.contains(friend)) View.VISIBLE else View.INVISIBLE
                     else -> if (selectedFriend == friend) View.VISIBLE else View.INVISIBLE

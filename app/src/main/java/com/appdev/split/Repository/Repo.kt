@@ -619,6 +619,7 @@ class Repo @Inject constructor(
         myId: String,
         onResult: (success: Boolean, message: String) -> Unit
     ) {
+
         try {
             contactDao.insertContacts(contacts)
             if (Utils.isInternetAvailable()) {
@@ -631,6 +632,8 @@ class Repo @Inject constructor(
                             name = contact.name,
                             profileImageUrl = contact.imageUrl
                         )
+                        Log.d("CHKZMA","${contact.friendId}")
+
                         val docRef = firestore.collection("users")
                             .document(myId)
                             .collection("friends")
@@ -642,6 +645,7 @@ class Repo @Inject constructor(
                 }
             }
         } catch (e: Exception) {
+            Log.d("CHKZMA","${e.localizedMessage}")
             onResult(false, "Failed to insert contacts: ${e.message}")
         }
     }
@@ -688,28 +692,97 @@ class Repo @Inject constructor(
                 .await()
 
             val friend = doc.toObject(FriendContact::class.java)
-            friend ?: getProfileById(friendId)
+            friend
         } catch (e: Exception) {
             Log.e("Repo", "Failed to fetch friend: ${e.message}")
             null
         }
     }
 
-    private suspend fun getProfileById(userId: String): FriendContact? {
+    suspend fun getProfileById(userId: String): FriendContact? {
+
         return try {
             val doc = firestore.collection("profiles")
                 .document(userId)
                 .get()
                 .await()
+            if (doc.exists()) {
+                val name = doc.getString("name") ?: ""
+                val email = doc.getString("email") ?: ""
+                val profileImage = doc.getString("profileImage") ?: ""
+                val friendId = doc.getString("userId") ?: ""
 
-            doc.toObject(FriendContact::class.java)
+                FriendContact(
+                    name = name,
+                    profileImageUrl = profileImage,
+                    contact = email,
+                    friendId = friendId
+                )
+            } else {
+                null
+            }
         } catch (e: Exception) {
             Log.e("Repo", "Failed to fetch profile: ${e.message}")
             null
         }
     }
 
+//-------------------------EXPENSES---------------------------
 
+    suspend fun settleFriendExpense(
+        myUserId: String,
+        expenseId: String,
+        updatedExpense: FriendExpenseRecord,
+        onResult: (Boolean, String) -> Unit
+    ) {
+        try {
+            val batch = firestore.batch()
+
+            Log.d("CHKAZX","Current user id ${myUserId}")
+            Log.d("CHKAZX","friend user id ${updatedExpense.friendId}")
+            // Update the expense record in both user's collections
+            val myExpenseRef = firestore.collection("expenses")
+                .document(myUserId)
+                .collection("friendsExpenses")
+                .document(expenseId)
+
+            val friendExpenseRef = firestore.collection("expenses")
+                .document(updatedExpense.paidBy)
+                .collection("friendsExpenses")
+                .document(expenseId)
+
+            batch.set(myExpenseRef, updatedExpense)
+            batch.set(friendExpenseRef, updatedExpense)
+
+            batch.commit().await()
+            onResult(true, "Expense settled successfully!")
+        } catch (e: Exception) {
+            Log.e("Repo", "Failed to settle expense: ${e.message}")
+            onResult(false, "Failed to settle expense: ${e.message}")
+        }
+    }
+
+    suspend fun settleGroupExpense(
+        groupId: String,
+        expenseId: String,
+        updatedExpense: ExpenseRecord,
+        onResult: (Boolean, String) -> Unit
+    ) {
+        try {
+            // Update the expense in the group's expenses collection
+            firestore.collection("groupExpenses")
+                .document(groupId)
+                .collection("expenses")
+                .document(expenseId)
+                .set(updatedExpense)
+                .await()
+
+            onResult(true, "Group expense settled successfully!")
+        } catch (e: Exception) {
+            Log.e("Repo", "Failed to settle group expense: ${e.message}")
+            onResult(false, "Failed to settle group expense: ${e.message}")
+        }
+    }
     suspend fun saveFriendExpense(
         myUserId: String,
         expense: FriendExpenseRecord,
@@ -746,7 +819,7 @@ class Repo @Inject constructor(
 
             onResult(true, "Expense saved successfully!")
         } catch (e: Exception) {
-            Log.e("Repo", "Failed to save expense: ${e.message}")
+            Log.e("Repo", "${expense.friendId}  Failed to save expense: ${e.message}")
             onResult(false, "Failed to save expense: ${e.message}")
         }
     }

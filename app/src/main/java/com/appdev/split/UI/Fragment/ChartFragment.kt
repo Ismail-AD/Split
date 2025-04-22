@@ -105,7 +105,11 @@ class ChartFragment : Fragment() {
                 mainViewModel.monthsTotalSpentState.collect { state ->
                     when (state) {
                         is UiState.Success -> {
-                            updateChartData(state.data.map { it.totalAmountSpend.toFloat() })
+                            val newData = state.data
+                            val newMonths = newData.map { it.year+"-"+it.month }
+                            if (newMonths == monthsWithYears) {
+                                updateChartData(newData.map { it.totalAmountSpend.toFloat() })
+                            }
                         }
                         // Handle other states if necessary
                         else -> {}
@@ -191,8 +195,8 @@ class ChartFragment : Fragment() {
             return
         }
 
-        if (values != newValues) {  // Only update if there's a change
-            Log.d("ChartDebug", "Updating chart data: $newValues")
+        if (newValues.size != values.size || !values.indices.all { i -> values[i] == newValues[i] }) {
+            Log.d("ChartDebug", "Updating chart data in fragment for months $monthsWithYears: $newValues")
             val customBars = months.mapIndexed { index, month ->
                 CustomBarGraph.BarData(
                     value = if (index < newValues.size) newValues[index] else 0f,
@@ -204,7 +208,6 @@ class ChartFragment : Fragment() {
             values = newValues.toList()
             mainViewModel.selectedMonthYears.value.let { updateChartSelection(it) }
         }
-
     }
 
 

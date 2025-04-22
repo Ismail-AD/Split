@@ -12,7 +12,7 @@ import com.appdev.split.databinding.ItemRecentBillBinding
 import kotlin.random.Random
 
 class GroupDetailExpenseAdapter(
-    private val expenses: List<ExpenseRecord>, // Change to ExpenseRecord
+    private val expenses: List<ExpenseRecord>,
     val navigate: (ExpenseRecord) -> Unit
 ) : RecyclerView.Adapter<GroupDetailExpenseAdapter.BillViewHolder>() {
 
@@ -32,51 +32,70 @@ class GroupDetailExpenseAdapter(
     inner class BillViewHolder(private val binding: ItemRecentBillBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(expense: ExpenseRecord) { // Changed from Bill to ExpenseRecord
-            binding.billName.text = expense.title // Assuming ExpenseRecord has a 'name' field
-            binding.billDate.text =
-                expense.startDate + "-" + expense.endDate // Assuming ExpenseRecord has a 'date' field
-
+        fun bind(expense: ExpenseRecord) {
+            binding.billName.text = expense.title
+            binding.billDate.text = expense.startDate + "-" + expense.endDate
             binding.currency.text = Utils.extractCurrencyCode(expense.currency)
 
-
-            val currentUserId =
-                getCurrentUserId() // Implement this method to get logged in user's ID
-
-            // Find current user's split
+            val currentUserId = getCurrentUserId()
             val userSplit = expense.splits.find { it.userId == currentUserId }
             val isPayer = expense.paidBy == currentUserId
 
-            if (userSplit != null) {
-                val userAmount = userSplit.amount
-                val label: String
-                val displayAmount: Double
+            // Check if all non-payers have settled
+            val allNonPayersSettled = expense.splits
+                .filter { it.userId != expense.paidBy }
+                .all { expense.settledBy.contains(it.userId) }
 
-                if (isPayer) {
-                    // User paid the bill
+            // Check if current user has settled
+            val hasUserSettled = expense.settledBy.contains(currentUserId)
+
+            // Display logic based on user role and settlement status
+            when {
+                // Case 1: All splits settled - everyone should see "Expense Settled"
+                allNonPayersSettled -> {
+                    binding.apply {
+                        youBorrowOrLent.text = "Expense Settled"
+                        amount.visibility = View.GONE
+                        currency.visibility = View.GONE
+                    }
+                }
+                // Case 2: Current user is payer but not all have settled
+                isPayer && !allNonPayersSettled -> {
                     val totalOthersShouldPay = expense.splits
                         .filter { it.userId != currentUserId }
                         .sumOf { it.amount }
 
-                    label = "You lent "
-                    displayAmount = totalOthersShouldPay
-
-                } else {
-                    // User didn't pay the bill
-                    label = "You borrowed "
-                    displayAmount = userAmount
+                    binding.apply {
+                        youBorrowOrLent.text = "You lent "
+                        amount.text = String.format("%.2f", totalOthersShouldPay)
+                        amount.visibility = View.VISIBLE
+                        currency.visibility = View.VISIBLE
+                    }
                 }
-
-                binding.apply {
-                    youBorrowOrLent.text = label
-                    amount.text = String.format("%.2f", displayAmount)
+                // Case 3: Current user has settled their part
+                hasUserSettled -> {
+                    binding.apply {
+                        youBorrowOrLent.text = "You settled up"
+                        amount.visibility = View.GONE
+                        currency.visibility = View.GONE
+                    }
                 }
-            } else {
-                // Handle case where user is not in splits
-                binding.apply {
-                    youBorrowOrLent.text = "Not involved"
-                    amount.visibility = View.GONE
-                    currency.visibility = View.GONE
+                // Case 4: Current user is not payer and has not settled
+                userSplit != null -> {
+                    binding.apply {
+                        youBorrowOrLent.text = "You borrowed "
+                        amount.text = String.format("%.2f", userSplit.amount)
+                        amount.visibility = View.VISIBLE
+                        currency.visibility = View.VISIBLE
+                    }
+                }
+                // Case 5: User is not involved in this expense
+                else -> {
+                    binding.apply {
+                        youBorrowOrLent.text = "Not involved"
+                        amount.visibility = View.GONE
+                        currency.visibility = View.GONE
+                    }
                 }
             }
 

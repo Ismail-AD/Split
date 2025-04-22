@@ -165,9 +165,9 @@
                 android:layout_gravity="center_vertical"
                 android:id="@+id/addAfterFriends"
                 android:visibility="gone"
-                android:backgroundTint="@color/green"
                 app:srcCompat="@drawable/plus"
                 app:tint="@color/white"
+                style="@style/FloatButtonBackground"
                 android:contentDescription="Floating Button"
                 app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
                 android:elevation="1dp"/>

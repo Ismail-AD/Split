@@ -76,7 +76,7 @@ class SingleDostAddExpenseFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         (activity as? EntryActivity)?.hideBottomBar()
         dialog = Dialog(requireContext())
-
+        Log.d("CHJAZAZ","${args.friendData}")
         if (args.friendData != null) {
             selectedFriend =
                 args.friendData
@@ -370,6 +370,7 @@ class SingleDostAddExpenseFragment : Fragment() {
                                     paidBy = FirebaseAuth.getInstance().currentUser!!.uid,
                                     splitType = binding.splitTypeText.text.toString(),
                                     splits = computedSplits,
+                                    settledBy = emptyList(),
                                     participantIds = Utils.getParticipantIds(computedSplits)
                                 )
 
@@ -434,6 +435,7 @@ class SingleDostAddExpenseFragment : Fragment() {
     private fun setupNewExpenseMode() {
         binding.apply {
             categorySpinner.selectItemByIndex(0)
+            currencySpinner.selectItemByIndex(0)
         }
         binding.titleTextView.text = "Add expense"
         if (args.friendData == null) {
@@ -504,6 +506,9 @@ class SingleDostAddExpenseFragment : Fragment() {
                     if (amount.editText?.text.isNullOrEmpty() && expenseInput.totalAmount != 0.0) {
                         amount.editText?.setText(expenseInput.totalAmount.toString())
                     }
+                    if (expenseInput.currency.trim().isNotEmpty()) {
+                        currencySpinner.selectItemByIndex(getCurrencyIndex(expenseInput.currency))
+                    }
                 }
             }
         }
@@ -514,6 +519,7 @@ class SingleDostAddExpenseFragment : Fragment() {
                     binding.categorySpinner.selectItemByIndex(getCategoryIndex(it))
                 }
             }
+
         }
     }
 
