@@ -363,15 +363,15 @@ class HistoryFragment : Fragment() {
         binding.btnPrevious.isEnabled = !isFirst
         binding.btnNext.isEnabled = !isLast
 
-        binding.btnPrevious.setColorFilter(
-            ContextCompat.getColor(requireContext(), if (isFirst) R.color.gray else R.color.black),
-            PorterDuff.Mode.SRC_IN
-        )
-
-        binding.btnNext.setColorFilter(
-            ContextCompat.getColor(requireContext(), if (isLast) R.color.gray else R.color.black),
-            PorterDuff.Mode.SRC_IN
-        )
+//        binding.btnPrevious.setColorFilter(
+//            ContextCompat.getColor(requireContext(), if (isFirst) R.color.gray else R.color.black),
+//            PorterDuff.Mode.SRC_IN
+//        )
+//
+//        binding.btnNext.setColorFilter(
+//            ContextCompat.getColor(requireContext(), if (isLast) R.color.gray else R.color.black),
+//            PorterDuff.Mode.SRC_IN
+//        )
     }
 
     private fun setupShimmer() {

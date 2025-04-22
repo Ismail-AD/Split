@@ -92,6 +92,7 @@
                     android:layout_gravity="center"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Previous"
+                    style="@style/iconTintColor"
                     android:src="@drawable/back" />
             </FrameLayout>
 
@@ -113,6 +114,7 @@
                     android:layout_gravity="center"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Next"
+                    style="@style/iconTintColor"
                     android:rotation="180"
                     android:src="@drawable/back" />
             </FrameLayout>
