@@ -31,12 +31,15 @@ import com.appdev.split.R
 import com.appdev.split.UI.Activity.EntryActivity
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentPersonalExpenseBinding
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
 import com.ozcanalasalvar.datepicker.view.datepicker.DatePicker
 import com.ozcanalasalvar.datepicker.view.popup.DatePickerPopup
 import com.skydoves.powerspinner.OnSpinnerItemSelectedListener
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import javax.inject.Inject
 
 
 class SingleDostAddExpenseFragment : Fragment() {
@@ -138,6 +141,7 @@ class SingleDostAddExpenseFragment : Fragment() {
         binding.selectedFrisRecyclerView.visibility = View.VISIBLE
 
     }
+
 
 
     private fun setupNavigationListeners() {
@@ -407,14 +411,15 @@ class SingleDostAddExpenseFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             mainViewModel.operationState.collect { state ->
                 when (state) {
-                    is UiState.Error -> showError(state.message)
+                    is UiState.Error -> {
+                        showError(state.message)
+                    }
                     UiState.Loading -> showLoadingIndicator()
                     is UiState.Success -> {
                         hideLoadingIndicator()
                         showError(state.data)
                         findNavController().navigateUp()
                     }
-
                     UiState.Stable -> {}
                 }
             }

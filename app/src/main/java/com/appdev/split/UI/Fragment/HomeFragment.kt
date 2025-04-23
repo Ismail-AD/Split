@@ -1,6 +1,7 @@
 package com.appdev.split.UI.Fragment
 
 import android.app.Dialog
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -32,6 +33,7 @@ import com.appdev.split.Utils.ThemeUtils
 import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.FragmentHomeBinding
 import com.bumptech.glide.Glide
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -42,6 +44,12 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 
@@ -61,7 +69,8 @@ class HomeFragment : Fragment() {
 
     lateinit var dialog: Dialog
     private var isExpanded = false
-
+    @Inject
+    lateinit var firebaseAnalytics: FirebaseAnalytics
 
 
     override fun onCreateView(
@@ -103,12 +112,19 @@ class HomeFragment : Fragment() {
                         is UiState.Success -> {
                             isMainDataReady = true
                             checkAndShowContent()
-                            expenses = state.data
                             expenses = state.data.mapValues { (_, expenseList) ->
-                                // Select the expense with the maximum timestamp
-                                expenseList.maxByOrNull { it.timeStamp }?.let { listOf(it) } ?: emptyList()
+                                if (expenseList.isNotEmpty()) {
+                                    // Get the most recent expense based on timestamp
+                                    val mostRecent = expenseList.maxByOrNull { it.timeStamp }
+                                    mostRecent?.let { listOf(it) } ?: emptyList()
+                                } else {
+                                    emptyList()
+                                }
                             }
+                            Log.d("CHKEXPAZ","${expenses}")
+                            Log.d("CHKEXPAZ","${state.data}")
                             updateRecyclerView(expenses)
+                            logHomeScreenViewed()
                         }
 
                         is UiState.Error -> {
@@ -165,6 +181,16 @@ class HomeFragment : Fragment() {
         }
 
     }
+
+    private fun logHomeScreenViewed() {
+        val params = Bundle().apply {
+            putInt("expense_count", expenses.size)
+            putBoolean("has_expenses", expenses.isNotEmpty())
+            putString("view_timestamp", getCurrentDate(System.currentTimeMillis().toString()))
+        }
+        firebaseAnalytics.logEvent("home_screen_viewed", params)
+    }
+
 
     override fun onResume() {
         super.onResume()
@@ -254,5 +280,18 @@ class HomeFragment : Fragment() {
             email
         )
         findNavController().navigate(action)
+    }
+}
+
+fun getCurrentDate(date:String): String {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val instant = Instant.ofEpochMilli(date.toLong())
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            .withZone(ZoneId.systemDefault())
+        formatter.format(instant)
+    } else {
+        val date = Date(date.toLong())
+        val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        format.format(date)
     }
 }

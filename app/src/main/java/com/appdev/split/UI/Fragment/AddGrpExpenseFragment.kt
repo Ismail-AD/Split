@@ -41,6 +41,7 @@ import com.appdev.split.Utils.Utils
 import com.appdev.split.databinding.DialogMemberListBinding
 import com.appdev.split.databinding.FragmentAddGrpExpenseBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
 import com.ozcanalasalvar.datepicker.view.datepicker.DatePicker
 import com.ozcanalasalvar.datepicker.view.popup.DatePickerPopup
@@ -48,6 +49,7 @@ import com.skydoves.powerspinner.OnSpinnerItemSelectedListener
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class AddGrpExpenseFragment : Fragment() {
@@ -66,6 +68,9 @@ class AddGrpExpenseFragment : Fragment() {
     var expObjectReceived: ExpenseRecord? = null
     var selectedYearMonth = Utils.getYearMonth()
     var selectedDay = Utils.getDay()
+
+    @Inject
+    lateinit var firebaseAnalytics: FirebaseAnalytics
 
 
     override fun onCreateView(
@@ -120,6 +125,10 @@ class AddGrpExpenseFragment : Fragment() {
 
 
     }
+
+
+    // 3. Add logExpenseError method
+
 
     private fun showDatePickerDialog() {
         val calendar = Calendar.getInstance()
@@ -384,13 +393,11 @@ class AddGrpExpenseFragment : Fragment() {
                         hideLoadingIndicator()
                         showError(state.message)
                     }
-
                     UiState.Loading -> showLoadingIndicator()
                     is UiState.Success -> {
                         hideLoadingIndicator()
                         findNavController().navigateUp()
                     }
-
                     UiState.Stable -> {}
                 }
             }

@@ -13,7 +13,7 @@
         android:layout_width="150dp"
         android:layout_height="100dp"
         android:layout_margin="@dimen/dp_10"
-        android:src="@drawable/logomark_2"
+        android:src="@drawable/spliticos"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

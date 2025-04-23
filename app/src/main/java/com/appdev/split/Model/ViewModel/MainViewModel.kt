@@ -259,11 +259,15 @@ class MainViewModel @Inject constructor(
                     expense?.participantIds?.firstOrNull { it != userId }
                 }.toSet()
 
+                // Create a counter to track when all listeners have initially loaded
+                var initialLoadCount = 0
+                val totalListeners = friendIds.size
+
                 friendIds.forEach { friendId ->
                     val listener = firestore.collection("expenses")
-                        .document(friendId)
+                        .document(userId)  // Changed from friendId to userId
                         .collection("friendsExpenses")
-                        .whereArrayContains("participantIds", userId)
+                        .whereArrayContains("participantIds", friendId)
                         .addSnapshotListener { friendSnapshot, friendError ->
                             if (friendError != null) {
                                 Log.e(
@@ -276,16 +280,26 @@ class MainViewModel @Inject constructor(
 
                             friendSnapshot?.documents?.mapNotNull { it.toObject(FriendExpenseRecord::class.java) }
                                 ?.let { friendExpenses ->
+                                    // Store these expenses by friendId
                                     allExpenses[friendId] = friendExpenses.toMutableList()
-                                    _allExpensesState.value = UiState.Success(allExpenses)
+
+                                    // Only update state once we've processed all initial loads
+                                    initialLoadCount++
+                                    if (initialLoadCount >= totalListeners || friendExpenses.isNotEmpty()) {
+                                        _allExpensesState.value = UiState.Success(allExpenses.toMap())
+                                    }
                                 }
                         }
 
                     friendExpenseListeners[friendId] = listener
                 }
+
+                // If there are no friends, still emit an empty result
+                if (friendIds.isEmpty()) {
+                    _allExpensesState.value = UiState.Success(emptyMap())
+                }
             }
     }
-
 
     // Call this in onCleared to prevent memory leaks
     override fun onCleared() {

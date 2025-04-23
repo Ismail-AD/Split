@@ -1,6 +1,7 @@
 package com.appdev.split.Repository
 
 import android.net.Uri
+import android.os.Bundle
 import android.util.Log
 import com.appdev.split.Model.Data.Contact
 import com.appdev.split.Model.Data.ExpenseRecord
@@ -13,6 +14,7 @@ import com.appdev.split.Model.Data.MySpending
 import com.appdev.split.Model.Data.UserEntity
 import com.appdev.split.Room.DaoClasses.ContactDao
 import com.appdev.split.Utils.Utils
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -31,7 +33,8 @@ class Repo @Inject constructor(
     private val contactDao: ContactDao,
     private val firestore: FirebaseFirestore,
     val firebaseAuth: FirebaseAuth,
-    val supabaseClient: SupabaseClient
+    val supabaseClient: SupabaseClient,
+    var firebaseAnalytics: FirebaseAnalytics
 ) {
 
     val currentUser = firebaseAuth.currentUser
@@ -70,12 +73,28 @@ class Repo @Inject constructor(
 
             // Save the expense in the subcollection
             newExpenseDoc.set(expenseWithId).await()
+            logExpenseAdded(expense)
             onResult(true, "Expense saved successfully!")
         } catch (e: Exception) {
+            e.localizedMessage?.let { logExpenseError(it,groupId) }
             Log.e("Repo", "Failed to save expense: ${e.message}")
             onResult(false, "Failed to save expense: ${e.message}")
         }
     }
+    private fun logExpenseAdded(expense: ExpenseRecord) {
+
+        // Custom event for expense tracking
+        val expenseParams = Bundle().apply {
+            putDouble("amount", expense.totalAmount)
+            putString("category", expense.expenseCategory)
+            putString("currency", Utils.extractCurrencyCode(expense.currency))
+            putString("split_type", expense.splitType)
+            putBoolean("is_update", expense.id.trim().isNotEmpty())
+            putInt("member_count", expense.splits.size)
+        }
+        firebaseAnalytics.logEvent("group_expense_added", expenseParams)
+    }
+
 
     suspend fun deleteGroupExpense(
         groupId: String,
@@ -816,15 +835,40 @@ class Repo @Inject constructor(
 
             updateTotalExpense(myContribution, expense.startDate, myUserId)
             updateTotalExpense(myContribution, expense.startDate, expense.friendId)
-
+            logExpenseAdded(expense)
             onResult(true, "Expense saved successfully!")
         } catch (e: Exception) {
             Log.e("Repo", "${expense.friendId}  Failed to save expense: ${e.message}")
+            e.localizedMessage?.let { logExpenseError(it) }
             onResult(false, "Failed to save expense: ${e.message}")
         }
     }
 
+    private fun logExpenseError(errorMessage: String,groupId: String) {
+        val params = Bundle().apply {
+            putString("error_message", errorMessage)
+            putString("group_id", groupId)
+        }
+        firebaseAnalytics.logEvent("group_expense_error", params)
+    }
+    private fun logExpenseAdded(expense: FriendExpenseRecord) {
+        // Custom event for expense tracking
+        val expenseParams = Bundle().apply {
+            putDouble("amount", expense.totalAmount)
+            putString("category", expense.expenseCategory)
+            putString("currency", Utils.extractCurrencyCode(expense.expenseCategory))
+            putString("split_type", expense.splitType)
+            putBoolean("is_update", expense.id.trim().isNotEmpty())
+        }
+        firebaseAnalytics.logEvent("expense_added_OR_updated", expenseParams)
+    }
 
+    private fun logExpenseError(errorMessage: String) {
+        val params = Bundle().apply {
+            putString("error_message", errorMessage)
+        }
+        firebaseAnalytics.logEvent("expense_error", params)
+    }
     suspend fun getExpensesByDate(
         myUserId: String,
         targetDate: String,
